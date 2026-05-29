@@ -50856,7 +50856,7 @@ $3(a,b,c){var s=null,r=b===B.f,q=r?B.aY:B.be,p=r?B.cb:B.p
 A.ax3(new A.mI(p,s,r?B.aY:B.be,s,B.H,s,q,s))
 q=A.b_V(!1)
 p=A.b_V(!0)
-return new A.qn($.baN(),"NamaAppmu",q,p,b,!1,s)},
+return new A.qn($.baN(),"Catatin",q,p,b,!1,s)},
 $S:358}
 A.ayH.prototype={
 jz(){var s=this
@@ -52239,7 +52239,7 @@ r.N$=q
 r.I$=0
 s.aA()},
 A(a){var s,r,q,p,o,n,m,l=this,k=null,j=A.O(a),i=A.c0(26,A.O(a).p3.gbm(),B.I)
-i=A.zF(k,k,k,B.cx,k,k,!0,k,A.cQ(A.b([A.cQ(k,k,k,k,k,k,k,k,k,k,"Nama"),A.cQ(k,k,k,k,k,k,k,k,k,A.eo(k,k,B.u,k,k,k,k,k,k,k,k,k,k,k,k,k,k,!0,k,k,k,k,k,k,k,k),"Appmu")],t.VO),k,k,k,k,k,k,k,k,i,k),B.aP,k,k,B.az,B.aT)
+i=A.zF(k,k,k,B.cx,k,k,!0,k,A.cQ(A.b([A.cQ(k,k,k,k,k,k,k,k,k,k,"Catat"),A.cQ(k,k,k,k,k,k,k,k,k,A.eo(k,k,B.u,k,k,k,k,k,k,k,k,k,k,k,k,k,k,!0,k,k,k,k,k,k,k,k),"in")],t.VO),k,k,k,k,k,k,k,k,i,k),B.aP,k,k,B.az,B.aT)
 s=A.n("Buat Akun",k,k,k,k,A.c0(28,k,k),k,k,k)
 r=$.H()
 q=t.p
@@ -52374,7 +52374,7 @@ m=A.O(m).p3.gb7()
 s=o.c
 s.toString
 s=A.c0(18,A.O(s).p3.gbm(),B.I)
-s=A.zF(n,n,n,B.cx,n,n,!0,n,A.cQ(A.b([A.cQ(n,n,n,n,n,n,n,n,n,n,"Nama"),A.cQ(n,n,n,n,n,n,n,n,n,A.eo(n,n,B.u,n,n,n,n,n,n,n,n,n,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),"Appmu")],t.VO),n,n,n,n,n,n,n,n,s,n),B.aP,n,n,B.az,B.aT)
+s=A.zF(n,n,n,B.cx,n,n,!0,n,A.cQ(A.b([A.cQ(n,n,n,n,n,n,n,n,n,n,"Catat"),A.cQ(n,n,n,n,n,n,n,n,n,A.eo(n,n,B.u,n,n,n,n,n,n,n,n,n,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),"in")],t.VO),n,n,n,n,n,n,n,n,s,n),B.aP,n,n,B.az,B.aT)
 r=o.y
 if(!(r!=null)){r=o.x
 r="Selamat datang, "+(r.length!==0?B.c.ga4(r.split(" ")):"Pengguna")+" \ud83d\udc4b"}q=t.p
