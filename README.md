@@ -4,95 +4,131 @@
 [![Web](https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge)](https://flutter.dev/multi-platform/web)
 [![PWA](https://img.shields.io/badge/PWA-Supported-orange?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-**Catatin** adalah aplikasi pencatatan keuangan pribadi dan pembukuan bisnis yang dikembangkan menggunakan framework Flutter. Repositori ini berisi berkas hasil kompilasi produksi (production build) dari aplikasi **Catatin Web** yang siap dideploy dan dijalankan di peramban web.
+**Catatin** adalah aplikasi pencatatan keuangan pribadi dan pembukuan bisnis yang dibangun dengan Flutter. Repositori ini **bukan** repositori kode sumber — isinya khusus berkas hasil kompilasi produksi (`flutter build web`) yang langsung disajikan sebagai situs statis.
+
+| | |
+| :--- | :--- |
+| **Live** | <https://piambak.github.io/catatin/> |
+| **Hosting** | GitHub Pages, sumber: branch `main` folder `/ (root)` |
+| **Versi** | `1.0.0+1` (lihat `version.json`) |
+| **Base href** | `/catatin/` |
+| **Branch** | `main` (yang tayang) dan `backup(stable-version)` (cadangan) |
+
+Karena Pages menyajikan langsung isi root `main`, **setiap push ke `main` otomatis memperbarui situs** tanpa proses build apa pun di CI.
 
 ---
 
-## 📁 Struktur Folder & Berkas
+## 📁 Struktur Repositori
 
-Berikut adalah penjelasan mengenai peran dan kegunaan dari masing-masing folder dan berkas utama di dalam repositori ini:
+```
+catatin/
+├── .claude/
+│   └── launch.json                  Konfigurasi server pratinjau lokal (bukan bagian aplikasi)
+├── assets/
+│   ├── assets/fonts/                Fredoka (Regular, SemiBold) & Nunito (Regular, Medium, SemiBold, Bold)
+│   ├── fonts/                       MaterialIcons-Regular.otf
+│   ├── shaders/                     ink_sparkle.frag, stretch_effect.frag
+│   ├── AssetManifest.bin            Manifes aset format biner (dibaca aplikasi saat runtime)
+│   ├── AssetManifest.bin.json       Manifes aset versi JSON
+│   ├── FontManifest.json            Pemetaan nama famili font ke berkas & ketebalannya
+│   └── NOTICES                      Kumpulan lisensi seluruh pustaka yang dipakai
+├── canvaskit/
+│   ├── chromium/                    Varian CanvasKit khusus Chromium
+│   ├── experimental_webparagraph/   Varian eksperimental tata letak teks
+│   ├── canvaskit.js / .wasm         Mesin render CanvasKit (WebGL)
+│   ├── skwasm.js / .wasm            Mesin render Skia-WASM, pilihan default
+│   ├── skwasm_heavy.js / .wasm      Dipakai bila peramban tak punya image codec / break iterator bawaan
+│   └── wimp.js / .wasm              Dipakai bila opsi `enableWimp` aktif
+├── icons/
+│   ├── Icon-192.png, Icon-512.png                  Ikon PWA standar
+│   └── Icon-maskable-192.png, Icon-maskable-512.png Ikon PWA maskable
+├── .last_build_id                   Penanda unik build terakhir dari Flutter
+├── favicon.png                      Ikon di tab peramban
+├── flutter.js                       Pemuat resmi Flutter Web
+├── flutter_bootstrap.js             Skrip bootstrap mesin Flutter sebelum aplikasi jalan
+├── flutter_service_worker.js        Service worker PWA (caching & dukungan luring)
+├── index.html                       Entrypoint HTML, memuat <base href="/catatin/">
+├── main.dart.js                     Seluruh logika & antarmuka aplikasi (kompilasi Dart → JS, ±3,6 MB)
+├── manifest.json                    Manifes PWA (nama, warna tema #0175C2, ikon, orientasi)
+├── version.json                     Nama, versi, dan nomor build aplikasi
+└── README.md                        Berkas ini
+```
 
-| Folder / Berkas | Tipe | Deskripsi / Kegunaan |
-| :--- | :---: | :--- |
-| `assets/` | Folder | Menyimpan berkas statis aplikasi seperti font utama (Fredoka, Nunito), shader, berkas manifes aset/font, serta dokumen lisensi (`NOTICES`). |
-| `canvaskit/` | Folder | Berisi pustaka WebAssembly (WASM) dan JavaScript CanvasKit yang digunakan oleh Flutter Web untuk merender antarmuka grafis secara optimal via WebGL. |
-| `icons/` | Folder | Menyimpan ikon-ikon aplikasi dengan berbagai ukuran yang diperlukan oleh Progressive Web App (PWA). |
-| `favicon.png` | Berkas | Gambar ikon yang muncul pada tab peramban ketika aplikasi dibuka. |
-| `flutter.js` | Berkas | Pustaka JavaScript resmi dari Flutter untuk menginisialisasi proses pemuatan dan siklus hidup aplikasi di web. |
-| `flutter_bootstrap.js` | Berkas | Berkas konfigurasi awal untuk melakukan bootstrap pada mesin Flutter Web sebelum aplikasi dijalankan. |
-| `flutter_service_worker.js` | Berkas | Mengelola mekanisme *service worker* untuk PWA, memfasilitasi caching berkas secara luring (offline) dan meningkatkan kecepatan pemuatan. |
-| `index.html` | Berkas | Pintu masuk utama (entrypoint) HTML untuk aplikasi web. Berisi konfigurasi dasar, tautan manifes PWA, dan penyiapan skrip bootstrap. |
-| `main.dart.js` | Berkas | Berkas JavaScript utama berukuran besar yang menampung seluruh kompilasi logika bisnis dan antarmuka aplikasi Flutter dari Dart ke JavaScript. |
-| `manifest.json` | Berkas | Berkas manifes PWA yang mendefinisikan nama aplikasi, warna tema, warna latar belakang, dan struktur ikon agar aplikasi dapat diinstal di perangkat pengguna. |
-| `version.json` | Berkas | Berisi informasi versi aplikasi saat ini (`1.0.0`), nomor build (`1`), serta nama paket aplikasi untuk kebutuhan manajemen rilis. |
-| `.last_build_id` | Berkas | Berkas pelacak metadata untuk mengidentifikasi build unik terakhir dari proses kompilasi Flutter. |
+Beberapa catatan:
 
----
-
-## ⚙️ Panduan Instalasi & Cara Menjalankan
-
-Karena repositori ini menyimpan hasil kompilasi web statis, Anda tidak memerlukan proses kompilasi ulang (compiling) untuk menjalankannya. Anda hanya memerlukan server web statis.
-
-### Persyaratan Utama
-*   [Node.js](https://nodejs.org/) (opsional, jika ingin menggunakan web server berbasis Node) atau Python.
-*   Peramban Web modern (Chrome, Edge, Firefox, Safari).
-
-### Menjalankan secara Lokal
-
-#### Metode 1: Menggunakan Node.js (`http-server`)
-1. Pastikan Anda memiliki Node.js terinstal di komputer Anda.
-2. Buka terminal atau Command Prompt pada direktori repositori ini (`d:\GitHub\catatin`).
-3. Jalankan perintah berikut untuk menjalankan server lokal:
-   ```bash
-   npx http-server -p 8080
-   ```
-4. Buka peramban dan akses aplikasi melalui alamat:
-   ```
-   http://localhost:8080/catatin/
-   ```
-   *(Catatan: Pastikan menyertakan sub-path `/catatin/` di akhir URL karena aplikasi dikonfigurasi dengan `<base href="/catatin/">`)*.
-
-#### Metode 2: Menggunakan Python
-Jika komputer Anda memiliki Python terinstal, Anda dapat menjalankan server bawaan Python:
-1. Buka terminal pada direktori proyek.
-2. Jalankan perintah berikut (untuk Python 3):
-   ```bash
-   python -m http.server 8080
-   ```
-3. Buka peramban dan akses aplikasi pada alamat `http://localhost:8080/catatin/`.
+* Berkas dan folder yang diawali titik (`.claude/`, `.last_build_id`) **tidak ikut disajikan** oleh GitHub Pages, karena Jekyll melewatkan entri berawalan `.` dan `_`.
+* Path `assets/assets/fonts/` memang bertingkat dua. Itu perilaku normal `flutter build web`: folder `assets/` milik proyek disalin ke dalam direktori `assets/` hasil build.
+* Setiap varian render di `canvaskit/` punya berkas pendamping `.js.symbols` untuk keperluan penerjemahan stack trace. Pemuat Flutter memilih sendiri varian yang cocok dengan kemampuan peramban pengguna, jadi seluruh varian perlu tetap ada.
 
 ---
 
-## 🚀 Panduan Pengembangan & Pembaruan
+## ⚙️ Menjalankan Secara Lokal
 
-Jika Anda ingin melakukan perubahan pada kode sumber dan memperbarui repositori rilis ini, ikuti langkah-langkah berikut pada repositori utama Flutter Anda:
+Tidak perlu kompilasi ulang — cukup server statis apa pun. **Yang penting: web root harus folder INDUK dari `catatin/`, bukan folder repo itu sendiri.** Sebabnya `index.html` memakai `<base href="/catatin/">`, sehingga semua aset diminta dari `/catatin/…`; kalau folder repo dijadikan root, seluruh permintaan aset akan 404 dan halaman blank.
 
-1. Lakukan pengembangan dan modifikasi fitur pada repositori kode sumber (source code) utama Catatin.
-2. Kompilasi ulang proyek ke versi web dengan perintah:
+### Metode 1 — Python (tanpa instalasi tambahan)
+
+Dari dalam folder repo:
+
+```bash
+python -m http.server 8080 --directory ..
+```
+
+Lalu buka <http://localhost:8080/catatin/>.
+
+### Metode 2 — Node.js (`http-server`)
+
+Dari folder **induk** repo:
+
+```bash
+npx http-server -p 8080
+```
+
+Lalu buka <http://localhost:8080/catatin/>.
+
+### Metode 3 — Lewat Claude Code
+
+Konfigurasi `.claude/launch.json` sudah menyiapkan server di atas dengan nama `catatin-web` pada port `8011`. Setelah dijalankan, alamat aplikasinya <http://localhost:8011/catatin/>.
+
+---
+
+## 🚀 Memperbarui Rilis
+
+Kode sumber Flutter berada di proyek terpisah, bukan di repositori ini. Alur pembaruannya:
+
+1. Kerjakan perubahan di proyek kode sumber Catatin.
+2. Kompilasi ulang ke web dengan base href yang sesuai:
    ```bash
-   flutter build web --base-href "/catatin/" --release
+   flutter build web --release --base-href "/catatin/"
    ```
-3. Setelah proses build selesai, salin seluruh isi dari folder hasil build (`build/web/`) di proyek utama Anda.
-4. Tempel dan timpa berkas yang ada di dalam repositori deployment ini (`d:\GitHub\catatin\`).
-5. Lakukan commit dan push pembaruan tersebut ke GitHub:
+3. Salin **seluruh isi** `build/web/` dari proyek sumber ke root repositori ini, timpa yang lama.
+4. Pastikan `README.md` dan `.claude/` tidak ikut terhapus — keduanya milik repositori ini, bukan keluaran build.
+5. Periksa hasilnya secara lokal lebih dulu (lihat bagian di atas), lalu:
    ```bash
    git add .
-   git commit -m "Update rilis: [deskripsi perubahan]"
+   git commit -m "Rilis: [deskripsi perubahan]"
    git push origin main
    ```
-6. Aplikasi Anda akan otomatis terbarui di hosting tujuan (misalnya GitHub Pages).
+6. GitHub Pages menjalankan `pages build and deployment` otomatis; situs biasanya sudah terbarui dalam 1–2 menit.
+
+> **Cadangan.** Branch `backup(stable-version)` menyimpan versi stabil yang tayang sekarang. Kalau rilis baru bermasalah, `main` bisa dikembalikan ke branch tersebut dan situs ikut kembali sendiri pada deployment berikutnya.
 
 ---
 
 ## 🛠️ Catatan Penting Mengenai Base Href
 
-Aplikasi ini menggunakan tag `<base href="/catatin/">` pada berkas `index.html`. Ini disesuaikan agar aplikasi dapat berjalan dengan benar di bawah sub-direktori (seperti GitHub Pages `https://<username>.github.io/catatin/`).
+`index.html` memakai `<base href="/catatin/">` agar aplikasi berjalan benar di sub-direktori seperti `https://<username>.github.io/catatin/`.
 
-*   **Jika Anda memindahkan hosting ke domain utama** (misalnya `https://catatin.com/`), buka berkas `index.html` dan ubah:
-    ```html
-    <base href="/catatin/">
-    ```
-    menjadi:
-    ```html
-    <base href="/">
-    ```
+Jika hosting dipindah ke domain utama (misalnya `https://catatin.com/`), ubah di `index.html`:
+
+```html
+<base href="/catatin/">
+```
+
+menjadi:
+
+```html
+<base href="/">
+```
+
+Kalau pembaruan dilakukan lewat `flutter build web`, cukup sesuaikan nilai `--base-href` pada perintah build sehingga tidak perlu menyunting `index.html` secara manual.
