@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "catatin-lama",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        ".localdev/serve.py",
+        "--port",
+        "8011",
+        "--root",
+        "C:/Users/Razer/AppData/Local/Temp/claude/D--GitHub-catatin/4ab2fae2-0a9c-49ba-971f-536e565ae766/scratchpad/lama"
+      ],
+      "port": 8011
+    }
+  ]
+}
