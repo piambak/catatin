@@ -1,0 +1,66 @@
+name: 🐞 Laporan bug
+description: Ada yang tidak jalan seperti seharusnya
+labels: ["bug"]
+body:
+  - type: textarea
+    id: ringkasan
+    attributes:
+      label: Apa yang terjadi
+      placeholder: Saat menyimpan transaksi baru, layar kembali kosong tanpa pesan.
+    validations:
+      required: true
+
+  - type: textarea
+    id: langkah
+    attributes:
+      label: Langkah untuk mengulangnya
+      value: |
+        1. Buka …
+        2. Klik …
+        3. Lihat …
+    validations:
+      required: true
+
+  - type: textarea
+    id: harapan
+    attributes:
+      label: Yang seharusnya terjadi
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Di mana ini terjadi
+      multiple: true
+      options:
+        - Web (situs GitHub Pages)
+        - Web (flutter run -d chrome)
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sumber_data
+    attributes:
+      label: Sumber data
+      description: Nilai DATA_SOURCE saat menjalankan aplikasi. Kalau tidak tahu, pilih mock.
+      options:
+        - mock (tanpa backend)
+        - hybrid (backend + cadangan lokal)
+        - api (backend penuh)
+    validations:
+      required: true
+
+  - type: textarea
+    id: lingkungan
+    attributes:
+      label: Versi
+      description: Tempel keluaran `flutter --version` dan nama peramban bila relevan.
+      render: text
+
+  - type: textarea
+    id: tambahan
+    attributes:
+      label: Tangkapan layar atau log konsol

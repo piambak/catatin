@@ -4,13 +4,7 @@
     {
       "name": "catatin-web",
       "runtimeExecutable": "python",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "8011",
-        "--directory",
-        ".."
-      ],
+      "runtimeArgs": ["-m", "http.server", "8011", "--directory", ".."],
       "port": 8011
     }
   ]

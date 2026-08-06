@@ -1,0 +1,8 @@
+# Folder ini sengaja dibiarkan kosong.
+#
+# Sudah terdaftar di pubspec.yaml (`assets: - assets/images/`), jadi gambar apa
+# pun yang ditaruh di sini langsung bisa dipakai lewat
+# Image.asset('assets/images/nama.png') tanpa menyunting pubspec lagi.
+#
+# Flutter menolak build kalau folder aset yang terdaftar tidak ada, makanya
+# berkas penanda ini perlu ikut ter-commit.

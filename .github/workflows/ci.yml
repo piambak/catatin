@@ -1,0 +1,60 @@
+name: CI
+
+# Menjaga agar tiap PR sudah lolos analisis, tes, dan build web sebelum digabung.
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'tool/**'
+      - '.github/workflows/ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tool/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Analyze, test, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Versi yang dipakai memverifikasi repo ini. Kalau dinaikkan,
+          # naikkan juga di publish-web.yml supaya CI dan rilis identik.
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+
+      - name: Ambil dependensi
+        run: flutter pub get
+
+      - name: Analisis statis
+        # Info dibiarkan lolos supaya PR kecil tidak tertahan urusan gaya;
+        # warning dan error tetap menggagalkan build.
+        run: flutter analyze --no-fatal-infos
+
+      - name: Tes
+        run: flutter test
+
+      - name: Build web (memastikan rilis tetap bisa dibangun)
+        run: flutter build web --release --base-href "/catatin/"
+
+      - name: Simpan hasil build untuk ditinjau
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: app/build/web
+          retention-days: 7

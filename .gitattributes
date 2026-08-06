@@ -1,0 +1,36 @@
+# Normalisasi akhir baris — kontributor Windows & Linux dapat diff yang sama.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh  text eol=lf
+gradlew text eol=lf
+
+# ── Berkas biner ─────────────────────────────────────────────────────────────
+*.ttf  binary
+*.otf  binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.wasm binary
+*.jar  binary
+
+# ── Hasil build web di root ──────────────────────────────────────────────────
+# Ditandai generated supaya GitHub melipatnya di review PR dan tidak dihitung
+# sebagai bahasa repo. `-diff` mencegah diff 3,6 MB yang tak terbaca manusia.
+/main.dart.js               -diff linguist-generated=true
+/main.dart.js.map           -diff linguist-generated=true
+/flutter.js                 -diff linguist-generated=true
+/flutter_bootstrap.js       -diff linguist-generated=true
+/flutter_service_worker.js  -diff linguist-generated=true
+/version.json               linguist-generated=true
+/manifest.json              linguist-generated=true
+/index.html                 linguist-generated=true
+/.last_build_id             -diff linguist-generated=true
+/assets/**                  -diff linguist-generated=true
+/canvaskit/**               -diff linguist-generated=true
+/icons/**                   -diff linguist-generated=true
+
+# Lockfile: tetap di-commit, tapi tidak perlu memenuhi layar saat review.
+app/pubspec.lock            -diff linguist-generated=true
