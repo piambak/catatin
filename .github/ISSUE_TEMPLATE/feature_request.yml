@@ -1,0 +1,48 @@
+name: ✨ Usulan fitur
+description: Ide fitur atau perbaikan alur
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: masalah
+    attributes:
+      label: Masalah yang mau dipecahkan
+      description: Ceritakan situasinya, bukan solusinya dulu.
+      placeholder: Pemilik usaha sulit tahu sisa waktu sebelum tenggat PPh Final.
+    validations:
+      required: true
+
+  - type: textarea
+    id: usulan
+    attributes:
+      label: Usulan
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area yang tersentuh
+      multiple: true
+      options:
+        - Dashboard
+        - Pembukuan (transaksi)
+        - Simulator pajak
+        - Pustaka peraturan
+        - Pengaturan / profil usaha
+        - Lapisan data / backend
+        - Tooling & CI
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: backend
+    attributes:
+      label: Kebutuhan backend
+      options:
+        - label: Fitur ini butuh endpoint backend baru (kalau ya, sebutkan di bawah)
+
+  - type: textarea
+    id: catatan
+    attributes:
+      label: Catatan tambahan
+      description: Referensi peraturan, contoh dari aplikasi lain, sketsa antarmuka.

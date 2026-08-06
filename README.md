@@ -1,134 +1,119 @@
-# Catatin Web 📊
+# Catatin 📊
 
-[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Web](https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge)](https://flutter.dev/multi-platform/web)
-[![PWA](https://img.shields.io/badge/PWA-Supported-orange?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+[![CI](https://github.com/piambak/catatin/actions/workflows/ci.yml/badge.svg)](https://github.com/piambak/catatin/actions/workflows/ci.yml)
+[![Publikasi web](https://github.com/piambak/catatin/actions/workflows/publish-web.yml/badge.svg)](https://github.com/piambak/catatin/actions/workflows/publish-web.yml)
+[![Flutter](https://img.shields.io/badge/Flutter-3.38.4%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 
-**Catatin** adalah aplikasi pencatatan keuangan pribadi dan pembukuan bisnis yang dibangun dengan Flutter. Repositori ini **bukan** repositori kode sumber — isinya khusus berkas hasil kompilasi produksi (`flutter build web`) yang langsung disajikan sebagai situs statis.
+Catat transaksi, hitung pajak, dan pahami aturan perpajakan UMKM — dalam satu
+aplikasi. Dibangun dengan Flutter, tayang sebagai PWA.
 
-| | |
-| :--- | :--- |
-| **Live** | <https://piambak.github.io/catatin/> |
-| **Hosting** | GitHub Pages, sumber: branch `main` folder `/ (root)` |
-| **Versi** | `1.0.0+1` (lihat `version.json`) |
-| **Base href** | `/catatin/` |
-| **Branch** | `main` (yang tayang) dan `backup(stable-version)` (cadangan) |
-
-Karena Pages menyajikan langsung isi root `main`, **setiap push ke `main` otomatis memperbarui situs** tanpa proses build apa pun di CI.
+**Coba sekarang → [piambak.github.io/catatin](https://piambak.github.io/catatin/)**
 
 ---
 
-## 📁 Struktur Repositori
+## Mulai cepat
+
+Butuh Flutter **3.38.4** atau lebih baru (CI memakai 3.44.8).
+
+```bash
+git clone https://github.com/piambak/catatin.git
+cd catatin/app
+flutter pub get
+flutter run -d chrome
+```
+
+Sudah jalan. Tanpa konfigurasi apa pun aplikasi memakai **data contoh** — tidak
+butuh backend, tidak butuh akun, tidak ada satu pun request jaringan.
+
+## Fitur
+
+| Fitur | Isi |
+| --- | --- |
+| **Dashboard** | Ringkasan pemasukan, pengeluaran, dan laba; tren bulanan; progres ambang PKP Rp 4,8 M; tenggat pajak terdekat |
+| **Pembukuan** | Catat transaksi per kategori, lengkap dengan penanda relevansi pajak dan HPP |
+| **Simulator pajak** | PPh Final 0,5% (PP 23/2018), PPh 21 metode TER (PMK 168/2023), perbandingan skenario, kalender pajak |
+| **Pustaka peraturan** | UU, PP, PMK, PER DJP, SE, dan panduan — dengan pencarian dan bookmark |
+| **Profil usaha** | NPWP, status PKP, jenis usaha, jumlah karyawan |
+| **Mode gelap** | Seluruh aplikasi, berganti seketika |
+
+## Isi repo
+
+Repo ini menyimpan dua hal sekaligus: kode sumber, dan hasil build yang tayang.
 
 ```
 catatin/
-├── .claude/
-│   └── launch.json                  Konfigurasi server pratinjau lokal (bukan bagian aplikasi)
-├── assets/
-│   ├── assets/fonts/                Fredoka (Regular, SemiBold) & Nunito (Regular, Medium, SemiBold, Bold)
-│   ├── fonts/                       MaterialIcons-Regular.otf
-│   ├── shaders/                     ink_sparkle.frag, stretch_effect.frag
-│   ├── AssetManifest.bin            Manifes aset format biner (dibaca aplikasi saat runtime)
-│   ├── AssetManifest.bin.json       Manifes aset versi JSON
-│   ├── FontManifest.json            Pemetaan nama famili font ke berkas & ketebalannya
-│   └── NOTICES                      Kumpulan lisensi seluruh pustaka yang dipakai
-├── canvaskit/
-│   ├── chromium/                    Varian CanvasKit khusus Chromium
-│   ├── experimental_webparagraph/   Varian eksperimental tata letak teks
-│   ├── canvaskit.js / .wasm         Mesin render CanvasKit (WebGL)
-│   ├── skwasm.js / .wasm            Mesin render Skia-WASM, pilihan default
-│   ├── skwasm_heavy.js / .wasm      Dipakai bila peramban tak punya image codec / break iterator bawaan
-│   └── wimp.js / .wasm              Dipakai bila opsi `enableWimp` aktif
-├── icons/
-│   ├── Icon-192.png, Icon-512.png                  Ikon PWA standar
-│   └── Icon-maskable-192.png, Icon-maskable-512.png Ikon PWA maskable
-├── .last_build_id                   Penanda unik build terakhir dari Flutter
-├── favicon.png                      Ikon di tab peramban
-├── flutter.js                       Pemuat resmi Flutter Web
-├── flutter_bootstrap.js             Skrip bootstrap mesin Flutter sebelum aplikasi jalan
-├── flutter_service_worker.js        Service worker PWA (caching & dukungan luring)
-├── index.html                       Entrypoint HTML, memuat <base href="/catatin/">
-├── main.dart.js                     Seluruh logika & antarmuka aplikasi (kompilasi Dart → JS, ±3,6 MB)
-├── manifest.json                    Manifes PWA (nama, warna tema #0175C2, ikon, orientasi)
-├── version.json                     Nama, versi, dan nomor build aplikasi
-└── README.md                        Berkas ini
+├── app/        Kode sumber Flutter — di sinilah kamu bekerja
+├── docs/       Dokumentasi arsitektur, backend, deploy, aset
+├── tool/       Skrip build dan sinkron ke root
+├── .github/    CI dan template kolaborasi
+│
+└── index.html, main.dart.js, assets/, canvaskit/, icons/, …
+             Hasil `flutter build web`. Digenerate otomatis — jangan disunting.
 ```
 
-Beberapa catatan:
+Hasil build ada di root karena GitHub Pages repo ini bersumber dari branch
+`main` folder `/ (root)`. Kamu tidak perlu menyentuhnya sama sekali: setiap push
+ke `main` yang mengubah `app/` memicu workflow yang membangun ulang dan
+memperbarui root sendiri.
 
-* Berkas dan folder yang diawali titik (`.claude/`, `.last_build_id`) **tidak ikut disajikan** oleh GitHub Pages, karena Jekyll melewatkan entri berawalan `.` dan `_`.
-* Path `assets/assets/fonts/` memang bertingkat dua. Itu perilaku normal `flutter build web`: folder `assets/` milik proyek disalin ke dalam direktori `assets/` hasil build.
-* Setiap varian render di `canvaskit/` punya berkas pendamping `.js.symbols` untuk keperluan penerjemahan stack trace. Pemuat Flutter memilih sendiri varian yang cocok dengan kemampuan peramban pengguna, jadi seluruh varian perlu tetap ada.
+## Menyambungkan backend
 
----
-
-## ⚙️ Menjalankan Secara Lokal
-
-Tidak perlu kompilasi ulang — cukup server statis apa pun. **Yang penting: web root harus folder INDUK dari `catatin/`, bukan folder repo itu sendiri.** Sebabnya `index.html` memakai `<base href="/catatin/">`, sehingga semua aset diminta dari `/catatin/…`; kalau folder repo dijadikan root, seluruh permintaan aset akan 404 dan halaman blank.
-
-### Metode 1 — Python (tanpa instalasi tambahan)
-
-Dari dalam folder repo:
+Sumber data dipilih saat build lewat `--dart-define`, tanpa mengubah kode:
 
 ```bash
-python -m http.server 8080 --directory ..
+# Data contoh — default, tanpa backend
+flutter run -d chrome
+
+# Backend sedang dibangun: pakai API kalau endpoint-nya ada,
+# jatuh ke data contoh kalau belum
+flutter run -d chrome \
+  --dart-define=API_BASE_URL=http://localhost:8080/api/v1 \
+  --dart-define=DATA_SOURCE=hybrid
+
+# Produksi: semua dari backend, error naik ke UI
+flutter run -d chrome \
+  --dart-define=API_BASE_URL=https://api.catatin.id/api/v1 \
+  --dart-define=DATA_SOURCE=api
 ```
 
-Lalu buka <http://localhost:8080/catatin/>.
+Seluruh kode HTTP terkumpul di satu berkas,
+[`app/lib/core/data/api_repositories.dart`](app/lib/core/data/api_repositories.dart).
+Tidak ada layar yang memanggil jaringan langsung, jadi menambah backend berarti
+mengisi satu berkas — bukan menyunting puluhan file antarmuka.
 
-### Metode 2 — Node.js (`http-server`)
+Kontrak tiap endpoint, lengkap dengan contoh JSON dan bentuk error, ada di
+**[docs/BACKEND.md](docs/BACKEND.md)**.
 
-Dari folder **induk** repo:
+## Rilis
 
-```bash
-npx http-server -p 8080
-```
+Push ke `main` yang menyentuh `app/` → workflow **Publikasi web** membangun
+ulang dan memperbarui root repo → GitHub Pages tayang dalam 1–2 menit.
 
-Lalu buka <http://localhost:8080/catatin/>.
+Perlu rilis manual? `tool/build_web.ps1` (Windows) atau `tool/build_web.sh`.
+Rinciannya, termasuk cara rollback, ada di [docs/DEPLOY.md](docs/DEPLOY.md).
 
-### Metode 3 — Lewat Claude Code
+## Dokumentasi
 
-Konfigurasi `.claude/launch.json` sudah menyiapkan server di atas dengan nama `catatin-web` pada port `8011`. Setelah dijalankan, alamat aplikasinya <http://localhost:8011/catatin/>.
+| Dokumen | Isi |
+| --- | --- |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Menyiapkan proyek, alur branch dan PR, gaya kode |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Struktur folder, lapisan aplikasi, aturan yang dijaga |
+| [docs/BACKEND.md](docs/BACKEND.md) | Kontrak API lengkap dan cara memasang backend |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Alur rilis, build manual, rollback |
+| [docs/ASSETS.md](docs/ASSETS.md) | Font, ikon, dan pertimbangan ukuran bundel |
 
----
+## Teknologi
 
-## 🚀 Memperbarui Rilis
+Flutter · `go_router` · `dio` · `fl_chart` · `shared_preferences` ·
+`flutter_secure_storage`
 
-Kode sumber Flutter berada di proyek terpisah, bukan di repositori ini. Alur pembaruannya:
+## Kontribusi
 
-1. Kerjakan perubahan di proyek kode sumber Catatin.
-2. Kompilasi ulang ke web dengan base href yang sesuai:
-   ```bash
-   flutter build web --release --base-href "/catatin/"
-   ```
-3. Salin **seluruh isi** `build/web/` dari proyek sumber ke root repositori ini, timpa yang lama.
-4. Pastikan `README.md` dan `.claude/` tidak ikut terhapus — keduanya milik repositori ini, bukan keluaran build.
-5. Periksa hasilnya secara lokal lebih dulu (lihat bagian di atas), lalu:
-   ```bash
-   git add .
-   git commit -m "Rilis: [deskripsi perubahan]"
-   git push origin main
-   ```
-6. GitHub Pages menjalankan `pages build and deployment` otomatis; situs biasanya sudah terbarui dalam 1–2 menit.
+Isu dan pull request terbuka untuk siapa saja. Baca
+[CONTRIBUTING.md](CONTRIBUTING.md) dulu — isinya singkat, dan menjelaskan satu
+hal yang sering bikin bingung: berkas mana yang boleh disunting dan mana yang
+digenerate.
 
-> **Cadangan.** Branch `backup(stable-version)` menyimpan versi stabil yang tayang sekarang. Kalau rilis baru bermasalah, `main` bisa dikembalikan ke branch tersebut dan situs ikut kembali sendiri pada deployment berikutnya.
-
----
-
-## 🛠️ Catatan Penting Mengenai Base Href
-
-`index.html` memakai `<base href="/catatin/">` agar aplikasi berjalan benar di sub-direktori seperti `https://<username>.github.io/catatin/`.
-
-Jika hosting dipindah ke domain utama (misalnya `https://catatin.com/`), ubah di `index.html`:
-
-```html
-<base href="/catatin/">
-```
-
-menjadi:
-
-```html
-<base href="/">
-```
-
-Kalau pembaruan dilakukan lewat `flutter build web`, cukup sesuaikan nilai `--base-href` pada perintah build sehingga tidak perlu menyunting `index.html` secara manual.
+Repo ini belum punya berkas lisensi, jadi hak ciptanya sepenuhnya di pemilik
+repo. Kalau kamu berencana memakai kodenya di luar kontribusi ke proyek ini,
+tanyakan dulu lewat isu.

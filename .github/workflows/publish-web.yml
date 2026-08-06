@@ -1,0 +1,71 @@
+name: Publikasi web
+
+# Inilah yang membuat source dan output "nyambung": begitu ada perubahan di
+# app/ yang masuk main, workflow ini membangun ulang web dan menaruh hasilnya
+# di root repo — sumber GitHub Pages.
+#
+# Kenapa commit ke root, bukan branch gh-pages: setting Pages repo ini
+# (branch main, folder /root) hanya bisa diubah pemilik repo. Selama belum
+# diubah, root main adalah satu-satunya yang tayang.
+#
+# Kalau langkah "Commit" gagal dengan 403, minta pemilik repo menyetel
+# Settings → Actions → General → Workflow permissions ke "Read and write".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tool/sync_build.sh'
+      - '.github/workflows/publish-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-web
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & commit ke root
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Harus sama dengan ci.yml — kalau beda, PR bisa hijau tapi rilis gagal.
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+
+      - name: Ambil dependensi
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: app
+        # Tanpa API_BASE_URL aplikasi tayang dengan data contoh. Saat backend
+        # siap, tambahkan:
+        #   --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }}
+        #   --dart-define=DATA_SOURCE=api
+        # (URL backend publik → pakai Variables, bukan Secrets.)
+        run: flutter build web --release --base-href "/catatin/"
+
+      - name: Sinkron hasil build ke root
+        run: bash tool/sync_build.sh
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan output — lewati commit."
+            exit 0
+          fi
+          git commit -m "build: publikasi web dari ${GITHUB_SHA::7} [skip ci]"
+          git push

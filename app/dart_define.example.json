@@ -1,0 +1,8 @@
+{
+  "_comment": "Salin jadi dart_define.json (di-gitignore), lalu jalankan: flutter run --dart-define-from-file=dart_define.json",
+  "API_BASE_URL": "http://localhost:8080/api/v1",
+  "DATA_SOURCE": "hybrid",
+  "ENABLE_API_LOG": true,
+  "API_CONNECT_TIMEOUT_MS": 15000,
+  "API_RECEIVE_TIMEOUT_MS": 15000
+}

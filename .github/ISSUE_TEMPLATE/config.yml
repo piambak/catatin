@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Diskusi & pertanyaan
+    url: https://github.com/piambak/catatin/discussions
+    about: Tanya cara pakai, usulan arah produk, atau diskusi teknis yang belum jadi isu.
+  - name: 📖 Dokumentasi untuk kontributor
+    url: https://github.com/piambak/catatin/blob/main/CONTRIBUTING.md
+    about: Cara menyiapkan proyek, alur cabang, dan aturan review.

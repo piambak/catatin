@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    # Aturan tambahan yang benar-benar menangkap bug, bukan sekadar gaya.
+    avoid_print: true
+    unawaited_futures: true
+    # Gaya penulisan dibiarkan longgar supaya PR kecil tidak tenggelam
+    # oleh perubahan format. Jalankan `dart format .` sebelum commit.

@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PENTING: hasil build web di ROOT repo (index.html, main.dart.js, assets/,
+# canvaskit/, icons/, …) SENGAJA di-commit — itulah yang disajikan GitHub Pages.
+# Yang diabaikan di bawah ini hanya artefak lokal di dalam app/.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Artefak build Flutter (semuanya di dalam app/) ───────────────────────────
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/coverage/
+
+# Konfigurasi lokal per-kontributor (URL backend, token) — jangan pernah di-commit
+app/dart_define.json
+
+# ── Android ──────────────────────────────────────────────────────────────────
+app/android/.gradle/
+app/android/local.properties
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+app/android/key.properties
+*.jks
+*.keystore
+
+# ── iOS / macOS ──────────────────────────────────────────────────────────────
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Flutter/ephemeral/
+app/ios/Pods/
+app/ios/Runner/GeneratedPluginRegistrant.*
+app/ios/.symlinks/
+
+# ── Editor & OS ──────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.history/
+.DS_Store
+Thumbs.db
+
+# ── Lain-lain ────────────────────────────────────────────────────────────────
+*.log
+app.*.symbols
+app.*.map.json
