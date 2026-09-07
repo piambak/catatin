@@ -21,7 +21,7 @@ bisa menghitung dari data pembukuan asli, bukan input manual ulang.
 
 | Minggu | Tanggal | Fase | Status |
 | --- | --- | --- | --- |
-| 1 | 14–18 Sep | Kickoff, audit, kunci spesifikasi | ⬜ Belum mulai |
+| 1 | 14–18 Sep | Kickoff, audit, kunci spesifikasi | 🔵 Berjalan |
 | 2 | 21–25 Sep | Cabut Pustaka peraturan + fondasi backend | ⬜ Belum mulai |
 | 3 | 28 Sep–2 Okt | Pembukuan naik kelas (1/2) — transaksi berulang, lampiran | ⬜ Belum mulai |
 | 4 | 5–9 Okt | Pembukuan naik kelas (2/2) — ekspor/impor, filter, ringkasan | ⬜ Belum mulai |
@@ -52,14 +52,14 @@ dan formula pajak yang benar, sebelum satu baris kode fitur baru ditulis.
 - [ ] Siapkan lingkungan dev backend (repo, DB lokal/staging, CI dasar)
 
 ### Frontend
-- [ ] Audit `app_router.dart` & `app_constants.dart` — petakan semua rute yang
+- [x] Audit `app_router.dart` & `app_constants.dart` — petakan semua rute yang
       menyentuh `/library/*`
-- [ ] Petakan setiap widget dashboard yang menaut ke Pustaka peraturan
+- [x] Petakan setiap widget dashboard yang menaut ke Pustaka peraturan
       (`regulation_card.dart`, `tax_tips_card.dart`, `deadline_card.dart`,
       `notification_screen.dart`) dan tentukan pengganti kontennya
-- [ ] Review file Flutter original yang diberikan user, bandingkan dengan
+- [x] Review file Flutter original yang diberikan user, bandingkan dengan
       `app/lib/` saat ini — catat perbedaan/bagian yang perlu diselaraskan
-- [ ] Setup branch kerja & pastikan `flutter pub get` + `flutter run -d chrome`
+- [x] Setup branch kerja & pastikan `flutter pub get` + `flutter run -d chrome`
       jalan mulus di mesin sendiri
 
 ### Pakar Regulasi DJP & Kemenkeu
@@ -322,5 +322,26 @@ keduanya lebih dalam dari sebelumnya.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
-- **2026-09-07** — Tim — Dokumen linimasa ini dibuat, jadwal dikunci mulai
-  14 September 2026.
+- **2026-09-07** — Frontend — Selesai 4 tugas audit Minggu 1: (1) peta rute
+  `/library/*` — `library` → `LibraryScreen` (tab nav), `library/bookmarks` →
+  `BookmarkScreen`, `library/:id` → `DocDetailScreen`; `app_router.dart`
+  identik byte-per-byte antara kode original user dan `app/lib/`, jadi peta
+  ini berlaku untuk keduanya. (2) Widget dashboard yang perlu diganti
+  kontennya: `regulation_card.dart` (kopling keras — impor `LibraryService`,
+  panggil `getDocuments()`, push ke `/library/:id`) dan `QuickActions` di
+  `deadline_card.dart` (callback `onLibrary`); `notification_screen.dart`
+  hanya kopling lunak (kategori `NotifType.regulation` berisi notifikasi
+  contoh, bukan panggilan service). `tax_tips_card.dart` dan
+  `cal_deadline_card.dart` ternyata **tidak** terkopel ke Pustaka
+  peraturan — daftar di dokumen ini bisa diabaikan untuk keduanya.
+  (3) Diff kode Flutter original user vs `app/lib/`: layar & widget nyaris
+  identik (cuma beda `dart format`), tapi lapisan data/servis beda total —
+  `app/lib/core/data/` (`repositories.dart` + 3 implementasi mock/api/hybrid)
+  dan model yang dipecah per file (`models/*_model.dart`) belum ada sama
+  sekali di kode original user; semua service (`accounting_service.dart`,
+  `library_service.dart`, dll.) karena itu berbeda besar. Rekomendasi:
+  lanjutkan kerja dari `app/lib/` (sudah backend-ready), bukan dari kode
+  original user. (4) Branch kerja `fitur/audit-original-flutter-vs-app-lib`
+  dibuat; `flutter pub get` bersih, `flutter analyze` di `app/` → 0
+  error/warning (120 info pre-existing soal `withOpacity` deprecated, tidak
+  terkait audit ini).
