@@ -90,8 +90,6 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const dashboard = '/dashboard';
-  static const library = '/library';
-  static const libDetail = '/library/:id';
   static const accounting = '/accounting';
   static const newTx = '/accounting/new';
   static const txDetail = '/accounting/:id';

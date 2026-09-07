@@ -22,7 +22,7 @@ bisa menghitung dari data pembukuan asli, bukan input manual ulang.
 | Minggu | Tanggal | Fase | Status |
 | --- | --- | --- | --- |
 | 1 | 14–18 Sep | Kickoff, audit, kunci spesifikasi | 🔵 Berjalan |
-| 2 | 21–25 Sep | Cabut Pustaka peraturan + fondasi backend | ⬜ Belum mulai |
+| 2 | 21–25 Sep | Cabut Pustaka peraturan + fondasi backend | 🔵 Berjalan |
 | 3 | 28 Sep–2 Okt | Pembukuan naik kelas (1/2) — transaksi berulang, lampiran | ⬜ Belum mulai |
 | 4 | 5–9 Okt | Pembukuan naik kelas (2/2) — ekspor/impor, filter, ringkasan | ⬜ Belum mulai |
 | 5 | 12–16 Okt | Simulator naik kelas (1/2) — tarik data asli, mesin tarif | ⬜ Belum mulai |
@@ -87,24 +87,25 @@ fondasi data untuk peningkatan berikutnya siap.
 ### Backend
 - [ ] Cabut bagian **"Pustaka peraturan"** dari `docs/BACKEND.md`
       (`GET /documents/categories`, `GET /documents`, `GET /documents/{id}`)
-- [ ] Cabut method terkait dokumen dari `repositories.dart` dan ketiga
-      implementasinya
+- [x] Cabut method terkait dokumen dari `repositories.dart` dan ketiga
+      implementasinya (dikerjakan bareng penghapusan frontend supaya `app/`
+      tetap bisa di-build — lihat Log Progres)
 - [ ] Mulai endpoint agregasi bulanan (income/expense/HPP per periode) —
       ini basis data yang nanti dipakai Simulator
 - [ ] Definisikan kontrak endpoint mesin tarif pajak (draf, belum
       diimplementasi penuh) berdasarkan skema Minggu 1
 
 ### Frontend
-- [ ] Hapus `library_screen.dart`, `doc_detail_screen.dart`,
+- [x] Hapus `library_screen.dart`, `doc_detail_screen.dart`,
       `bookmark_screen.dart`, `lib_widgets.dart`, `related_docs.dart`,
       `library_service.dart`, `document_model.dart`
-- [ ] Cabut rute `/library/*` dan `/library/bookmarks` dari `app_router.dart`,
+- [x] Cabut rute `/library/*` dan `/library/bookmarks` dari `app_router.dart`,
       cabut entri terkait dari `app_constants.dart`
-- [ ] Hapus tab/menu Pustaka dari bottom navigation (`MainShell`)
-- [ ] Ganti konten `regulation_card.dart` / `tax_tips_card.dart` dengan versi
+- [x] Hapus tab/menu Pustaka dari bottom navigation (`MainShell`)
+- [x] Ganti konten `regulation_card.dart` / `tax_tips_card.dart` dengan versi
       yang tidak bergantung pada data dokumen (pakai konten inline dari
       pakar pajak)
-- [ ] Uji manual: seluruh alur (splash → login → dashboard → pembukuan →
+- [x] Uji manual: seluruh alur (splash → login → dashboard → pembukuan →
       simulator → settings) tidak ada link mati ke `/library/*`
 
 ### Pakar Regulasi DJP & Kemenkeu
@@ -321,6 +322,42 @@ keduanya lebih dalam dari sebelumnya.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-07** — Frontend — Selesai 4 tugas frontend Minggu 2 (cabut Pustaka
+  peraturan) di `app/lib/` pada branch `fitur/audit-original-flutter-vs-app-lib`:
+  (1) hapus `library_screen.dart`, `doc_detail_screen.dart`,
+  `bookmark_screen.dart`, `lib_widgets.dart`, `related_docs.dart`,
+  `library_service.dart`, `document_model.dart` beserta folder
+  `screens/library/` dan `widgets/library/`. (2) Cabut rute `/library`,
+  `/library/bookmarks`, `/library/:id` dari `app_router.dart`; cabut
+  `AppRoutes.library`/`libDetail` dari `app_constants.dart` (entri
+  `ApiEndpoints.documents*` dibiarkan — itu bagian kontrak backend di
+  `docs/BACKEND.md`, belum dicabut). (3) Hapus tab & item bottom-nav
+  "Perpustakaan" dari `MainShell`, sesuaikan indeks `_tabs`/`_screens`.
+  (4) `regulation_card.dart` ditulis ulang jadi kartu statis "Info Pajak
+  UMKM" berisi 4 poin inline (PPh Final 0,5%, ambang PKP, PPN 11%, PPh Badan
+  22% — dari `AppConstants`, bukan input pakar pajak yang belum ada);
+  `QuickActions` di `deadline_card.dart` kehilangan tombol "Cari Regulasi"
+  dan parameter `onLibrary`; 3 titik pemanggilan di `dashboard_screen.dart`
+  disesuaikan. `tax_tips_card.dart` tidak disentuh (memang tidak terkopel,
+  lihat log Minggu 1). Uji manual: `flutter run -d web-server`, login demo,
+  jalan penuh splash → dashboard → pembukuan → simulator → pengaturan →
+  notifikasi — nol referensi `/library`, nol network request ke `library`,
+  bottom nav cuma 4 tab. Satu `GoException` di console saat boot (sebelum
+  login) tidak terkait — tidak menyebut "library", tidak berulang, seluruh
+  alur tetap jalan.
+  **Efek samping tak terduga:** menghapus `document_model.dart` mematahkan
+  build `core/data/` (backend), karena `LibraryRepository` dan 3
+  implementasinya (`mock_repositories.dart`, `api_repositories.dart`,
+  `hybrid_repositories.dart`) serta `MockData.documents`/`docCategories`
+  masih memakai tipe `Document`/`DocCategory`/`DocType`. Supaya branch ini
+  tetap bisa di-build, tugas Backend Minggu 2 "cabut method terkait dokumen
+  dari `repositories.dart` dan ketiga implementasinya" ikut dikerjakan di
+  sini (dicentang di atas). `docs/BACKEND.md` **belum** disentuh — itu masih
+  perlu di-cross-check oleh Backend. Test `MockLibraryRepository` di
+  `test/widget_test.dart` juga dihapus (target ujinya sudah tidak ada).
+  `flutter analyze` → 0 error/warning, `flutter test` → 5/5 lulus.
+  Belum di-push — commit ada di clone lokal, menunggu kredensial git push.
 
 - **2026-09-07** — Frontend — Selesai 4 tugas audit Minggu 1: (1) peta rute
   `/library/*` — `library` → `LibraryScreen` (tab nav), `library/bookmarks` →

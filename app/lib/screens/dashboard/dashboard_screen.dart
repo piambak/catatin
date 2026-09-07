@@ -186,8 +186,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 AppRoutes.newTx),
                                             onSimulator: () => context.go(
                                                 AppRoutes.simulator),
-                                            onLibrary: () => context.go(
-                                                AppRoutes.library),
                                           )),
                                         ],
                                       ),
@@ -195,10 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     const SizedBox(height: 10),
                                     // Row 2: Regulation fills remaining height
                                     Expanded(
-                                      child: RegulationCard(
-                                        onViewAll: () =>
-                                            context.go(AppRoutes.library),
-                                      ),
+                                      child: RegulationCard(),
                                     ),
                                   ]),
                                 ),
@@ -226,11 +221,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               QuickActions(
                                 onNewTx: () => context.push(AppRoutes.newTx),
                                 onSimulator: () => context.go(AppRoutes.simulator),
-                                onLibrary: () => context.go(AppRoutes.library),
                               ),
                               const SizedBox(height: 10),
-                              RegulationCard(
-                                onViewAll: () => context.go(AppRoutes.library)),
+                              RegulationCard(),
                               const SizedBox(height: 10),
                               CalDeadlineCard(
                                 deadlines: _deadlines,
@@ -247,11 +240,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             QuickActions(
                               onNewTx: () => context.push(AppRoutes.newTx),
                               onSimulator: () => context.go(AppRoutes.simulator),
-                              onLibrary: () => context.go(AppRoutes.library),
                             ),
                             const SizedBox(height: 10),
-                            RegulationCard(
-                              onViewAll: () => context.go(AppRoutes.library)),
+                            RegulationCard(),
                             const SizedBox(height: 10),
                             CalDeadlineCard(
                               deadlines: _deadlines,
