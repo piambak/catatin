@@ -15,6 +15,7 @@ import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/business_screen.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
+import '../services/theme_notifier.dart';
 import '../theme/breakpoints.dart';
 import '../theme/design_tokens.dart';
 import '../../widgets/common/app_nav.dart';
@@ -25,37 +26,37 @@ final appRouter = GoRouter(
   routes: [
     // ── Auth ──────────────────────────────────────────────
     GoRoute(path: AppRoutes.splash,
-      builder: (_, __) => const SplashScreen()),
+      builder: (_, __) => _themed(() => SplashScreen())),
     GoRoute(path: AppRoutes.login,
-      builder: (_, __) => const LoginScreen()),
+      builder: (_, __) => _themed(() => LoginScreen())),
     GoRoute(path: AppRoutes.register,
-      builder: (_, __) => const RegisterScreen()),
+      builder: (_, __) => _themed(() => RegisterScreen())),
 
     // ── Onboarding (no bottom nav, forced after register) ─
     GoRoute(
       path: '/onboarding/business',
-      builder: (_, __) => const BusinessScreen(isOnboarding: true),
+      builder: (_, __) => _themed(() => BusinessScreen(isOnboarding: true)),
     ),
 
     // ── Full-page routes (push, no bottom nav) ────────────
     GoRoute(
       path: AppRoutes.newTx,
-      builder: (_, __) => const NewTransactionScreen(),
+      builder: (_, __) => _themed(() => NewTransactionScreen()),
     ),
     GoRoute(
       path: '/accounting/:id',
       builder: (_, s) =>
-          TxDetailScreen(txId: s.pathParameters['id']!),
+          _themed(() => TxDetailScreen(txId: s.pathParameters['id']!)),
     ),
     GoRoute(
       path: AppRoutes.bizSetup,
-      builder: (_, __) => const BusinessScreen(isOnboarding: false),
+      builder: (_, __) => _themed(() => BusinessScreen(isOnboarding: false)),
     ),
 
     // ── Notifications (full-page, no bottom nav) ────────────
     GoRoute(
       path: AppRoutes.notifications,
-      builder: (_, __) => const NotificationScreen(),
+      builder: (_, __) => _themed(() => NotificationScreen()),
     ),
 
     // ── Main shell with bottom nav ─────────────────────────
@@ -65,24 +66,42 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          pageBuilder: (_, __) => _fade(const DashboardScreen()),
+          pageBuilder: (_, __) => _fade(_themed(() => DashboardScreen())),
         ),
         GoRoute(
           path: AppRoutes.accounting,
-          pageBuilder: (_, __) => _fade(const AccountingScreen()),
+          pageBuilder: (_, __) => _fade(_themed(() => AccountingScreen())),
         ),
         GoRoute(
           path: AppRoutes.simulator,
-          pageBuilder: (_, __) => _fade(const SimulatorScreen()),
+          pageBuilder: (_, __) => _fade(_themed(() => SimulatorScreen())),
         ),
         GoRoute(
           path: AppRoutes.settings,
-          pageBuilder: (_, __) => _fade(const SettingsScreen()),
+          pageBuilder: (_, __) => _fade(_themed(() => SettingsScreen())),
         ),
       ],
     ),
   ],
 );
+
+/// Membangun ulang subtree saat mode terang/gelap berganti.
+///
+/// Token `DS.*` adalah getter statis yang membaca [themeNotifier] langsung —
+/// tidak lewat InheritedWidget. Artinya layar yang memakainya **tidak
+/// berlangganan** apa pun: saat `MaterialApp` menerima `themeMode` baru,
+/// Navigator tidak punya alasan membangun ulang halamannya, jadi warnanya
+/// tidak ikut berubah sampai layar itu dibuka ulang.
+///
+/// [build] sengaja berupa fungsi, bukan widget jadi: pemanggilnya harus
+/// membuat instance BARU tiap rebuild. Kalau yang dikembalikan instance
+/// `const` yang sama, Flutter melihat widget identik lalu melewati rebuild —
+/// dan bug-nya kembali. State di dalamnya tetap aman karena tipe dan key-nya
+/// tidak berubah, jadi Element-nya diperbarui, bukan dibuang.
+Widget _themed(Widget Function() build) => ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, __, ___) => build(),
+    );
 
 // ── Auth guard + onboarding redirect ─────────────────────────────────────────
 
@@ -163,13 +182,19 @@ class _MainShellState extends State<MainShell> {
     ),
   ];
 
-  // Each tab screen is created ONCE and kept alive in IndexedStack
-  final _screens = const [
-    _DashboardTab(),
-    _SimulatorTab(),
-    _AccountingTab(),
-    _SettingsTab(),
-  ];
+  // Tiap tab tetap hidup di IndexedStack. Daftarnya sengaja TIDAK const:
+  // instance baru per rebuild diperlukan supaya pergantian mode gelap benar
+  // benar sampai ke isi tab (lihat catatan di `_themed`). Tipe dan urutannya
+  // tetap sama, jadi State masing-masing tab tidak hilang.
+  // Elemennya sengaja TIDAK const. Flutter melewati rebuild kalau widget lama
+  // dan baru adalah instance yang identik — dan `const` membuatnya identik,
+  // sehingga pergantian mode gelap tidak pernah sampai ke isi tab.
+  List<Widget> get _screens => [
+        _DashboardTab(),
+        _SimulatorTab(),
+        _AccountingTab(),
+        _SettingsTab(),
+      ];
 
   bool _railExpanded = true;
   String? _userName;
@@ -193,8 +218,11 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     // IndexedStack menjaga semua tab tetap hidup, hanya menyembunyikan
-    // yang tidak aktif.
-    final content = IndexedStack(index: _idx, children: _screens);
+    // yang tidak aktif. Dibungkus _themed supaya isinya ikut dibangun ulang
+    // saat mode gelap dinyalakan, bukan hanya kerangkanya.
+    final content = _themed(
+      () => IndexedStack(index: _idx, children: _screens),
+    );
 
     return Scaffold(
       backgroundColor: DS.surface,
@@ -248,23 +276,23 @@ class _MainShellState extends State<MainShell> {
 class _DashboardTab extends StatelessWidget {
   const _DashboardTab();
   @override
-  Widget build(BuildContext context) => const DashboardScreen();
+  Widget build(BuildContext context) => DashboardScreen();
 }
 
 class _AccountingTab extends StatelessWidget {
   const _AccountingTab();
   @override
-  Widget build(BuildContext context) => const AccountingScreen();
+  Widget build(BuildContext context) => AccountingScreen();
 }
 
 class _SimulatorTab extends StatelessWidget {
   const _SimulatorTab();
   @override
-  Widget build(BuildContext context) => const SimulatorScreen();
+  Widget build(BuildContext context) => SimulatorScreen();
 }
 
 class _SettingsTab extends StatelessWidget {
   const _SettingsTab();
   @override
-  Widget build(BuildContext context) => const SettingsScreen();
+  Widget build(BuildContext context) => SettingsScreen();
 }
