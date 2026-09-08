@@ -302,6 +302,200 @@ keduanya lebih dalam dari sebelumnya.
 
 ---
 
+## Temuan audit kode — usulan perbaikan
+
+> Ditambahkan **8 September 2026** setelah audit `app/lib` (53 file, ±14.500
+> baris) pada branch `claude/flutter-project-review-plan-pzmo22`. Semua temuan
+> di bawah **belum tercakup** tugas Minggu 1–9 di atas. Masukkan ke minggu yang
+> relevan saat sinkron mingguan, jangan dikerjakan diam-diam di luar jadwal.
+>
+> Prioritas: 🔴 wajib beres sebelum **M4** (validasi pajak) · 🟡 sebaiknya masuk
+> fase ini · ⬜ boleh ditunda ke fase berikutnya
+
+| # | Temuan | Prioritas | Pemilik | Usul masuk |
+| --- | --- | --- | --- | --- |
+| T-1 | Kategori TER B & C tidak ada — PPh 21 salah hitung | 🔴 | Pakar pajak → Frontend | Minggu 5 |
+| T-2 | Nol tes untuk mesin pajak | 🔴 | Frontend | Minggu 3 |
+| T-3 | PPh Final: pengecualian omzet Rp500 juta & batas jangka waktu belum ada | 🔴 | Pakar pajak → Frontend | Minggu 5 |
+| T-4 | Angka PKP di layar PPh 21 menyesatkan; rekalkulasi Desember belum ada | 🟡 | Pakar pajak → Frontend | Minggu 6 |
+| T-5 | Null-assertion rawan crash di pemetaan PTKP | 🟡 | Frontend | Minggu 3 |
+| T-6 | 66 pemakaian `withOpacity` yang sudah deprecated | 🟡 | Frontend | Minggu 8 |
+| T-7 | Dua `BuildContext` dipakai lewat async gap | 🟡 | Frontend | Minggu 3 |
+| T-8 | Aksesibilitas nol — tidak ada satu pun `Semantics` | 🟡 | Frontend | Minggu 8 |
+| T-9 | CI tidak menegakkan `dart format` | 🟡 | Frontend | Minggu 3 |
+| T-10 | CI tanpa laporan coverage | ⬜ | Frontend | Minggu 8 |
+| T-11 | `flutter_secure_storage` di web perlu diverifikasi sebelum JWT asli | ⬜ | Backend + Frontend | Minggu 5 |
+| T-12 | Belum ada kerangka l10n | ⬜ | Frontend | Fase berikutnya |
+
+---
+
+### 🔴 T-1 — Kategori TER B & C tidak ada, PPh 21 salah hitung
+
+`calculatePPh21()` di `app/lib/core/services/simulator_service.dart:102` selalu
+membaca `AppConstants.terTableA`, apa pun status PTKP yang dipilih pengguna.
+`terTableB` dan `terTableC` **tidak ada sama sekali** di `app_constants.dart` —
+yang ada hanya `terTableA` (baris 32).
+
+Akibatnya pengguna yang memilih status seperti K/2 atau K/3 tetap mendapat tarif
+kategori A, jadi angka pajaknya salah. Ini persis tugas Minggu 1 pakar pajak
+yang masih terbuka ("cek kelengkapan kategori TER A/B/C") — sekarang
+terkonfirmasi sebagai bug, bukan sekadar hal yang perlu dicek.
+
+- [ ] **Pakar pajak** — kunci pemetaan status PTKP → kategori TER menurut
+      PMK 168/2023, lengkap dengan tabel tarif B dan C
+- [ ] **Frontend** — tambah `terTableB`/`terTableC`, ganti pemilihan tabel jadi
+      fungsi dari status PTKP, bukan konstanta
+
+**Catatan:** jangan implementasi dari sumber sekunder. Tunggu tabel resmi dari
+pakar pajak — satu tarif salah berarti seluruh hasil M4 ikut salah.
+
+### 🔴 T-2 — Mesin pajak tidak punya satu pun tes
+
+`test/widget_test.dart` berisi 5 tes, semuanya menguji `MockDashboardRepository`.
+`simulator_service.dart` — `calculatePPhFinal()`, `calculatePPh21()`, dan
+kalkulasi skenario — nol tes. Padahal ini satu-satunya kode di repo yang
+kesalahannya langsung berujung ke angka pajak salah di layar pengguna.
+
+Milestone **M4** mensyaratkan hasil kalkulasi cocok dengan kalkulator resmi DJP.
+Tanpa tes, verifikasi itu manual dan tidak berulang — begitu Minggu 5 merombak
+kedua tab simulator, tidak ada jaring pengaman yang memberi tahu kalau angkanya
+bergeser.
+
+- [ ] **Frontend** — tes unit `calculatePPhFinal()`: di bawah ambang, tepat di
+      ambang Rp4,8 M, di atas ambang, dan omzet nol
+- [ ] **Frontend** — tes unit `calculatePPh21()`: satu kasus per status PTKP,
+      plus batas antar-lapisan TER (nilai tepat di `max` tiap baris)
+- [ ] **Frontend** — begitu pakar pajak menyerahkan kasus uji resmi (tugas
+      Minggu 7), jadikan tes otomatis — bukan cuma dicek manual sekali
+
+### 🔴 T-3 — PPh Final: pengecualian Rp500 juta & batas jangka waktu belum dimodelkan
+
+`calculatePPhFinal()` mengenakan 0,5% dari rupiah pertama, dan `eligible` hanya
+diuji terhadap ambang Rp4,8 M/tahun. Dua hal belum ada di model:
+
+1. **Pengecualian omzet Rp500 juta pertama** untuk WP orang pribadi
+   (UU HPP 2021 / PP 55/2022). Kalau ini berlaku untuk pengguna target Catatin,
+   omzet di bawah Rp500 juta/tahun mestinya menghasilkan pajak nol — sekarang
+   tidak.
+2. **Batas jangka waktu** pemakaian tarif final PP 23/2018, yang berbeda antara
+   WP OP dan badan. Tidak ada input apa pun soal "sejak tahun berapa".
+
+- [ ] **Pakar pajak** — putuskan apakah keduanya masuk lingkup Catatin, dan
+      untuk profil WP yang mana saja
+- [ ] **Frontend** — kalau ya, `PPhFinalResult` butuh field baru dan Profil
+      usaha butuh input tahun mulai. Ini mengubah kontrak data, jadi harus
+      diputus **sebelum** Minggu 5 mulai, bukan di tengah jalan
+
+### 🟡 T-4 — Angka PKP di layar PPh 21 menyesatkan
+
+`calculatePPh21()` menghitung `pkp = (gajiKotor × 12) − PTKP` lalu
+menampilkannya, padahal:
+
+- Biaya jabatan (5%, ada batas atas) dan iuran pensiun tidak dikurangkan
+- Pada metode TER bulanan, PKP **tidak dipakai sama sekali** untuk menghitung
+  pajaknya — tarif diambil dari tabel TER berdasar penghasilan bruto
+
+Jadi pengguna melihat angka berlabel "PKP" yang bukan PKP menurut definisi mana
+pun, dan yang tidak dipakai dalam hasil hitung. Terpisah dari itu, **rekalkulasi
+Desember** (Pasal 17 progresif untuk masa pajak terakhir) belum dimodelkan —
+TER hanya berlaku Januari–November.
+
+- [ ] **Pakar pajak** — tentukan angka apa yang layak ditampilkan di tab PPh 21,
+      dan apakah rekalkulasi Desember masuk lingkup fase ini
+- [ ] **Frontend** — sesuaikan `PPh21Result` dan `pph21_tab.dart` mengikuti
+      keputusan di atas
+
+### 🟡 T-5 — Null-assertion rawan crash di pemetaan PTKP
+
+`simulator_service.dart:79` dan `:103` memakai pola yang sama:
+
+```dart
+AppConstants.ptkp[status.shortLabel.replaceAll('/','')]!
+```
+
+Nilai enum diubah jadi label tampilan, tanda `/` dibuang, hasilnya dipakai
+sebagai kunci Map, lalu di-`!`. Tiga langkah rapuh untuk sesuatu yang bisa
+dipetakan langsung. Menambah satu status PTKP tanpa menambah entri Map akan
+crash saat runtime, bukan gagal saat compile.
+
+- [ ] **Frontend** — ganti jadi pemetaan langsung `PtkpStatus` → `double`
+      (extension `ptkpAmount` dengan `switch` lengkap), hapus tanda `!`
+
+### 🟡 T-6 — 66 pemakaian `withOpacity` yang sudah deprecated
+
+Tersebar di ±20 file widget (dashboard, simulator, accounting). CI menjalankan
+`flutter analyze --no-fatal-infos`, jadi ini tidak pernah menggagalkan PR —
+sampai suatu saat Flutter mengangkatnya jadi error dan build rilis berhenti.
+
+Perbaikannya mekanis: `withOpacity(0.5)` → `withValues(alpha: 0.5)`.
+
+- [ ] **Frontend** — kerjakan sebagai **satu PR terpisah** (menyentuh ±20 file).
+      Jangan dititipkan ke PR fitur; diff-nya akan menenggelamkan review
+
+### 🟡 T-7 — Dua `BuildContext` dipakai lewat async gap
+
+- `screens/settings/settings_screen.dart:68` — `mounted` dicek **sebelum**
+  `await AuthService.logout()`, lalu `context.go()` dipanggil sesudahnya. Cek
+  `mounted`-nya ada di sisi yang salah dari `await`: kalau logout lambat dan
+  layar keburu dilepas, `context.go` dilempar ke widget yang sudah mati.
+- `widgets/accounting/month_picker.dart:389` — `context` dipakai di dalam
+  `Future.microtask` setelah `Navigator.pop(context)` dipanggil.
+
+- [ ] **Frontend** — pindahkan cek `mounted` ke sesudah `await` di
+      `settings_screen.dart`; di `month_picker.dart` ambil `NavigatorState`
+      sebelum pop, jangan bawa `context` masuk ke microtask
+
+### 🟡 T-8 — Aksesibilitas nol
+
+Nol pemakaian `Semantics`, `semanticLabel`, atau `excludeSemantics` di seluruh
+53 file. Untuk aplikasi yang tayang sebagai web publik, artinya pembaca layar
+tidak bisa membacakan grafik `fl_chart`, kartu KPI, maupun progress bar ambang
+PKP.
+
+- [ ] **Frontend** — `semanticLabel` untuk semua grafik dan progress bar
+      (minimal: bacakan angkanya)
+- [ ] **Frontend** — cek target sentuh ≥48dp dan kontras warna di mode terang
+      dan gelap. Ini melengkapi tugas "polish UI" Minggu 8, bukan menggantikannya
+
+### 🟡 T-9 — CI tidak menegakkan `dart format`
+
+`analysis_options.yaml` menulis "Jalankan `dart format .` sebelum commit", tapi
+tidak ada yang memeriksanya. Format yang tidak konsisten memicu konflik merge
+yang sebenarnya tidak perlu — persis hal yang bisa dihindari kalau tim sepakat
+soal format sejak awal.
+
+- [ ] **Frontend** — tambahkan langkah `dart format --set-exit-if-changed .` di
+      `ci.yml`. Jalankan `dart format .` sekali di seluruh repo lebih dulu
+      supaya langkah barunya tidak langsung merah
+
+### ⬜ T-10 — CI tanpa laporan coverage
+
+`flutter test` jalan tanpa `--coverage`, jadi tidak ada yang tahu cakupan tes
+naik atau turun antar-PR. Baru benar-benar berguna setelah T-2 selesai.
+
+- [ ] **Frontend** — `flutter test --coverage` dan unggah `lcov.info` sebagai
+      artifact CI
+
+### ⬜ T-11 — `flutter_secure_storage` di web perlu diverifikasi
+
+`storage_service.dart:3` menulis token disimpan di "Keychain/Keystore, WebCrypto
+di web". Penyimpanan di browser punya model ancaman yang berbeda dari Keychain,
+dan itu perlu dipastikan sebelum JWT asli menggantikan data contoh.
+
+- [ ] **Backend + Frontend** — sebelum Minggu 5, sepakati umur token, mekanisme
+      refresh, dan apakah refresh token boleh disimpan di browser sama sekali
+
+### ⬜ T-12 — Belum ada kerangka l10n
+
+Semua string Indonesia ditulis langsung di widget; `intl` hanya dipakai untuk
+format rupiah dan tanggal. Tidak mendesak selama produk hanya berbahasa
+Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
+
+- [ ] **Frontend** — ambil keputusan sadar: kalau memang tidak akan multi-bahasa,
+      tulis itu di `docs/ARCHITECTURE.md` supaya tidak jadi pertanyaan berulang
+
+---
+
 ## Risiko yang sudah diketahui
 
 - **Urutan tidak boleh ditukar** — Minggu 5 (Simulator tarik data asli)
@@ -322,6 +516,35 @@ keduanya lebih dalam dari sebelumnya.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-08** — Frontend — Audit kode `app/lib` (53 file, ±14.546 baris) di
+  atas branch `claude/flutter-project-review-plan-pzmo22`; hasilnya jadi bagian
+  baru **"Temuan audit kode — usulan perbaikan"** (T-1 s/d T-12) di dokumen ini.
+  Tidak ada kode aplikasi yang diubah — bagian ini murni tambahan dokumentasi.
+  Basis pemeriksaan: `flutter pub get` bersih, `flutter analyze` → **0 error,
+  0 warning, 103 info** (66 `withOpacity` deprecated, 21 `unnecessary_underscores`,
+  7 `curly_braces_in_flow_control_structures`, sisanya tersebar). Penghapusan
+  Pustaka peraturan terverifikasi bersih — nol referensi menggantung ke
+  `library_screen.dart`, `doc_detail_screen.dart`, `bookmark_screen.dart`, atau
+  `document_model.dart`.
+  **Tiga temuan berprioritas 🔴** yang menyentuh benar-tidaknya angka pajak:
+  (T-1) `calculatePPh21()` selalu memakai `terTableA` apa pun status PTKP-nya,
+  dan `terTableB`/`terTableC` tidak ada di `app_constants.dart` — jadi status
+  seperti K/2 dan K/3 dihitung dengan tarif kategori A. Ini mengonfirmasi tugas
+  Minggu 1 pakar pajak yang masih terbuka sebagai bug nyata, bukan sekadar hal
+  yang perlu dicek. (T-2) `simulator_service.dart` nol tes — 5 tes yang ada
+  semuanya menguji `MockDashboardRepository`, sementara kode kalkulasi pajaknya
+  sendiri tidak diuji sama sekali; ini menggantung di depan milestone M4.
+  (T-3) `calculatePPhFinal()` belum memodelkan pengecualian omzet Rp500 juta
+  pertama untuk WP OP maupun batas jangka waktu PP 23/2018.
+  T-1, T-3, dan T-4 **butuh keputusan pakar pajak dulu** sebelum frontend boleh
+  menyentuhnya — jangan diimplementasi dari sumber sekunder. Sisanya (T-5 s/d
+  T-12) murni frontend dan bisa jalan sekarang: null-assertion rawan crash di
+  pemetaan PTKP, dua `BuildContext` lewat async gap, aksesibilitas nol,
+  `dart format` tidak ditegakkan CI, dan pembersihan `withOpacity`.
+  Usul penjadwalan tiap temuan ada di kolom "Usul masuk" pada tabel ringkasnya —
+  perlu dikonfirmasi saat sinkron mingguan, belum disepakati siapa pun.
+
 
 - **2026-09-07** — Frontend — Selesai 4 tugas frontend Minggu 2 (cabut Pustaka
   peraturan) di `app/lib/` pada branch `fitur/audit-original-flutter-vs-app-lib`:
