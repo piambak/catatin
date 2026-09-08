@@ -1,10 +1,18 @@
 // lib/screens/splash/splash_screen.dart
+//
+// Layar pembuka — digayakan ulang mengikuti mockup Claude Design.
+//
+// Wordmark di sini masih tertulis "NamaAppmu", dipecah jadi dua TextSpan
+// ('Nama' + 'Appmu') sehingga pencarian teks utuh tidak menemukannya. Sekarang
+// memakai `DsWordmark` yang sama dengan rail navigasi dan layar masuk.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../core/services/storage_service.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../widgets/common/ds_widgets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,58 +55,28 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.dark,
+      backgroundColor: DS.surface,
       body: FadeTransition(
         opacity: _fade,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo mark
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.brand,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.calculate_rounded,
-                  color: Colors.white,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // App name
-              RichText(
-                text: TextSpan(
-                  style: AppTextStyles.display(28, weight: FontWeight.w600, color: Colors.white),
-                  children: const [
-                    TextSpan(text: 'Nama'),
-                    TextSpan(
-                      text: 'Appmu',
-                      style: TextStyle(color: AppColors.brand),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
+              const DsWordmark(size: 38),
+              const SizedBox(height: 12),
               Text(
-                'Platform Perpajakan UMKM Indonesia',
-                style: AppTextStyles.body(13, color: AppColors.darkMuted),
+                'Catat transaksi, hitung pajak, pahami aturan.',
+                textAlign: TextAlign.center,
+                style: Typo.sans(14, color: DS.muted),
               ),
-
-              const SizedBox(height: 48),
-
-              // Loading indicator
+              const SizedBox(height: 44),
               SizedBox(
-                width: 24,
-                height: 24,
+                width: 22,
+                height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.brand.withValues(alpha: 0.7),
+                  color: DS.brand,
                 ),
               ),
             ],

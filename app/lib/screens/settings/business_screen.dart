@@ -459,10 +459,13 @@ class _SelectableChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(Radii.pill),
+          // TANPA `alignment`. Container yang diberi alignment akan melebar
+          // sampai batas maksimum constraint-nya, dan Wrap memberi lebar baris
+          // penuh sebagai maksimum — jadi tiap pil memakan satu baris sendiri.
           child: Container(
             constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(Radii.pill),
               border: Border.all(

@@ -110,7 +110,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           type: NotifType.setup,
           title: 'Lengkapi profil usaha Anda',
           body: 'Tambahkan nama usaha, NPWP, dan status PKP agar '
-                'semua fitur NamaAppmu berjalan optimal. Ketuk untuk melengkapi.',
+                'semua fitur Catatin berjalan optimal. Ketuk untuk melengkapi.',
           time: DateTime.now(),
           isRead: false,
         );

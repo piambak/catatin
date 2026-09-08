@@ -127,7 +127,11 @@ class DsButton extends StatelessWidget {
                 ? Border.all(color: DS.border)
                 : null,
           ),
-          alignment: Alignment.center,
+          // Alignment HANYA saat expand. Container yang diberi alignment
+          // melebar sampai batas maksimum constraint-nya; di dalam Wrap —
+          // yang memberi lebar baris penuh sebagai maksimum — itu membuat
+          // tiap tombol memakan satu baris sendiri alih-alih berdampingan.
+          alignment: expand ? Alignment.center : null,
           child: Text(
             label,
             textAlign: TextAlign.center,
