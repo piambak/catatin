@@ -1,11 +1,24 @@
 // lib/screens/simulator/simulator_screen.dart
+//
+// Simulator hasil redesain — mengikuti artboard 1c di Catatin.dc.html.
+//
+// Perubahan struktur: tab "PPh Final" dan "PPh 21" digabung jadi satu alur
+// percakapan (`TaxConversationTab`) yang menghitung keduanya sekaligus dan
+// membandingkannya di penjelasan. Tab "Skenario" dan "Deadline" tetap terpisah
+// karena tugasnya memang lain.
+//
+// Berkas lama `pph_final_tab.dart` dan `pph21_tab.dart` sengaja TIDAK dihapus.
+// Keduanya masih jadi rujukan saat T-1 (kategori TER B & C) dikerjakan, dan
+// menghapusnya di PR yang sama akan mencampur dua topik.
 
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import 'pph_final_tab.dart';
-import 'pph21_tab.dart';
-import 'scenario_tab.dart';
+
+import '../../core/theme/breakpoints.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../widgets/common/ds_widgets.dart';
 import 'calendar_tab.dart';
+import 'scenario_tab.dart';
+import 'tax_conversation_tab.dart';
 
 class SimulatorScreen extends StatefulWidget {
   const SimulatorScreen({super.key});
@@ -18,12 +31,7 @@ class _SimulatorScreenState extends State<SimulatorScreen>
     with TickerProviderStateMixin {
   late final TabController _tabCtrl;
 
-  static const _tabs = [
-    _TabItem(label: 'PPh Final',  icon: Icons.bolt_rounded),
-    _TabItem(label: 'PPh 21',     icon: Icons.people_outline_rounded),
-    _TabItem(label: 'Skenario',   icon: Icons.tune_rounded),
-    _TabItem(label: 'Deadline',   icon: Icons.calendar_month_outlined),
-  ];
+  static const _tabs = ['Hitung pajak', 'Skenario', 'Deadline'];
 
   @override
   void initState() {
@@ -40,68 +48,145 @@ class _SimulatorScreenState extends State<SimulatorScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-      // ── App bar + tab bar ────────────────────────────────────
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Simulator Pajak',
-              style: AppTextStyles.display(17, weight: FontWeight.w600, color: Theme.of(context).appBarTheme.foregroundColor)),
-            Text('Hitung dan rencanakan kewajiban pajak',
-              style: AppTextStyles.body(11, color: AppColors.stone500)),
-          ],
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(46),
-          child: TabBar(
-              controller: _tabCtrl,
-              isScrollable: false,
-              labelColor: Theme.of(context).appBarTheme.foregroundColor,
-              unselectedLabelColor: AppColors.stone400,
-              labelStyle: AppTextStyles.body(12, weight: FontWeight.w600),
-              unselectedLabelStyle: AppTextStyles.body(12),
-              indicatorColor: AppColors.brand,
-              indicatorWeight: 2,
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: AppColors.stone200,
-              tabs: _tabs.map((t) => Tab(
-                height: 40,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(t.icon, size: 14),
-                    const SizedBox(width: 5),
-                    Text(t.label),
-                  ],
+      backgroundColor: DS.surface,
+      body: SafeArea(
+        child: BreakpointBuilder(
+          builder: (context, bp) {
+            final pad = Bp.pagePadding(bp);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(pad, 22, pad, 0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: Bp.contentMax),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (bp.isExpanded) ...[
+                            const DsLabel('Simulator'),
+                            const SizedBox(height: 8),
+                          ],
+                          Text('Hitung pajak Anda',
+                              style: T.serif(bp.isExpanded ? 29 : 23)),
+                          const SizedBox(height: 4),
+                          Text(
+                            bp.isExpanded
+                                ? 'Versi web memakai alur yang sama — hanya lebih lapang.'
+                                : 'Tiga pertanyaan, tanpa istilah rumit.',
+                            style: T.sans(bp.isExpanded ? 15 : 13.5,
+                                color: DS.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              )).toList(),
-            ),
-          ),
+                const SizedBox(height: 14),
+                _SimulatorTabs(controller: _tabCtrl, labels: _tabs, pad: pad),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    // NeverScrollable supaya input rupiah tidak bentrok
+                    // dengan gestur geser antar-tab.
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: const [
+                      TaxConversationTab(),
+                      ScenarioTab(),
+                      CalendarTab(),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
-
-      // ── Tab views ────────────────────────────────────────────
-      body: TabBarView(
-        controller: _tabCtrl,
-        physics: const NeverScrollableScrollPhysics(),
-        // NeverScrollable so Rupiah inputs don't conflict with swipe
-        children: const [
-          PphFinalTab(),
-          Pph21Tab(),
-          ScenarioTab(),
-          CalendarTab(),
-        ],
       ),
     );
   }
 }
 
-class _TabItem {
+/// Tab bergaya pil, menggantikan TabBar bergaris bawah.
+class _SimulatorTabs extends StatelessWidget {
+  const _SimulatorTabs({
+    required this.controller,
+    required this.labels,
+    required this.pad,
+  });
+
+  final TabController controller;
+  final List<String> labels;
+  final double pad;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(pad, 0, pad, 14),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: DS.hairline)),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: Bp.contentMax),
+          child: AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) => Row(
+              children: [
+                for (var i = 0; i < labels.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _TabPill(
+                      label: labels[i],
+                      selected: controller.index == i,
+                      onTap: () => controller.animateTo(i),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  const _TabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
   final String label;
-  final IconData icon;
-  const _TabItem({required this.label, required this.icon});
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? DS.brandMuted : Colors.transparent,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: T.sans(13.5,
+                  weight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected ? DS.brandInk : DS.muted),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

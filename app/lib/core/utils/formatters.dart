@@ -27,6 +27,14 @@ class Rupiah {
   static String miliar(num amount) =>
       'Rp ${_desimal.format(amount / 1000000000)} Miliar';
 
+  static final _plain = NumberFormat('#,###', 'id_ID');
+
+  /// 28.500.000 — tanpa awalan "Rp", nilai absolut.
+  ///
+  /// Dipakai di kolom angka yang sudah punya label atau tanda sendiri, seperti
+  /// ringkasan "Bulan ini" dan daftar "Terakhir dicatat" di dashboard.
+  static String plain(num amount) => _plain.format(amount.abs());
+
   /// Parse "28.500.000" → 28500000
   static double parse(String value) {
     final cleaned = value

@@ -16,6 +16,9 @@ import '../../screens/settings/business_screen.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/breakpoints.dart';
+import '../theme/design_tokens.dart';
+import '../../widgets/common/app_nav.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
@@ -136,72 +139,105 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  static const _tabs = [
-    AppRoutes.dashboard,
-    AppRoutes.accounting,
-    AppRoutes.simulator,
-    AppRoutes.settings,
+  // Urutan mengikuti mockup Claude Design: Dashboard · Simulator ·
+  // Pencatatan · Pengaturan. Rutenya sendiri tidak berubah.
+  static const _destinations = [
+    NavDestination(
+      label: 'Dashboard',
+      icon: Icons.dashboard_outlined,
+      route: AppRoutes.dashboard,
+    ),
+    NavDestination(
+      label: 'Simulator',
+      icon: Icons.calculate_outlined,
+      route: AppRoutes.simulator,
+    ),
+    NavDestination(
+      label: 'Pencatatan',
+      icon: Icons.receipt_long_outlined,
+      route: AppRoutes.accounting,
+    ),
+    NavDestination(
+      label: 'Pengaturan',
+      icon: Icons.settings_outlined,
+      route: AppRoutes.settings,
+    ),
   ];
 
   // Each tab screen is created ONCE and kept alive in IndexedStack
   final _screens = const [
     _DashboardTab(),
-    _AccountingTab(),
     _SimulatorTab(),
+    _AccountingTab(),
     _SettingsTab(),
   ];
 
+  bool _railExpanded = true;
+  String? _userName;
+
+  @override
+  void initState() {
+    super.initState();
+    StorageService.getUserName().then((n) {
+      if (mounted) setState(() => _userName = n);
+    });
+  }
+
   int get _idx {
-    final i = _tabs.indexWhere((t) => widget.location.startsWith(t));
+    final i = _destinations
+        .indexWhere((d) => widget.location.startsWith(d.route));
     return i >= 0 ? i : 0;
   }
 
+  void _select(int i) => context.go(_destinations[i].route);
+
   @override
   Widget build(BuildContext context) {
+    // IndexedStack menjaga semua tab tetap hidup, hanya menyembunyikan
+    // yang tidak aktif.
+    final content = IndexedStack(index: _idx, children: _screens);
+
     return Scaffold(
-      // IndexedStack keeps all screens mounted, just hides inactive ones
-      body: IndexedStack(
-        index: _idx,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.stone200, width: 0.5))),
-        child: BottomNavigationBar(
-          currentIndex: _idx,
-          onTap: (i) => context.go(_tabs[i]),
-          backgroundColor: Theme.of(context).cardColor,
-          selectedItemColor: AppColors.brand,
-          unselectedItemColor: AppColors.stone400,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 10, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 10),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Pembukuan',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calculate_outlined),
-              activeIcon: Icon(Icons.calculate_rounded),
-              label: 'Simulator',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings_rounded),
-              label: 'Pengaturan',
-            ),
-          ],
-        ),
+      backgroundColor: DS.surface,
+      body: BreakpointBuilder(
+        builder: (context, bp) {
+          if (bp.usesRail) {
+            return Row(
+              children: [
+                AppNavRail(
+                  destinations: _destinations,
+                  currentIndex: _idx,
+                  onSelect: _select,
+                  expanded: _railExpanded,
+                  onToggle: () =>
+                      setState(() => _railExpanded = !_railExpanded),
+                  userName: _userName,
+                ),
+                Expanded(child: content),
+              ],
+            );
+          }
+
+          // Pil navigasi mengambang di atas konten, seperti di mockup.
+          return Stack(
+            children: [
+              Positioned.fill(child: content),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  child: AppBottomNav(
+                    destinations: _destinations,
+                    currentIndex: _idx,
+                    onSelect: _select,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

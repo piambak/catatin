@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/accounting_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/breakpoints.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../widgets/accounting/tx_add_sheet.dart';
 import '../../widgets/accounting/month_picker.dart' show TxListTile;
@@ -128,52 +130,33 @@ class _AccountingScreenState extends State<AccountingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final bp = Bp.of(context);
+    final pad = Bp.pagePadding(bp);
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: DS.surface,
       body: Column(children: [
-        // ── Sticky header ────────────────────────────────────
+        // ── Kepala tetap ─────────────────────────────────────
         Material(
-          color: Theme.of(context).appBarTheme.backgroundColor,
+          color: DS.surface,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             SizedBox(height: MediaQuery.of(context).padding.top),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
+              padding: EdgeInsets.fromLTRB(pad, 20, pad - 8, 0),
               child: Row(children: [
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Pembukuan',
-                      style: AppTextStyles.display(17, weight: FontWeight.w600, color: Theme.of(context).appBarTheme.foregroundColor)),
-                    Text('Catat dan pantau transaksi',
-                      style: AppTextStyles.body(11, color: AppColors.stone500)),
-                  ],
-                )),
+                Expanded(
+                  child: Text('Pencatatan',
+                      style: T.serif(bp.isExpanded ? 34 : 25)),
+                ),
                 IconButton(
-                  icon: Icon(Icons.star_border_rounded,
-                    color: Theme.of(context).appBarTheme.foregroundColor),
-                  tooltip: 'Transaksi Favorit',
+                  icon: Icon(Icons.star_border_rounded, color: DS.body),
+                  tooltip: 'Transaksi favorit',
                   onPressed: _showFavorites,
                 ),
               ]),
             ),
-            const SizedBox(height: 4),
-            TabBar(
-              controller: _tabCtrl,
-              labelStyle: AppTextStyles.body(12, weight: FontWeight.w600),
-              unselectedLabelStyle: AppTextStyles.body(12),
-              labelColor: Theme.of(context).appBarTheme.foregroundColor,
-              unselectedLabelColor: AppColors.stone400,
-              indicatorColor: AppColors.brand,
-              indicatorWeight: 2,
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: AppColors.stone200,
-              tabs: const [
-                Tab(text: 'Harian'),
-                Tab(text: 'Kalender'),
-                Tab(text: 'Bulanan'),
-                Tab(text: 'Total'),
-              ],
-            ),
+            const SizedBox(height: 12),
+            _ViewTabs(controller: _tabCtrl, pad: pad),
           ]),
         ),
 
@@ -209,11 +192,18 @@ class _AccountingScreenState extends State<AccountingScreen>
       ]),
 
       // ── FAB ──────────────────────────────────────────────
-      floatingActionButton: FloatingActionButton(
-        onPressed:       _showAddSheet,
-        backgroundColor: AppColors.brand,
-        tooltip:         'Catat Transaksi',
-        child: const Icon(Icons.add_rounded, color: Colors.white),
+      // Digeser ke atas supaya tidak tertimpa pil navigasi mengambang.
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: Bp.bottomInset(bp)),
+        child: FloatingActionButton(
+          onPressed: _showAddSheet,
+          backgroundColor: DS.brand,
+          foregroundColor: DS.onBrand,
+          elevation: 2,
+          tooltip: 'Catat transaksi',
+          child: const Icon(Icons.add_rounded),
+        ),
       ),
     );
   }
@@ -1727,6 +1717,86 @@ class _FrequentList extends StatelessWidget {
             onTap: () {}),
         ]);
       }).toList(),
+    );
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab bergaya pil — menggantikan TabBar bergaris bawah, mengikuti mockup.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ViewTabs extends StatelessWidget {
+  const _ViewTabs({required this.controller, required this.pad});
+
+  final TabController controller;
+  final double pad;
+
+  static const _labels = ['Harian', 'Kalender', 'Bulanan', 'Total'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(pad, 0, pad, 14),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: DS.hairline)),
+      ),
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < _labels.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _ViewTabPill(
+                    label: _labels[i],
+                    selected: controller.index == i,
+                    onTap: () => controller.animateTo(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewTabPill extends StatelessWidget {
+  const _ViewTabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? DS.brandMuted : Colors.transparent,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: T.sans(13.5,
+                  weight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected ? DS.brandInk : DS.muted),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
