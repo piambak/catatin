@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/accounting_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
@@ -89,20 +88,20 @@ class _AccountingScreenState extends State<AccountingScreen>
           child: Column(children: [
             Container(margin: const EdgeInsets.only(top: 10, bottom: 4),
               width: 36, height: 4,
-              decoration: BoxDecoration(color: AppColors.stone200,
+              decoration: BoxDecoration(color: DS.hairline,
                 borderRadius: BorderRadius.circular(2))),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
               child: Row(children: [
-                Icon(Icons.star_rounded, size: 18, color: AppColors.brand),
+                Icon(Icons.star_rounded, size: 18, color: DS.brand),
                 const SizedBox(width: 8),
                 Text('Transaksi Favorit',
-                  style: AppTextStyles.display(15)),
+                  style: Typo.serif(15)),
                 const Spacer(),
                 Text('${favs.length} transaksi',
-                  style: AppTextStyles.body(12, color: AppColors.stone400)),
+                  style: Typo.sans(12, color: DS.faint)),
               ])),
-            Divider(height: 0.5, color: AppColors.stone200),
+            Divider(height: 0.5, color: DS.hairline),
             if (favs.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
@@ -116,7 +115,7 @@ class _AccountingScreenState extends State<AccountingScreen>
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: favs.length,
                 separatorBuilder: (_, __) =>
-                  Divider(height: 0.5, color: AppColors.stone200),
+                  Divider(height: 0.5, color: DS.hairline),
                 itemBuilder: (_, i) => TxListTile(
                   tx:    favs[i],
                   onTap: () {},
@@ -236,7 +235,7 @@ class _MonthNav extends StatelessWidget {
       const SizedBox(width: 10),
       Text(
         '${_months[cursor.month]} ${cursor.year}',
-        style: AppTextStyles.body(13, weight: FontWeight.w500)),
+        style: Typo.sans(13, weight: FontWeight.w500)),
       const SizedBox(width: 10),
       _NavBtn(
         icon: Icons.chevron_right_rounded,
@@ -261,7 +260,7 @@ class _YearNav extends StatelessWidget {
         icon: Icons.chevron_left_rounded,
         onTap: () => onShift(year - 1)),
       const SizedBox(width: 10),
-      Text('$year', style: AppTextStyles.body(13, weight: FontWeight.w500)),
+      Text('$year', style: Typo.sans(13, weight: FontWeight.w500)),
       const SizedBox(width: 10),
       _NavBtn(
         icon: Icons.chevron_right_rounded,
@@ -283,10 +282,10 @@ class _NavBtn extends StatelessWidget {
     child: Container(
       width: 28, height: 28,
       decoration: BoxDecoration(
-        color: AppColors.stone100,
+        color: DS.hairline,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: AppColors.stone200, width: 0.5)),
-      child: Icon(icon, size: 17, color: AppColors.stone500),
+        border: Border.all(color: DS.hairline, width: 0.5)),
+      child: Icon(icon, size: 17, color: DS.muted),
     ),
   ),
   );
@@ -334,7 +333,7 @@ class _DailyTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: AppColors.brand,
+      color: DS.brand,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 100),
         children: [
@@ -387,7 +386,7 @@ class _DayGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final netColor = _net >= 0 ? AppColors.income : AppColors.expense;
+    final netColor = _net >= 0 ? DS.income : DS.expense;
     final netStr   = (_net >= 0 ? '+' : '−') +
         Rupiah.compact(_net.abs());
 
@@ -401,12 +400,12 @@ class _DayGroup extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.stone100,
+              color: DS.hairline,
               borderRadius: BorderRadius.circular(7)),
             child: Row(children: [
               Expanded(child: Text(dateLabel,
-                style: AppTextStyles.body(11, weight: FontWeight.w600))),
-              Text(netStr, style: AppTextStyles.mono(11,
+                style: Typo.sans(11, weight: FontWeight.w600))),
+              Text(netStr, style: Typo.mono(11,
                 color: netColor, weight: FontWeight.w600)),
             ]),
           ),
@@ -416,13 +415,13 @@ class _DayGroup extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.stone200, width: 0.5)),
+              border: Border.all(color: DS.hairline, width: 0.5)),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: txs.length,
               separatorBuilder: (_, __) =>
-                Divider(height: 0.5, indent: 56, color: AppColors.stone100),
+                Divider(height: 0.5, indent: 56, color: DS.hairline),
               itemBuilder: (_, i) => TxListTile(
                 tx: txs[i], onTap: () {}),
             ),
@@ -503,7 +502,7 @@ class _CalendarTabState extends State<_CalendarTab> {
                       widget.cursor.year, widget.cursor.month - 1))),
                   const SizedBox(width: 10),
                   Text('${_months[widget.cursor.month]} ${widget.cursor.year}',
-                    style: AppTextStyles.body(14, weight: FontWeight.w600)),
+                    style: Typo.sans(14, weight: FontWeight.w600)),
                   const SizedBox(width: 10),
                   _NavBtn(icon: Icons.chevron_right_rounded,
                     onTap: () => widget.onShift(DateTime(
@@ -517,23 +516,23 @@ class _CalendarTabState extends State<_CalendarTab> {
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.stone100,
+                        color: DS.hairline,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.stone200, width: .5)),
+                          color: DS.hairline, width: .5)),
                       child: Text('Hari Ini',
-                        style: AppTextStyles.body(11,
+                        style: Typo.sans(11,
                           weight: FontWeight.w500)),
                     ),
                   ),
                   const Spacer(),
                   // Legend
                   Row(mainAxisSize: MainAxisSize.min, children: [
-                    _LegDot(color: AppColors.income,  label: 'Masuk'),
+                    _LegDot(color: DS.income,  label: 'Masuk'),
                     const SizedBox(width: 10),
-                    _LegDot(color: AppColors.expense, label: 'Keluar'),
+                    _LegDot(color: DS.expense, label: 'Keluar'),
                     const SizedBox(width: 10),
-                    _LegDot(color: AppColors.brand,   label: 'Keduanya'),
+                    _LegDot(color: DS.brand,   label: 'Keduanya'),
                   ]),
                 ]),
               ),
@@ -543,8 +542,8 @@ class _CalendarTabState extends State<_CalendarTab> {
                 child: Row(
                   children: ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
                     .map((d) => Expanded(child: Center(child: Text(d,
-                      style: AppTextStyles.body(9,
-                        color: AppColors.stone400,
+                      style: Typo.sans(9,
+                        color: DS.faint,
                         weight: FontWeight.w500)))))
                     .toList(),
                 ),
@@ -586,31 +585,31 @@ class _CalendarTabState extends State<_CalendarTab> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(width:36,height:4,
-            decoration:BoxDecoration(color:AppColors.stone200,
+            decoration:BoxDecoration(color:DS.hairline,
               borderRadius:BorderRadius.circular(2))),
           const SizedBox(height:12),
           Row(children: [
             Expanded(child: Text(Tanggal.long(date),
-              style: AppTextStyles.display(15))),
+              style: Typo.serif(15))),
             Text('${txs.length} transaksi',
-              style: AppTextStyles.body(12, color: AppColors.stone400)),
+              style: Typo.sans(12, color: DS.faint)),
           ]),
           const SizedBox(height:8),
           Row(children: [
-            _CalStat(label:'Masuk',  value:income,  color:AppColors.income),
+            _CalStat(label:'Masuk',  value:income,  color:DS.income),
             const SizedBox(width:8),
-            _CalStat(label:'Keluar', value:expense, color:AppColors.expense),
+            _CalStat(label:'Keluar', value:expense, color:DS.expense),
             const SizedBox(width:8),
             _CalStat(label:'Net',    value:income-expense,
-              color: income>=expense ? AppColors.income : AppColors.expense),
+              color: income>=expense ? DS.income : DS.expense),
           ]),
-          Divider(height:20,color:AppColors.stone200),
+          Divider(height:20,color:DS.hairline),
           ConstrainedBox(
             constraints:const BoxConstraints(maxHeight:300),
             child: ListView.separated(
               shrinkWrap:true,
               itemCount:txs.length,
-              separatorBuilder:(_,__)=>Divider(height:.5,color:AppColors.stone100),
+              separatorBuilder:(_,__)=>Divider(height:.5,color:DS.hairline),
               itemBuilder:(_,i)=>TxListTile(tx:txs[i],onTap:(){}),
             ),
           ),
@@ -716,26 +715,26 @@ class _FullCalGridState extends State<_FullCalGrid> {
 
             // Border between cells
             final border = Border(
-              right:  col < 6 ? BorderSide(color: AppColors.stone200, width: .5) : BorderSide.none,
-              bottom: row < 5 ? BorderSide(color: AppColors.stone200, width: .5) : BorderSide.none,
+              right:  col < 6 ? BorderSide(color: DS.hairline, width: .5) : BorderSide.none,
+              bottom: row < 5 ? BorderSide(color: DS.hairline, width: .5) : BorderSide.none,
             );
 
             Color? bg;
             Color  numClr;
             if (!c.isCurrent) {
-              numClr = AppColors.stone300;
+              numClr = DS.border;
             } else if (isToday) {
-              numClr = AppColors.navy;
+              numClr = DS.accent;
             } else {
-              numClr = AppColors.stone700;
+              numClr = DS.ink;
             }
 
             if (txs.isNotEmpty && c.isCurrent) {
-              if (hasInc && hasExp)     bg = AppColors.brand.withValues(alpha: .10);
-              else if (hasInc)          bg = AppColors.incomeLight;
-              else                      bg = AppColors.expenseLight;
+              if (hasInc && hasExp)     bg = DS.brand.withValues(alpha: .10);
+              else if (hasInc)          bg = DS.income.withValues(alpha: 0.12);
+              else                      bg = DS.expense.withValues(alpha: 0.12);
             }
-            if (isHovered) bg = AppColors.brand.withValues(alpha: .18);
+            if (isHovered) bg = DS.brand.withValues(alpha: .18);
 
             final inc = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
             final exp = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
@@ -752,9 +751,9 @@ class _FullCalGridState extends State<_FullCalGrid> {
               child: Tooltip(
                 message: c.isCurrent && txs.isNotEmpty ? tip : '',
                 preferBelow: false,
-                textStyle: AppTextStyles.body(11, color: Colors.white),
+                textStyle: Typo.sans(11, color: Colors.white),
                 decoration: BoxDecoration(
-                  color: AppColors.stone700,
+                  color: DS.ink,
                   borderRadius: BorderRadius.circular(6)),
                 child: GestureDetector(
                   onTap: c.isCurrent && txs.isNotEmpty
@@ -774,7 +773,7 @@ class _FullCalGridState extends State<_FullCalGrid> {
                           width: fontSize * 1.7,
                           height: fontSize * 1.7,
                           decoration: isToday ? BoxDecoration(
-                            color: AppColors.navy,
+                            color: DS.accent,
                             shape: BoxShape.circle) : null,
                           child: Center(child: Text('${c.day}',
                             style: TextStyle(
@@ -787,8 +786,8 @@ class _FullCalGridState extends State<_FullCalGrid> {
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: Row(mainAxisSize: MainAxisSize.min, children: [
-                              if (hasInc) _dot(AppColors.income),
-                              if (hasExp) _dot(AppColors.expense),
+                              if (hasInc) _dot(DS.income),
+                              if (hasExp) _dot(DS.expense),
                             ]),
                           ),
                       ],
@@ -845,28 +844,28 @@ class _MiniCalendar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.stone200, width: .5)),
+        border: Border.all(color: DS.hairline, width: .5)),
       child: Column(children: [
         // Mini month nav
         Row(children: [
           GestureDetector(
             onTap: () => onMonth(DateTime(cursor.year, cursor.month - 1)),
             child: Icon(Icons.chevron_left_rounded,
-              size: 16, color: AppColors.stone400)),
+              size: 16, color: DS.faint)),
           Expanded(child: Text(
             '${_months[cursor.month]} ${cursor.year}',
             textAlign: TextAlign.center,
-            style: AppTextStyles.body(11, weight: FontWeight.w600))),
+            style: Typo.sans(11, weight: FontWeight.w600))),
           GestureDetector(
             onTap: () => onMonth(DateTime(cursor.year, cursor.month + 1)),
             child: Icon(Icons.chevron_right_rounded,
-              size: 16, color: AppColors.stone400)),
+              size: 16, color: DS.faint)),
         ]),
         const SizedBox(height: 6),
         // Day labels
         Row(children: ['M','S','S','R','K','J','S'].map((d) =>
           Expanded(child: Text(d, textAlign: TextAlign.center,
-            style: AppTextStyles.body(8, color: AppColors.stone400)))
+            style: Typo.sans(8, color: DS.faint)))
         ).toList()),
         const SizedBox(height: 3),
         // Mini grid
@@ -885,16 +884,16 @@ class _MiniCalendar extends StatelessWidget {
             return Center(child: Container(
               width: 18, height: 18,
               decoration: BoxDecoration(
-                color: isToday ? AppColors.navy : Colors.transparent,
+                color: isToday ? DS.accent : Colors.transparent,
                 shape: BoxShape.circle),
               child: Stack(alignment: Alignment.center, children: [
-                Text('$day', style: AppTextStyles.body(8,
-                  color: isToday ? Colors.white : AppColors.stone600)),
+                Text('$day', style: Typo.sans(8,
+                  color: isToday ? Colors.white : DS.muted)),
                 if (hasTx && !isToday)
                   Positioned(bottom: 1, child: Container(
                     width: 3, height: 3,
                     decoration: BoxDecoration(
-                      color: AppColors.brand, shape: BoxShape.circle))),
+                      color: DS.brand, shape: BoxShape.circle))),
               ]),
             ));
           },
@@ -922,21 +921,21 @@ class _FilterCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.stone200, width: .5)),
+        border: Border.all(color: DS.hairline, width: .5)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Filter', style: AppTextStyles.body(12, weight: FontWeight.w500)),
+          Text('Filter', style: Typo.sans(12, weight: FontWeight.w500)),
           const SizedBox(height: 8),
           _FilterRow(
             label: 'Pemasukan',
-            color: AppColors.income,
+            color: DS.income,
             value: showIncome,
             onToggle: onIncomeToggle),
           const SizedBox(height: 6),
           _FilterRow(
             label: 'Pengeluaran',
-            color: AppColors.expense,
+            color: DS.expense,
             value: showExpense,
             onToggle: onExpenseToggle),
         ],
@@ -966,21 +965,21 @@ class _FilterRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: value ? color : Colors.transparent,
           border: Border.all(
-            color: value ? color : AppColors.stone300, width: 1.5),
+            color: value ? color : DS.border, width: 1.5),
           borderRadius: BorderRadius.circular(3)),
         child: value
           ? const Icon(Icons.check_rounded, size: 10, color: Colors.white)
           : null),
       const SizedBox(width: 8),
-      Text(label, style: AppTextStyles.body(11,
-        color: value ? AppColors.stone700 : AppColors.stone400,
+      Text(label, style: Typo.sans(11,
+        color: value ? DS.ink : DS.faint,
         weight: value ? FontWeight.w500 : FontWeight.w400)),
       const Spacer(),
       Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
           color: color.withValues(alpha: value ? 0.3 : 0.1),
-          border: Border.all(color: value ? color : AppColors.stone300),
+          border: Border.all(color: value ? color : DS.border),
           borderRadius: BorderRadius.circular(2))),
     ]),
   );
@@ -1000,7 +999,7 @@ class _LegDot extends StatelessWidget {
           border:Border.all(color:color,width:1),
           borderRadius:BorderRadius.circular(2))),
       const SizedBox(width:4),
-      Text(label,style:AppTextStyles.body(10,color:AppColors.stone500)),
+      Text(label,style:Typo.sans(10,color:DS.muted)),
     ]);
 }
 
@@ -1016,13 +1015,13 @@ class _CalStat extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.stone100,
+        color: DS.hairline,
         borderRadius: BorderRadius.circular(8)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: AppTextStyles.body(10, color: AppColors.stone400)),
+        Text(label, style: Typo.sans(10, color: DS.faint)),
         const SizedBox(height: 2),
         Text(Rupiah.compact(value.abs()),
-          style: AppTextStyles.mono(12, color: color, weight: FontWeight.w600)),
+          style: Typo.mono(12, color: color, weight: FontWeight.w600)),
       ]),
     ),
   );
@@ -1101,32 +1100,32 @@ class _MonthlyTabState extends State<_MonthlyTab> {
                       borderRadius: BorderRadius.vertical(
                         top:    const Radius.circular(10),
                         bottom: Radius.circular(isOpen ? 0 : 10)),
-                      border: Border.all(color: AppColors.stone200, width: 0.5)),
+                      border: Border.all(color: DS.hairline, width: 0.5)),
                     child: Row(children: [
                       Container(
                         width: 36, height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.stone100,
+                          color: DS.hairline,
                           borderRadius: BorderRadius.circular(8)),
                         child: Center(child: Text(
                           _months[m].substring(0, 3),
-                          style: AppTextStyles.body(11, weight: FontWeight.w600)))),
+                          style: Typo.sans(11, weight: FontWeight.w600)))),
                       const SizedBox(width: 10),
                       Expanded(child: Text(_months[m],
-                        style: AppTextStyles.body(13, weight: FontWeight.w500))),
+                        style: Typo.sans(13, weight: FontWeight.w500))),
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         Text('+${Rupiah.compact(income)}',
-                          style: AppTextStyles.mono(11,
-                            color: AppColors.income, weight: FontWeight.w600)),
+                          style: Typo.mono(11,
+                            color: DS.income, weight: FontWeight.w600)),
                         Text('−${Rupiah.compact(expense)}',
-                          style: AppTextStyles.mono(11,
-                            color: AppColors.expense, weight: FontWeight.w600)),
+                          style: Typo.mono(11,
+                            color: DS.expense, weight: FontWeight.w600)),
                       ]),
                       const SizedBox(width: 8),
                       Icon(isOpen
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                        size: 18, color: AppColors.stone400),
+                        size: 18, color: DS.faint),
                     ]),
                   ),
                 ),
@@ -1135,10 +1134,10 @@ class _MonthlyTabState extends State<_MonthlyTab> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.stone100,
+                      color: DS.hairline,
                       borderRadius: const BorderRadius.vertical(
                         bottom: Radius.circular(10)),
-                      border: Border.all(color: AppColors.stone200, width: 0.5)),
+                      border: Border.all(color: DS.hairline, width: 0.5)),
                     child: Column(
                       children: List.generate(4, (wi) {
                         final weekTxs = _txWeek(m, wi + 1);
@@ -1150,15 +1149,15 @@ class _MonthlyTabState extends State<_MonthlyTab> {
                             horizontal: 12, vertical: 5),
                           child: Row(children: [
                             Text('Minggu ${wi + 1}  (${labels[wi]})',
-                              style: AppTextStyles.body(11, color: AppColors.stone500)),
+                              style: Typo.sans(11, color: DS.muted)),
                             const Spacer(),
                             Text('+${Rupiah.compact(wInc)}',
-                              style: AppTextStyles.mono(10,
-                                color: AppColors.income, weight: FontWeight.w500)),
+                              style: Typo.mono(10,
+                                color: DS.income, weight: FontWeight.w500)),
                             const SizedBox(width: 10),
                             Text('−${Rupiah.compact(wExp)}',
-                              style: AppTextStyles.mono(10,
-                                color: AppColors.expense, weight: FontWeight.w500)),
+                              style: Typo.mono(10,
+                                color: DS.expense, weight: FontWeight.w500)),
                           ]),
                         );
                       }),
@@ -1204,30 +1203,30 @@ class _TotalTab extends StatelessWidget {
 
         // ── 4 KPI chips ───────────────────────────────────────
         Row(children: [
-          _StatChip(label: 'Total Pemasukan',  value: Rupiah.compact(_totalIncome),  color: AppColors.income),
+          _StatChip(label: 'Total Pemasukan',  value: Rupiah.compact(_totalIncome),  color: DS.income),
           const SizedBox(width: 8),
-          _StatChip(label: 'Total Pengeluaran',value: Rupiah.compact(_totalExpense), color: AppColors.expense),
+          _StatChip(label: 'Total Pengeluaran',value: Rupiah.compact(_totalExpense), color: DS.expense),
         ]),
         const SizedBox(height: 8),
         Row(children: [
           _StatChip(label: 'Laba Bersih', value: Rupiah.compact(_profit),
-            color: _profit >= 0 ? const Color(0xFF185FA5) : AppColors.expense),
+            color: _profit >= 0 ? const Color(0xFF185FA5) : DS.expense),
           const SizedBox(width: 8),
-          _StatChip(label: 'Margin', value: '${_margin.toStringAsFixed(1)}%', color: AppColors.warning),
+          _StatChip(label: 'Margin', value: Pct.formatValue(_margin), color: DS.brandDeep),
         ]),
         const SizedBox(height: 8),
         Row(children: [
-          _StatChip(label: 'Rata-rata Harian', value: Rupiah.compact(_avgDaily), color: AppColors.stone500),
+          _StatChip(label: 'Rata-rata Harian', value: Rupiah.compact(_avgDaily), color: DS.muted),
           const SizedBox(width: 8),
-          _StatChip(label: 'Total Transaksi',  value: '${allTx.length} tx',    color: AppColors.stone500),
+          _StatChip(label: 'Total Transaksi',  value: '${allTx.length} tx',    color: DS.muted),
         ]),
         const SizedBox(height: 14),
 
         // ── Bar chart — income vs expense 6 months ────────────
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Pemasukan vs Pengeluaran', style: AppTextStyles.display(13)),
-            Text('6 bulan terakhir', style: AppTextStyles.body(10, color: AppColors.stone400)),
+            Text('Pemasukan vs Pengeluaran', style: Typo.serif(13)),
+            Text('6 bulan terakhir', style: Typo.sans(10, color: DS.faint)),
             const SizedBox(height: 14),
             Semantics(
               label: 'Grafik batang pemasukan dan pengeluaran enam bulan terakhir',
@@ -1235,9 +1234,9 @@ class _TotalTab extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Row(children: [
-              _LegDot(color: AppColors.income,  label: 'Pemasukan'),
+              _LegDot(color: DS.income,  label: 'Pemasukan'),
               const SizedBox(width: 12),
-              _LegDot(color: AppColors.expense, label: 'Pengeluaran'),
+              _LegDot(color: DS.expense, label: 'Pengeluaran'),
             ]),
           ]),
         ),
@@ -1246,8 +1245,8 @@ class _TotalTab extends StatelessWidget {
         // ── Line chart — cumulative laba ──────────────────────
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Tren Laba Kumulatif', style: AppTextStyles.display(13)),
-            Text('Akumulasi laba per bulan', style: AppTextStyles.body(10, color: AppColors.stone400)),
+            Text('Tren Laba Kumulatif', style: Typo.serif(13)),
+            Text('Akumulasi laba per bulan', style: Typo.sans(10, color: DS.faint)),
             const SizedBox(height: 14),
             Semantics(
               label: 'Grafik garis tren laba enam bulan terakhir',
@@ -1264,8 +1263,8 @@ class _TotalTab extends StatelessWidget {
             return Row(children: [
               Expanded(child: AppCard(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Komposisi Arus Kas', style: AppTextStyles.display(13)),
-                  Text('Pemasukan vs Pengeluaran', style: AppTextStyles.body(10, color: AppColors.stone400)),
+                  Text('Komposisi Arus Kas', style: Typo.serif(13)),
+                  Text('Pemasukan vs Pengeluaran', style: Typo.sans(10, color: DS.faint)),
                   const SizedBox(height: 14),
                   Semantics(
                     label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
@@ -1278,8 +1277,8 @@ class _TotalTab extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(child: AppCard(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Kategori Pengeluaran', style: AppTextStyles.display(13)),
-                  Text('Top 5 terbesar', style: AppTextStyles.body(10, color: AppColors.stone400)),
+                  Text('Kategori Pengeluaran', style: Typo.serif(13)),
+                  Text('Top 5 terbesar', style: Typo.sans(10, color: DS.faint)),
                   const SizedBox(height: 14),
                   Semantics(
                     label: 'Diagram lingkaran komposisi pengeluaran per kategori',
@@ -1291,8 +1290,8 @@ class _TotalTab extends StatelessWidget {
           }
           return Column(children: [
             AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Komposisi Arus Kas', style: AppTextStyles.display(13)),
-              Text('Pemasukan vs Pengeluaran', style: AppTextStyles.body(10, color: AppColors.stone400)),
+              Text('Komposisi Arus Kas', style: Typo.serif(13)),
+              Text('Pemasukan vs Pengeluaran', style: Typo.sans(10, color: DS.faint)),
               const SizedBox(height: 14),
               Semantics(
                     label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
@@ -1303,8 +1302,8 @@ class _TotalTab extends StatelessWidget {
             ])),
             const SizedBox(height: 10),
             AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Kategori Pengeluaran', style: AppTextStyles.display(13)),
-              Text('Top 5 terbesar', style: AppTextStyles.body(10, color: AppColors.stone400)),
+              Text('Kategori Pengeluaran', style: Typo.serif(13)),
+              Text('Top 5 terbesar', style: Typo.sans(10, color: DS.faint)),
               const SizedBox(height: 14),
               Semantics(
                     label: 'Diagram lingkaran komposisi pengeluaran per kategori',
@@ -1318,7 +1317,7 @@ class _TotalTab extends StatelessWidget {
         // ── Category breakdown (bar) ──────────────────────────
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Rincian Pengeluaran', style: AppTextStyles.display(13)),
+            Text('Rincian Pengeluaran', style: Typo.serif(13)),
             const SizedBox(height: 10),
             _CategoryBreakdown(allTx: allTx),
           ]),
@@ -1329,19 +1328,19 @@ class _TotalTab extends StatelessWidget {
         Row(children: [
           Expanded(child: AppCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Frekuensi Transaksi', style: AppTextStyles.display(13)),
+              Text('Frekuensi Transaksi', style: Typo.serif(13)),
               const SizedBox(height: 8),
               _StatsRow(icon: Icons.trending_up_rounded,
                 label: 'Pemasukan', value: '$_incomeCount transaksi',
-                color: AppColors.income),
+                color: DS.income),
               const SizedBox(height: 4),
               _StatsRow(icon: Icons.trending_down_rounded,
                 label: 'Pengeluaran', value: '$_expenseCount transaksi',
-                color: AppColors.expense),
+                color: DS.expense),
               const SizedBox(height: 4),
               _StatsRow(icon: Icons.payments_outlined,
                 label: 'Rata-rata nilai', value: Rupiah.compact(_avgTxValue),
-                color: AppColors.stone500),
+                color: DS.muted),
             ]),
           )),
         ]),
@@ -1350,9 +1349,9 @@ class _TotalTab extends StatelessWidget {
         // ── Frequent transactions ─────────────────────────────
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Transaksi Paling Sering', style: AppTextStyles.display(13)),
+            Text('Transaksi Paling Sering', style: Typo.serif(13)),
             Text('Berdasarkan frekuensi',
-              style: AppTextStyles.body(10, color: AppColors.stone400)),
+              style: Typo.sans(10, color: DS.faint)),
             const SizedBox(height: 10),
             _FrequentList(allTx: allTx),
           ]),
@@ -1376,8 +1375,8 @@ class _StatsRow extends StatelessWidget {
     Icon(icon, size: 14, color: color),
     const SizedBox(width: 8),
     Expanded(child: Text(label,
-      style: AppTextStyles.body(11, color: AppColors.stone500))),
-    Text(value, style: AppTextStyles.body(11, color: color, weight: FontWeight.w600)),
+      style: Typo.sans(11, color: DS.muted))),
+    Text(value, style: Typo.sans(11, color: color, weight: FontWeight.w600)),
   ]);
 }
 
@@ -1418,7 +1417,7 @@ class _LineChart extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: maxY > 0 ? (maxY / 3).clamp(1, double.infinity) : 1,
           getDrawingHorizontalLine: (_) => FlLine(
-            color: AppColors.stone200, strokeWidth: .5),
+            color: DS.hairline, strokeWidth: .5),
         ),
         titlesData: FlTitlesData(
           leftTitles:   AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -1431,7 +1430,7 @@ class _LineChart extends StatelessWidget {
               final i = v.toInt();
               if (i < 0 || i >= monthLabels.length) return const SizedBox.shrink();
               return Text(monthLabels[i],
-                style: AppTextStyles.body(8, color: AppColors.stone400));
+                style: Typo.sans(8, color: DS.faint));
             },
           )),
         ),
@@ -1442,12 +1441,12 @@ class _LineChart extends StatelessWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: _profit(allTx) >= 0 ? AppColors.income : AppColors.expense,
+            color: _profit(allTx) >= 0 ? DS.income : DS.expense,
             barWidth: 2.5,
             dotData: FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: (_profit(allTx) >= 0 ? AppColors.income : AppColors.expense)
+              color: (_profit(allTx) >= 0 ? DS.income : DS.expense)
                 .withValues(alpha: 0.08)),
           ),
         ],
@@ -1472,7 +1471,7 @@ class _PieChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = income + expense;
     if (total == 0) return Center(child: Text('Belum ada data',
-      style: AppTextStyles.body(11, color: AppColors.stone400)));
+      style: Typo.sans(11, color: DS.faint)));
 
     final incPct = income / total * 100;
     final expPct = expense / total * 100;
@@ -1486,18 +1485,18 @@ class _PieChart extends StatelessWidget {
           sections: [
             PieChartSectionData(
               value: income,
-              color: AppColors.income,
+              color: DS.income,
               radius: 40,
-              title: '${incPct.toStringAsFixed(0)}%',
-              titleStyle: AppTextStyles.body(10,
+              title: Pct.formatValue(incPct, decimals: 0),
+              titleStyle: Typo.sans(10,
                 color: Colors.white, weight: FontWeight.w600),
             ),
             PieChartSectionData(
               value: expense,
-              color: AppColors.expense,
+              color: DS.expense,
               radius: 40,
-              title: '${expPct.toStringAsFixed(0)}%',
-              titleStyle: AppTextStyles.body(10,
+              title: Pct.formatValue(expPct, decimals: 0),
+              titleStyle: Typo.sans(10,
                 color: Colors.white, weight: FontWeight.w600),
             ),
           ],
@@ -1505,9 +1504,9 @@ class _PieChart extends StatelessWidget {
       ),
       const SizedBox(height: 8),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _LegDot(color: AppColors.income,  label: 'Masuk ${Rupiah.compact(income)}'),
+        _LegDot(color: DS.income,  label: 'Masuk ${Rupiah.compact(income)}'),
         const SizedBox(width: 12),
-        _LegDot(color: AppColors.expense, label: 'Keluar ${Rupiah.compact(expense)}'),
+        _LegDot(color: DS.expense, label: 'Keluar ${Rupiah.compact(expense)}'),
       ]),
     ]);
   }
@@ -1529,7 +1528,7 @@ class _ExpensePieChart extends StatelessWidget {
     final expenses = allTx.where((t) => !t.isIncome);
     final total    = expenses.fold(0.0, (s, t) => s + t.amount);
     if (total == 0) return Center(child: Text('Belum ada data',
-      style: AppTextStyles.body(11, color: AppColors.stone400)));
+      style: Typo.sans(11, color: DS.faint)));
 
     final map = <String, double>{};
     for (final t in expenses) {
@@ -1551,8 +1550,8 @@ class _ExpensePieChart extends StatelessWidget {
               value: e.value.value,
               color: _catColors[e.key % _catColors.length],
               radius: 44,
-              title: pct >= 8 ? '${pct.toStringAsFixed(0)}%' : '',
-              titleStyle: AppTextStyles.body(9,
+              title: pct >= 8 ? Pct.formatValue(pct, decimals: 0) : '',
+              titleStyle: Typo.sans(9,
                 color: Colors.white, weight: FontWeight.w600),
             );
           }).toList(),
@@ -1580,12 +1579,12 @@ class _StatChip extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
-        color: AppColors.stone100,
+        color: DS.hairline,
         borderRadius: BorderRadius.circular(9)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(value, style: AppTextStyles.mono(13, color: color, weight: FontWeight.w600)),
+        Text(value, style: Typo.mono(13, color: color, weight: FontWeight.w600)),
         const SizedBox(height: 2),
-        Text(label, style: AppTextStyles.body(10, color: AppColors.stone400)),
+        Text(label, style: Typo.sans(10, color: DS.faint)),
       ]),
     ),
   );
@@ -1632,19 +1631,19 @@ class _BarChart extends StatelessWidget {
                 children: [
                   Container(width: 10, height: hi,
                     decoration: BoxDecoration(
-                      color: AppColors.income.withValues(alpha: 0.85),
+                      color: DS.income.withValues(alpha: 0.85),
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(3)))),
                   const SizedBox(width: 2),
                   Container(width: 10, height: he,
                     decoration: BoxDecoration(
-                      color: AppColors.expense.withValues(alpha: 0.75),
+                      color: DS.expense.withValues(alpha: 0.75),
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(3)))),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(lbl, style: AppTextStyles.body(8, color: AppColors.stone400)),
+              Text(lbl, style: Typo.sans(8, color: DS.faint)),
             ],
           ));
         }).toList(),
@@ -1662,7 +1661,7 @@ class _CategoryBreakdown extends StatelessWidget {
     final expenses  = allTx.where((t) => !t.isIncome);
     final total     = expenses.fold(0.0, (s, t) => s + t.amount);
     if (total == 0) return Text('Tidak ada data pengeluaran',
-      style: AppTextStyles.body(12, color: AppColors.stone400));
+      style: Typo.sans(12, color: DS.faint));
 
     final map = <String, double>{};
     for (final t in expenses) {
@@ -1679,26 +1678,26 @@ class _CategoryBreakdown extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(children: [
             SizedBox(width: 90, child: Text(e.key,
-              style: AppTextStyles.body(11, color: AppColors.stone500),
+              style: Typo.sans(11, color: DS.muted),
               overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 8),
             Expanded(child: Container(
               height: 6,
               decoration: BoxDecoration(
-                color: AppColors.stone200,
+                color: DS.hairline,
                 borderRadius: BorderRadius.circular(3)),
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
                 widthFactor: pct,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.expense,
+                    color: DS.expense,
                     borderRadius: BorderRadius.circular(3))))),
             ),
             const SizedBox(width: 8),
-            Text('${(pct * 100).toStringAsFixed(0)}%',
-              style: AppTextStyles.mono(11,
-                color: AppColors.expense, weight: FontWeight.w600)),
+            Text(Pct.formatValue(pct * 100, decimals: 0),
+              style: Typo.mono(11,
+                color: DS.expense, weight: FontWeight.w600)),
           ]),
         );
       }).toList(),
@@ -1722,7 +1721,7 @@ class _FrequentList extends StatelessWidget {
     final top = sorted.take(3).toList();
 
     if (top.isEmpty) return Text('Belum ada data',
-      style: AppTextStyles.body(12, color: AppColors.stone400));
+      style: Typo.sans(12, color: DS.faint));
 
     return Column(
       children: top.asMap().entries.map((e) {
@@ -1733,7 +1732,7 @@ class _FrequentList extends StatelessWidget {
           .where((t) => (t.description ?? t.category.name) == e.value.key)
           .fold(0.0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
         return Column(children: [
-          if (e.key > 0) Divider(height: 0.5, color: AppColors.stone100),
+          if (e.key > 0) Divider(height: 0.5, color: DS.hairline),
           TxListTile(
             tx: tx.copyWith(amount: amtTotal.abs()),
             onTap: () {}),

@@ -69,6 +69,12 @@ class DS {
   /// Teks di atas [brand] — mockup memakai ink, bukan putih.
   static const onBrand = Color(0xFF0D1B2A);
 
+  /// Aksen biru dari mockup — tautan, info, dan grafik sekunder.
+  static Color get accent => _dark ? const Color(0xFF3DB5FF) : const Color(0xFF009FFD);
+
+  /// Latar tenang bernuansa aksen.
+  static Color get accentMuted => _dark ? const Color(0xFF1B2E3D) : const Color(0xFFEAF6FF);
+
   // ── Semantik ──────────────────────────────────────────────────────────────
 
   static Color get income => _dark ? const Color(0xFF3FBF75) : const Color(0xFF1B8A4B);

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/theme_notifier.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/utils/formatters.dart';
 
 /// Label huruf besar berjarak lebar — penanda bagian paling khas di mockup.
 class DsLabel extends StatelessWidget {
@@ -607,7 +608,7 @@ class DsProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: semanticLabel,
-      value: '${(value * 100).toStringAsFixed(1)}%',
+      value: Pct.formatValue(value * 100),
       child: Container(
         height: 6,
         decoration: BoxDecoration(

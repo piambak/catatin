@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
 
 // ─── App Card ─────────────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ class AppCard extends StatelessWidget {
         color: backgroundColor ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: borderColor ?? AppColors.stone200,
+          color: borderColor ?? DS.hairline,
           width: 0.5,
         ),
       ),
@@ -61,7 +61,7 @@ class SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text.toUpperCase(),
-      style: AppTextStyles.label(color: color),
+      style: Typo.label(color: color),
     );
   }
 }
@@ -79,11 +79,11 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = {
-      BadgeVariant.green: (AppColors.incomeLight,  AppColors.income),
-      BadgeVariant.red:   (AppColors.expenseLight, AppColors.expense),
-      BadgeVariant.amber: (AppColors.warningLight, AppColors.warning),
-      BadgeVariant.blue:  (AppColors.navyLight,    AppColors.navy),
-      BadgeVariant.gray:  (AppColors.stone100,     AppColors.stone500),
+      BadgeVariant.green: (DS.income.withValues(alpha: 0.12),  DS.income),
+      BadgeVariant.red:   (DS.expense.withValues(alpha: 0.12), DS.expense),
+      BadgeVariant.amber: (DS.brandMuted, DS.brandDeep),
+      BadgeVariant.blue:  (DS.accent.withValues(alpha: 0.12),    DS.accent),
+      BadgeVariant.gray:  (DS.hairline,     DS.muted),
     };
     final (bg, fg) = colors[variant]!;
 
@@ -93,7 +93,7 @@ class StatusBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(text, style: AppTextStyles.body(10, color: fg, weight: FontWeight.w600)),
+      child: Text(text, style: Typo.sans(10, color: fg, weight: FontWeight.w600)),
     );
   }
 }
@@ -115,13 +115,13 @@ class ShimmerBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: AppColors.stone200,
-      highlightColor: AppColors.stone100,
+      baseColor: DS.hairline,
+      highlightColor: DS.hairline,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.stone200,
+          color: DS.hairline,
           borderRadius: BorderRadius.circular(radius),
         ),
       ),
@@ -153,15 +153,15 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: AppColors.stone300),
+            Icon(icon, size: 48, color: DS.border),
             const SizedBox(height: 12),
             Text(title,
-              style: AppTextStyles.body(15, color: AppColors.stone500, weight: FontWeight.w500),
+              style: Typo.sans(15, color: DS.muted, weight: FontWeight.w500),
               textAlign: TextAlign.center),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(subtitle!,
-                style: AppTextStyles.body(13, color: AppColors.stone400),
+                style: Typo.sans(13, color: DS.faint),
                 textAlign: TextAlign.center),
             ],
             if (action != null) ...[
@@ -191,10 +191,10 @@ class ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40, color: AppColors.stone300),
+            Icon(Icons.error_outline, size: 40, color: DS.border),
             const SizedBox(height: 12),
             Text(message,
-              style: AppTextStyles.body(14, color: AppColors.stone500),
+              style: Typo.sans(14, color: DS.muted),
               textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
@@ -223,7 +223,7 @@ class LabelDivider extends StatelessWidget {
       const Expanded(child: Divider()),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(label, style: AppTextStyles.body(11, color: AppColors.stone400)),
+        child: Text(label, style: Typo.sans(11, color: DS.faint)),
       ),
       const Expanded(child: Divider()),
     ]);
