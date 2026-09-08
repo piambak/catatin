@@ -54,15 +54,6 @@ void main() {
     });
   });
 
-  group('MockLibraryRepository', () {
-    test('pencarian menyaring berdasarkan judul', () async {
-      final repo = MockLibraryRepository();
-      final hits = await repo.getDocuments(query: 'PPh Final');
-      expect(hits, isNotEmpty);
-      expect(hits.every((d) => d.title.isNotEmpty), isTrue);
-    });
-  });
-
   testWidgets('tema terpasang tanpa exception', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,

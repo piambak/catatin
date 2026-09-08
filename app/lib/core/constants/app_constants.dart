@@ -90,8 +90,6 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const dashboard = '/dashboard';
-  static const library = '/library';
-  static const libDetail = '/library/:id';
   static const accounting = '/accounting';
   static const newTx = '/accounting/new';
   static const txDetail = '/accounting/:id';
@@ -128,11 +126,6 @@ class ApiEndpoints {
   static const dashboardSummary = '/dashboard/summary';
   static const dashboardKpiHistory = '/dashboard/kpi-history';
   static const taxCalendar = '/tax-calendar';
-
-  // Pustaka peraturan
-  static const documents = '/documents';
-  static String documentById(String id) => '/documents/$id';
-  static const docCategories = '/documents/categories';
 
   // Simulator pajak murni hitungan lokal — tidak butuh endpoint.
 }

@@ -169,35 +169,3 @@ class HybridDashboardRepository implements DashboardRepository {
         () => mock.getKpiHistory(metric),
       );
 }
-
-// ── Pustaka peraturan ─────────────────────────────────────────────────────────
-
-class HybridLibraryRepository implements LibraryRepository {
-  final LibraryRepository api;
-  final LibraryRepository mock;
-
-  HybridLibraryRepository(this.api, this.mock);
-
-  @override
-  Future<List<DocCategory>> getCategories() =>
-      _orFallback(api.getCategories, mock.getCategories);
-
-  @override
-  Future<List<Document>> getDocuments({
-    String? query,
-    String? categoryId,
-    String? type,
-  }) =>
-      _orFallback(
-        () => api.getDocuments(
-            query: query, categoryId: categoryId, type: type),
-        () => mock.getDocuments(
-            query: query, categoryId: categoryId, type: type),
-      );
-
-  @override
-  Future<Document?> getDocument(String id) => _orFallback(
-        () => api.getDocument(id),
-        () => mock.getDocument(id),
-      );
-}

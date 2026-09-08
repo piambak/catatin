@@ -5,6 +5,5 @@
 
 export 'business_model.dart';
 export 'dashboard_model.dart';
-export 'document_model.dart';
 export 'transaction_model.dart';
 export 'user_model.dart';

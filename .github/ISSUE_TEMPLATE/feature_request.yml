@@ -27,7 +27,6 @@ body:
         - Dashboard
         - Pembukuan (transaksi)
         - Simulator pajak
-        - Pustaka peraturan
         - Pengaturan / profil usaha
         - Lapisan data / backend
         - Tooling & CI

@@ -11,9 +11,6 @@ import '../../screens/accounting/new_transaction_screen.dart';
 import '../../screens/accounting/tx_detail_screen.dart';
 import '../../screens/simulator/simulator_screen.dart';
 import '../../screens/dashboard/notification_screen.dart';
-import '../../screens/library/bookmark_screen.dart';
-import '../../screens/library/library_screen.dart';
-import '../../screens/library/doc_detail_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/business_screen.dart';
 import '../constants/app_constants.dart';
@@ -49,15 +46,6 @@ final appRouter = GoRouter(
           TxDetailScreen(txId: s.pathParameters['id']!),
     ),
     GoRoute(
-      path: '/library/bookmarks',
-      builder: (_, __) => const BookmarkScreen(),
-    ),
-    GoRoute(
-      path: '/library/:id',
-      builder: (_, s) =>
-          DocDetailScreen(docId: s.pathParameters['id']!),
-    ),
-    GoRoute(
       path: AppRoutes.bizSetup,
       builder: (_, __) => const BusinessScreen(isOnboarding: false),
     ),
@@ -76,10 +64,6 @@ final appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.dashboard,
           pageBuilder: (_, __) => _fade(const DashboardScreen()),
-        ),
-        GoRoute(
-          path: AppRoutes.library,
-          pageBuilder: (_, __) => _fade(const LibraryScreen()),
         ),
         GoRoute(
           path: AppRoutes.accounting,
@@ -104,6 +88,11 @@ Future<String?> _guard(BuildContext context, GoRouterState state) async {
   final isLoggedIn  = await StorageService.isLoggedIn();
   final isOnboarded = await StorageService.isOnboarded();
   final loc = state.matchedLocation;
+
+  // Fitur Pustaka peraturan dicabut di Fase Dua — tautan lama ke /library
+  // pernah tayang publik dan bisa masih di-bookmark orang. Alih-alih jatuh ke
+  // layar error bawaan go_router, arahkan ke dashboard.
+  if (loc.startsWith('/library')) return AppRoutes.dashboard;
 
   final onAuth = loc == AppRoutes.login ||
       loc == AppRoutes.register ||
@@ -149,7 +138,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   static const _tabs = [
     AppRoutes.dashboard,
-    AppRoutes.library,
     AppRoutes.accounting,
     AppRoutes.simulator,
     AppRoutes.settings,
@@ -158,7 +146,6 @@ class _MainShellState extends State<MainShell> {
   // Each tab screen is created ONCE and kept alive in IndexedStack
   final _screens = const [
     _DashboardTab(),
-    _LibraryTab(),
     _AccountingTab(),
     _SimulatorTab(),
     _SettingsTab(),
@@ -199,11 +186,6 @@ class _MainShellState extends State<MainShell> {
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined),
-              activeIcon: Icon(Icons.menu_book_rounded),
-              label: 'Perpustakaan',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long_outlined),
               activeIcon: Icon(Icons.receipt_long_rounded),
               label: 'Pembukuan',
@@ -232,12 +214,6 @@ class _DashboardTab extends StatelessWidget {
   const _DashboardTab();
   @override
   Widget build(BuildContext context) => const DashboardScreen();
-}
-
-class _LibraryTab extends StatelessWidget {
-  const _LibraryTab();
-  @override
-  Widget build(BuildContext context) => const LibraryScreen();
 }
 
 class _AccountingTab extends StatelessWidget {

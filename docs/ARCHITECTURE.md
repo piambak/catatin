@@ -77,7 +77,7 @@ Aturan yang dijaga:
 | `core/theme/` | `AppColors`, `AppTextStyles`, `AppTheme` terang & gelap |
 | `core/utils/` | Format rupiah dan tanggal |
 | `models/` | Struktur data murni + `fromJson`/`toJson` |
-| `screens/` | Satu folder per fitur: auth, dashboard, accounting, library, simulator, settings, splash |
+| `screens/` | Satu folder per fitur: auth, dashboard, accounting, simulator, settings, splash |
 | `widgets/` | Komponen per fitur + `widgets/common/` |
 
 ## Fitur
@@ -87,7 +87,6 @@ Aturan yang dijaga:
 | Masuk & daftar | `screens/auth/` | Ya |
 | Dashboard | `screens/dashboard/` | Ya |
 | Pembukuan transaksi | `screens/accounting/` | Ya |
-| Pustaka peraturan | `screens/library/` | Ya (bookmark tetap lokal) |
 | Simulator pajak | `screens/simulator/` | **Tidak** — murni hitungan lokal |
 | Profil usaha & pengaturan | `screens/settings/` | Ya (dengan cadangan lokal) |
 

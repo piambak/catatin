@@ -76,18 +76,6 @@ abstract class DashboardRepository {
   Future<List<KpiPoint>> getKpiHistory(KpiMetric metric);
 }
 
-abstract class LibraryRepository {
-  Future<List<DocCategory>> getCategories();
-
-  Future<List<Document>> getDocuments({
-    String? query,
-    String? categoryId,
-    String? type,
-  });
-
-  Future<Document?> getDocument(String id);
-}
-
 // ── Pemilih implementasi ──────────────────────────────────────────────────────
 
 /// Titik tunggal tempat implementasi repository dipilih.
@@ -107,7 +95,6 @@ class Repos {
   static BusinessRepository? _business;
   static TransactionRepository? _transaction;
   static DashboardRepository? _dashboard;
-  static LibraryRepository? _library;
 
   static AuthRepository get auth => _auth ??= switch (AppConfig.dataSource) {
         DataSource.mock => MockAuthRepository(),
@@ -140,21 +127,12 @@ class Repos {
             ApiDashboardRepository(), MockDashboardRepository()),
       };
 
-  static LibraryRepository get library =>
-      _library ??= switch (AppConfig.dataSource) {
-        DataSource.mock => MockLibraryRepository(),
-        DataSource.api => ApiLibraryRepository(),
-        DataSource.hybrid =>
-          HybridLibraryRepository(ApiLibraryRepository(), MockLibraryRepository()),
-      };
-
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 
   static set auth(AuthRepository value) => _auth = value;
   static set business(BusinessRepository value) => _business = value;
   static set transaction(TransactionRepository value) => _transaction = value;
   static set dashboard(DashboardRepository value) => _dashboard = value;
-  static set library(LibraryRepository value) => _library = value;
 
   /// Buang semua instance supaya dibangun ulang dari [AppConfig].
   static void reset() {
@@ -162,6 +140,5 @@ class Repos {
     _business = null;
     _transaction = null;
     _dashboard = null;
-    _library = null;
   }
 }

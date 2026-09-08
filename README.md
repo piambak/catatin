@@ -4,8 +4,8 @@
 [![Publikasi web](https://github.com/piambak/catatin/actions/workflows/publish-web.yml/badge.svg)](https://github.com/piambak/catatin/actions/workflows/publish-web.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38.4%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 
-Catat transaksi, hitung pajak, dan pahami aturan perpajakan UMKM — dalam satu
-aplikasi. Dibangun dengan Flutter, tayang sebagai PWA.
+Catat transaksi dan hitung pajak UMKM dalam satu aplikasi. Dibangun dengan
+Flutter, tayang sebagai PWA.
 
 **Coba sekarang → [piambak.github.io/catatin](https://piambak.github.io/catatin/)**
 
@@ -32,7 +32,6 @@ butuh backend, tidak butuh akun, tidak ada satu pun request jaringan.
 | **Dashboard** | Ringkasan pemasukan, pengeluaran, dan laba; tren bulanan; progres ambang PKP Rp 4,8 M; tenggat pajak terdekat |
 | **Pembukuan** | Catat transaksi per kategori, lengkap dengan penanda relevansi pajak dan HPP |
 | **Simulator pajak** | PPh Final 0,5% (PP 23/2018), PPh 21 metode TER (PMK 168/2023), perbandingan skenario, kalender pajak |
-| **Pustaka peraturan** | UU, PP, PMK, PER DJP, SE, dan panduan — dengan pencarian dan bookmark |
 | **Profil usaha** | NPWP, status PKP, jenis usaha, jumlah karyawan |
 | **Mode gelap** | Seluruh aplikasi, berganti seketika |
 

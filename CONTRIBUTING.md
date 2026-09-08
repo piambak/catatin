@@ -68,8 +68,8 @@ fix(accounting): tanggal transaksi tergeser satu hari di zona WITA
 docs(backend): lengkapi kontrak endpoint /tax-calendar
 ```
 
-Cakupan (`dashboard`, `accounting`, `library`, `simulator`, `settings`, `auth`,
-`data`, `ci`) membantu saat menelusuri riwayat per fitur.
+Cakupan (`dashboard`, `accounting`, `simulator`, `settings`, `auth`, `data`,
+`ci`) membantu saat menelusuri riwayat per fitur.
 
 ## 4. Gaya kode
 

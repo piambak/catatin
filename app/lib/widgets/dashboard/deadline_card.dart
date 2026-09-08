@@ -128,13 +128,11 @@ class _DeadlineRow extends StatelessWidget {
 class QuickActions extends StatelessWidget {
   final VoidCallback onNewTx;
   final VoidCallback onSimulator;
-  final VoidCallback onLibrary;
 
   const QuickActions({
     super.key,
     required this.onNewTx,
     required this.onSimulator,
-    required this.onLibrary,
   });
 
   @override
@@ -153,13 +151,6 @@ class QuickActions extends StatelessWidget {
         color: AppColors.navy,
         bg: AppColors.navyLight,
         onTap: onSimulator,
-      ),
-      _Action(
-        label: 'Cari Regulasi',
-        icon: Icons.menu_book_outlined,
-        color: AppColors.warning,
-        bg: AppColors.warningLight,
-        onTap: onLibrary,
       ),
     ];
 
