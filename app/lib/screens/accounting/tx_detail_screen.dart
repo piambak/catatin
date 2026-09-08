@@ -94,7 +94,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             const SizedBox(width: 4),
             Expanded(
               child: Text('Detail transaksi',
-                  style: T.serif(bp.isExpanded ? 30 : 24)),
+                  style: Typo.serif(bp.isExpanded ? 30 : 24)),
             ),
           ],
         ),
@@ -117,7 +117,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
               const SizedBox(height: 16),
               Text('Transaksi tidak ditemukan.',
                   textAlign: TextAlign.center,
-                  style: T.sans(15, color: DS.body)),
+                  style: Typo.sans(15, color: DS.body)),
               const SizedBox(height: 20),
               DsButton(label: 'Coba lagi', onPressed: _load),
             ],
@@ -166,12 +166,12 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(amountText,
-                  style: T.serif(42, color: accent, height: 1, spacing: -1)),
+                  style: Typo.serif(42, color: accent, height: 1, spacing: -1)),
             ),
             if (tx.description?.isNotEmpty ?? false) ...[
               const SizedBox(height: 12),
               Text(tx.description!,
-                  style: T.sans(16, color: DS.body, height: 1.5)),
+                  style: Typo.sans(16, color: DS.body, height: 1.5)),
             ],
           ],
         ),
@@ -195,29 +195,29 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             title: 'Kategori',
             trailing:
                 '${tx.category.icon} ${tx.category.name}${tags.isEmpty ? '' : ' · ${tags.join(' · ')}'}',
-            trailingStyle: T.sans(14, color: DS.ink, weight: FontWeight.w500),
+            trailingStyle: Typo.sans(14, color: DS.ink, weight: FontWeight.w500),
           ),
           DsListRow(
             title: 'Tanggal',
             trailing: Tanggal.long(tx.date),
-            trailingStyle: T.sans(14, color: DS.ink),
+            trailingStyle: Typo.sans(14, color: DS.ink),
           ),
           DsListRow(
             title: 'Metode pembayaran',
             trailing:
                 _paymentLabels[tx.paymentMethod] ?? tx.paymentMethod,
-            trailingStyle: T.sans(14, color: DS.ink),
+            trailingStyle: Typo.sans(14, color: DS.ink),
           ),
           if (tx.receiptNote?.isNotEmpty ?? false)
             DsListRow(
               title: 'Catatan nota',
               trailing: tx.receiptNote!,
-              trailingStyle: T.sans(14, color: DS.ink),
+              trailingStyle: Typo.sans(14, color: DS.ink),
             ),
           DsListRow(
             title: 'Dicatat',
             trailing: Tanggal.long(tx.createdAt),
-            trailingStyle: T.sans(14, color: DS.muted),
+            trailingStyle: Typo.sans(14, color: DS.muted),
             showDivider: false,
           ),
         ],
@@ -246,14 +246,14 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text('Hapus transaksi ini?',
-                      style: T.sans(14.5,
+                      style: Typo.sans(14.5,
                           weight: FontWeight.w600, color: DS.expense)),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Text('Tindakan ini tidak bisa dibatalkan.',
-                style: T.sans(13, color: DS.body)),
+                style: Typo.sans(13, color: DS.body)),
             const SizedBox(height: 14),
             Row(
               children: [

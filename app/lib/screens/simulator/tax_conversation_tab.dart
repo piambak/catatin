@@ -249,7 +249,7 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('Rp', style: T.mono(18, color: DS.faint)),
+                    Text('Rp', style: Typo.mono(18, color: DS.faint)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
@@ -260,13 +260,13 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         autofocus: true,
-                        style: T.mono(wide ? 32 : 30, color: DS.ink),
+                        style: Typo.mono(wide ? 32 : 30, color: DS.ink),
                         decoration: InputDecoration(
                           isDense: true,
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                           hintText: '0',
-                          hintStyle: T.mono(wide ? 32 : 30, color: DS.hairline),
+                          hintStyle: Typo.mono(wide ? 32 : 30, color: DS.hairline),
                         ),
                       ),
                     ),
@@ -279,7 +279,7 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
               _income > 0
                   ? 'Ketuk kolomnya untuk mengubah.'
                   : 'Ketik nominal tanpa titik — pemisah ribuan ditambahkan otomatis.',
-              style: T.sans(12.5, color: DS.faint),
+              style: Typo.sans(12.5, color: DS.faint),
             ),
             const SizedBox(height: 14),
             DsButton(
@@ -343,11 +343,11 @@ class _StepShell extends StatelessWidget {
           const SizedBox(height: 8),
         ],
         Text(question,
-            style: T.sans(wide ? 20 : 19,
+            style: Typo.sans(wide ? 20 : 19,
                 weight: FontWeight.w600, color: DS.ink, height: 1.35)),
         if (hint != null) ...[
           const SizedBox(height: 6),
-          Text(hint!, style: T.sans(13.5, color: DS.muted)),
+          Text(hint!, style: Typo.sans(13.5, color: DS.muted)),
         ],
         const SizedBox(height: 16),
         child,
@@ -440,12 +440,12 @@ class _ResultPanel extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(_taxText,
-                        style: T.serif(expanded ? 40 : 34,
+                        style: Typo.serif(expanded ? 40 : 34,
                             color: DS.invInk, height: 1.1)),
                   ),
                   const SizedBox(height: 6),
                   Text(_subText,
-                      style: T.sans(expanded ? 14.5 : 13.5, color: DS.soft)),
+                      style: Typo.sans(expanded ? 14.5 : 13.5, color: DS.soft)),
                 ],
               ),
             ),
@@ -466,7 +466,7 @@ class _ResultPanel extends StatelessWidget {
               constraints:
                   BoxConstraints(maxWidth: expanded ? 560 : double.infinity),
               child: Text(_explainText,
-                  style: T.sans(expanded ? 15 : 14.5,
+                  style: Typo.sans(expanded ? 15 : 14.5,
                       color: DS.invBody, height: 1.6)),
             ),
           ],

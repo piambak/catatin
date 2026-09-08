@@ -99,12 +99,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const DsWordmark(size: 28),
                       const SizedBox(height: 36),
-                      Text('Masuk', style: T.serif(32)),
+                      Text('Masuk', style: Typo.serif(32)),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           Text('Belum punya akun?',
-                              style: T.sans(13.5, color: DS.muted)),
+                              style: Typo.sans(13.5, color: DS.muted)),
                           const SizedBox(width: 5),
                           _InlineLink(
                             'Daftar gratis',
@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 12),
                             child: Text('atau coba dulu',
-                                style: T.sans(12, color: DS.faint)),
+                                style: Typo.sans(12, color: DS.faint)),
                           ),
                           Expanded(child: Divider(color: DS.hairline)),
                         ],
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Mode demo memakai data contoh. Tidak ada koneksi ke '
                         'server dan tidak ada data asli yang tersimpan.',
-                        style: T.sans(12, color: DS.faint, height: 1.45),
+                        style: Typo.sans(12, color: DS.faint, height: 1.45),
                       ),
                     ],
                   ),
@@ -230,7 +230,7 @@ class _InlineLink extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           child: Text(
             label,
-            style: T.sans(13.5,
+            style: Typo.sans(13.5,
                 weight: FontWeight.w600, color: color ?? DS.link),
           ),
         ),

@@ -119,8 +119,8 @@ class Radii {
 /// di-bundle di `assets/fonts/` — hanya DM Sans dan DM Serif Display. Sampai
 /// DM Mono ditambahkan ke pubspec, [mono] memakai `monospace` bawaan sistem,
 /// sama seperti kode lama.
-class T {
-  T._();
+class Typo {
+  Typo._();
 
   static TextStyle serif(double size, {Color? color, double? height, double? spacing}) =>
       TextStyle(

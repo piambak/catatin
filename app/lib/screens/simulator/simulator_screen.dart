@@ -70,13 +70,13 @@ class _SimulatorScreenState extends State<SimulatorScreen>
                             const SizedBox(height: 8),
                           ],
                           Text('Hitung pajak Anda',
-                              style: T.serif(bp.isExpanded ? 29 : 23)),
+                              style: Typo.serif(bp.isExpanded ? 29 : 23)),
                           const SizedBox(height: 4),
                           Text(
                             bp.isExpanded
                                 ? 'Versi web memakai alur yang sama — hanya lebih lapang.'
                                 : 'Tiga pertanyaan, tanpa istilah rumit.',
-                            style: T.sans(bp.isExpanded ? 15 : 13.5,
+                            style: Typo.sans(bp.isExpanded ? 15 : 13.5,
                                 color: DS.muted),
                           ),
                         ],
@@ -180,7 +180,7 @@ class _TabPill extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label,
-              style: T.sans(13.5,
+              style: Typo.sans(13.5,
                   weight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? DS.brandInk : DS.muted),
             ),

@@ -328,11 +328,11 @@ keduanya lebih dalam dari sebelumnya.
 | T-12 | Belum ada kerangka l10n | ⬜ | Frontend | Fase berikutnya |
 | T-13 | Tabel TER tampilan menyimpang dari tabel hitung | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-14 | 3.225 baris widget dashboard jadi yatim setelah redesain | 🟡 | Frontend | Perlu keputusan |
-| T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | 🟡 | Frontend | Sebelum kode baru menyebar |
+| T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 
 ---
 
-### 🟡 T-15 — Kelas tipografi bernama `T` bentrok dengan parameter generic
+### ✅ T-15 — Kelas tipografi bernama `T` bentrok dengan parameter generic *(selesai 8 Sep 2026)*
 
 `design_tokens.dart` mengekspor kelas gaya teks bernama **`T`** (`T.sans`,
 `T.serif`, `T.mono`). `T` juga nama konvensional untuk parameter generic di
@@ -349,10 +349,11 @@ Terjadi nyata saat menggayakan ulang `tx_add_sheet.dart`, yang punya
 parameter generic-nya jadi `V` — **itu memperbaiki gejala di tempat yang salah**:
 kode pemanggil dipaksa menghindari nama yang lazim gara-gara token.
 
-- [ ] **Frontend** — ganti nama kelas `T` jadi sesuatu yang tidak bentrok
-      (mis. `Type_`, `Ts`, atau `AppText`), lalu kembalikan generic `V` di
-      `tx_add_sheet.dart` ke `T`. Mekanis tapi menyentuh banyak berkas, jadi
-      PR tersendiri — dan sebaiknya sebelum lebih banyak layar memakai `T`.
+- [x] **Frontend** — kelas `T` diganti nama jadi **`Typo`** (142 pemakaian di
+      15 berkas), lalu generic `V` di `tx_add_sheet.dart` dikembalikan ke `T`.
+      `Typo` dipilih supaya sebaris dengan token lain (`DS`, `Space`, `Radii`)
+      dan tidak tertukar dengan `AppTextStyles` lama yang masih dipakai layar
+      yang belum didesain ulang.
 
 ---
 
@@ -610,6 +611,20 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-08** — Frontend — **T-15 selesai.** Kelas tipografi `T` di
+  `design_tokens.dart` diganti nama jadi `Typo` — 142 pemakaian di 15 berkas —
+  lalu parameter generic di `tx_add_sheet.dart` dikembalikan dari `V` ke `T`.
+  Ini menghapus tambalan yang dipasang saat menggayakan ulang alur transaksi:
+  waktu itu generic-nya yang mengalah, padahal token-lah yang memakai nama
+  konvensional milik generic. Sekarang `_DdItem<T>` dan `_SheetDropdown<T>`
+  memakai `T` seperti lazimnya, dan `Typo.sans()` tetap resolve di dalamnya.
+  `Typo` dipilih agar sebaris dengan `DS`, `Space`, dan `Radii`, sekaligus
+  tidak tertukar dengan `AppTextStyles` lama yang masih dipakai layar yang
+  belum didesain ulang.
+  Nol perubahan perilaku — murni penggantian nama.
+  `flutter analyze` → 0 error, 0 warning, 39 info. `flutter test` → 39 lulus,
+  1 di-skip. `flutter build web --release` → berhasil.
 
 - **2026-09-08** — Frontend — Alur transaksi diseragamkan gayanya, dan **T-15**
   (baru) dicatat.

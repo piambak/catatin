@@ -81,12 +81,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       const DsWordmark(size: 28),
                       const SizedBox(height: 36),
-                      Text('Buat akun', style: T.serif(32)),
+                      Text('Buat akun', style: Typo.serif(32)),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           Text('Sudah punya akun?',
-                              style: T.sans(13.5, color: DS.muted)),
+                              style: Typo.sans(13.5, color: DS.muted)),
                           const SizedBox(width: 5),
                           Semantics(
                             button: true,
@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 2, vertical: 4),
                                 child: Text('Masuk',
-                                    style: T.sans(13.5,
+                                    style: Typo.sans(13.5,
                                         weight: FontWeight.w600,
                                         color: DS.link)),
                               ),

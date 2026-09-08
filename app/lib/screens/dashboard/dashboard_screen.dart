@@ -144,8 +144,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     subtitle: Tanggal.long(_deadlines[i].deadline),
                     trailing: _followUpAmount(i),
                     trailingStyle: i == 1
-                        ? T.mono(14, color: DS.muted)
-                        : T.sans(13, color: DS.faint),
+                        ? Typo.mono(14, color: DS.muted)
+                        : Typo.sans(13, color: DS.faint),
                     showDivider: i < _deadlines.length - 1,
                   ),
               ],
@@ -293,7 +293,7 @@ class _Header extends StatelessWidget {
             children: [
               DsLabel(Tanggal.long(DateTime.now()), size: compact ? 10.5 : 11),
               const SizedBox(height: 8),
-              Text(greeting, style: T.serif(compact ? 25 : 34, spacing: -0.2)),
+              Text(greeting, style: Typo.serif(compact ? 25 : 34, spacing: -0.2)),
             ],
           ),
         ),
@@ -336,10 +336,10 @@ class _NextObligation extends StatelessWidget {
           const DsLabel('Kewajiban berikutnya'),
           const SizedBox(height: 14),
           Text('Tidak ada tenggat terdekat',
-              style: T.serif(compact ? 28 : 38)),
+              style: Typo.serif(compact ? 28 : 38)),
           const SizedBox(height: 12),
           Text('Semua kewajiban pajak Anda sudah tercatat aman.',
-              style: T.sans(15, color: DS.body)),
+              style: Typo.sans(15, color: DS.body)),
         ],
       );
     }
@@ -360,7 +360,7 @@ class _NextObligation extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(amountText,
-                    style: T.serif(44, height: 1, spacing: -1)),
+                    style: Typo.serif(44, height: 1, spacing: -1)),
               ),
               const SizedBox(height: 14),
               DsStatusPill(text: pillText),
@@ -371,7 +371,7 @@ class _NextObligation extends StatelessWidget {
             spacing: 16,
             runSpacing: 12,
             children: [
-              Text(amountText, style: T.serif(60, height: 1, spacing: -1.5)),
+              Text(amountText, style: Typo.serif(60, height: 1, spacing: -1.5)),
               DsStatusPill(text: pillText),
             ],
           );
@@ -395,7 +395,7 @@ class _NextObligation extends StatelessWidget {
                 : '${d.label} — jatuh tempo ${Tanggal.long(d.deadline)}. '
                     'Dihitung dari omzet ${Rupiah.format(income)} dengan tarif '
                     '${Pct.format(AppConstants.pphFinalRate)} (PP 23/2018).',
-            style: T.sans(compact ? 15.5 : 16, color: DS.body, height: 1.55),
+            style: Typo.sans(compact ? 15.5 : 16, color: DS.body, height: 1.55),
           ),
         ),
         SizedBox(height: compact ? 20 : 22),
@@ -493,13 +493,13 @@ class _MonthTotals extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(label,
-                        style: T.sans(12.5, color: DS.muted, height: 1.3)),
+                        style: Typo.sans(12.5, color: DS.muted, height: 1.3)),
                     const SizedBox(height: 4),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(Rupiah.plain(value),
-                          style: T.mono(17, color: color)),
+                          style: Typo.mono(17, color: color)),
                     ),
                   ],
                 ),
@@ -525,13 +525,13 @@ class _MonthTotals extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(items[i].$1, style: T.sans(13, color: DS.muted)),
+                  Text(items[i].$1, style: Typo.sans(13, color: DS.muted)),
                   const SizedBox(height: 5),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(Rupiah.format(items[i].$2),
-                        style: T.mono(20, color: items[i].$3)),
+                        style: Typo.mono(20, color: items[i].$3)),
                   ),
                 ],
               ),
@@ -556,7 +556,7 @@ class _PkpProgress extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(Rupiah.format(ytd), style: T.mono(21)),
+        Text(Rupiah.format(ytd), style: Typo.mono(21)),
         const SizedBox(height: 14),
         DsProgressBar(
           value: ratio,
@@ -567,7 +567,7 @@ class _PkpProgress extends StatelessWidget {
           ratio >= 0.8
               ? '$pctText dari batas PKP Rp 4,8 M. Omzet Anda mendekati ambang — siapkan rencana PKP.'
               : '$pctText dari batas PKP Rp 4,8 M. Anda masih aman di skema UMKM 0,5%.',
-          style: T.sans(13, color: DS.muted, height: 1.5),
+          style: Typo.sans(13, color: DS.muted, height: 1.5),
         ),
       ],
     );
@@ -584,7 +584,7 @@ class _RecentList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) {
       return Text('Belum ada transaksi bulan ini.',
-          style: T.sans(14, color: DS.muted));
+          style: Typo.sans(14, color: DS.muted));
     }
     return Column(
       children: [
@@ -603,7 +603,7 @@ class _RecentList extends StatelessWidget {
       title: title,
       trailing: '${isIncome ? '+' : '−'}${Rupiah.plain(tx.amount)}',
       trailingStyle:
-          T.mono(13.5, color: isIncome ? DS.income : DS.muted),
+          Typo.mono(13.5, color: isIncome ? DS.income : DS.muted),
       showDivider: showDivider,
       onTap: () => onTap(tx),
     );
@@ -632,7 +632,7 @@ class _TextLink extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Text(
             label,
-            style: T.sans(block ? 14.5 : 13.5,
+            style: Typo.sans(block ? 14.5 : 13.5,
                 weight: FontWeight.w500, color: DS.link),
           ),
         ),
@@ -750,7 +750,7 @@ class _DashboardError extends StatelessWidget {
             const SizedBox(height: 16),
             Text(message,
                 textAlign: TextAlign.center,
-                style: T.sans(15, color: DS.body)),
+                style: Typo.sans(15, color: DS.body)),
             const SizedBox(height: 20),
             DsButton(label: 'Coba lagi', onPressed: onRetry),
           ],

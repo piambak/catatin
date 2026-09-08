@@ -72,20 +72,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: DS.surface,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Radii.lg)),
-        title: Text('Keluar dari akun?', style: T.serif(20)),
+        title: Text('Keluar dari akun?', style: Typo.serif(20)),
         content: Text(
           'Anda perlu masuk lagi untuk melihat catatan dan simulasi pajak.',
-          style: T.sans(14, color: DS.body),
+          style: Typo.sans(14, color: DS.body),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: T.sans(14, color: DS.muted)),
+            child: Text('Batal', style: Typo.sans(14, color: DS.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('Ya, keluar',
-                style: T.sans(14, weight: FontWeight.w600, color: DS.expense)),
+                style: Typo.sans(14, weight: FontWeight.w600, color: DS.expense)),
           ),
         ],
       ),
@@ -120,7 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListView(
       padding: EdgeInsets.fromLTRB(pad, 24, pad, 32 + Bp.bottomInset(bp)),
       children: [
-        Text('Pengaturan', style: T.serif(25)),
+        Text('Pengaturan', style: Typo.serif(25)),
         const SizedBox(height: 24),
         _identity(),
         const SizedBox(height: 30),
@@ -147,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Pengaturan', style: T.serif(34)),
+              Text('Pengaturan', style: Typo.serif(34)),
               const SizedBox(height: 32),
               Expanded(
                 child: Row(
@@ -210,7 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         _sections[i],
-                        style: T.sans(14.5,
+                        style: Typo.sans(14.5,
                             weight: _section == i
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -237,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(color: DS.wordmark, shape: BoxShape.circle),
           alignment: Alignment.center,
           child: Text(initial,
-              style: T.sans(20, weight: FontWeight.w600, color: Colors.white)),
+              style: Typo.sans(20, weight: FontWeight.w600, color: Colors.white)),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -246,9 +246,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(_name ?? '—',
-                  style: T.sans(16, weight: FontWeight.w600, color: DS.ink)),
+                  style: Typo.sans(16, weight: FontWeight.w600, color: DS.ink)),
               const SizedBox(height: 2),
-              Text(_email ?? '—', style: T.sans(13, color: DS.muted)),
+              Text(_email ?? '—', style: Typo.sans(13, color: DS.muted)),
             ],
           ),
         ),
@@ -277,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 DsListRow(
                   title: 'Status PKP',
                   trailing: b.pkpStatus ? 'PKP' : 'Non-PKP',
-                  trailingStyle: T.sans(14,
+                  trailingStyle: Typo.sans(14,
                       weight: FontWeight.w600,
                       color: b.pkpStatus ? DS.brandDeep : DS.income),
                   showDivider: false,
@@ -303,13 +303,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Mode gelap',
-                        style: T.sans(15, color: DS.body, height: 1.3)),
+                        style: Typo.sans(15, color: DS.body, height: 1.3)),
                     const SizedBox(height: 2),
                     Text(
                       dark
                           ? 'Sedang aktif — berlaku di seluruh aplikasi.'
                           : 'Nyalakan untuk tampilan gelap di seluruh aplikasi.',
-                      style: T.sans(12.5, color: DS.faint, height: 1.3),
+                      style: Typo.sans(12.5, color: DS.faint, height: 1.3),
                     ),
                   ],
                 ),
@@ -375,7 +375,7 @@ class _EditLink extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text('Ubah',
                 style:
-                    T.sans(13.5, weight: FontWeight.w500, color: DS.link)),
+                    Typo.sans(13.5, weight: FontWeight.w500, color: DS.link)),
           ),
         ),
       );
@@ -394,7 +394,7 @@ class _SetupPrompt extends StatelessWidget {
         Text(
           'Profil usaha belum diisi. Simulator memakai data ini untuk '
           'menentukan skema pajak yang berlaku.',
-          style: T.sans(14, color: DS.body, height: 1.5),
+          style: Typo.sans(14, color: DS.body, height: 1.5),
         ),
         const SizedBox(height: 14),
         DsButton(label: 'Isi profil usaha', onPressed: onTap),

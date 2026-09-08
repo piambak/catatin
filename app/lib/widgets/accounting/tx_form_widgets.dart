@@ -105,7 +105,7 @@ class _TypeBtn extends StatelessWidget {
                     child: Text(
                       label,
                       overflow: TextOverflow.ellipsis,
-                      style: T.sans(13.5,
+                      style: Typo.sans(13.5,
                           weight: FontWeight.w600,
                           color: selected ? Colors.white : DS.muted),
                     ),
@@ -152,7 +152,7 @@ class _AmountInputState extends State<AmountInput> {
       children: [
         Text(
           widget.isIncome ? 'Jumlah pemasukan' : 'Jumlah pengeluaran',
-          style: T.sans(13, weight: FontWeight.w500, color: DS.body),
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
         ),
         const SizedBox(height: 10),
         Container(
@@ -168,7 +168,7 @@ class _AmountInputState extends State<AmountInput> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('Rp', style: T.mono(18, color: DS.faint)),
+              Text('Rp', style: Typo.mono(18, color: DS.faint)),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -179,11 +179,11 @@ class _AmountInputState extends State<AmountInput> {
                     _ThousandSeparatorFormatter(),
                   ],
                   onChanged: (_) => setState(() {}),
-                  style: T.mono(28, color: accent, weight: FontWeight.w600),
+                  style: Typo.mono(28, color: accent, weight: FontWeight.w600),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: '0',
-                    hintStyle: T.mono(28, color: DS.hairline),
+                    hintStyle: Typo.mono(28, color: DS.hairline),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -197,10 +197,10 @@ class _AmountInputState extends State<AmountInput> {
         ),
         if (hasError) ...[
           const SizedBox(height: 6),
-          Text(widget.error!, style: T.sans(12, color: DS.expense)),
+          Text(widget.error!, style: Typo.sans(12, color: DS.expense)),
         ] else if (parsed > 0) ...[
           const SizedBox(height: 6),
-          Text(Rupiah.format(parsed), style: T.sans(12, color: DS.faint)),
+          Text(Rupiah.format(parsed), style: Typo.sans(12, color: DS.faint)),
         ],
       ],
     );
@@ -247,11 +247,11 @@ class CategoryGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Kategori',
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 10),
         if (categories.isEmpty)
           Text('Tidak ada kategori untuk jenis transaksi ini.',
-              style: T.sans(13, color: DS.muted))
+              style: Typo.sans(13, color: DS.muted))
         else
           Wrap(
             spacing: 8,
@@ -267,7 +267,7 @@ class CategoryGrid extends StatelessWidget {
           ),
         if (error != null) ...[
           const SizedBox(height: 8),
-          Text(error!, style: T.sans(12, color: DS.expense)),
+          Text(error!, style: Typo.sans(12, color: DS.expense)),
         ],
       ],
     );
@@ -327,7 +327,7 @@ class _CategoryChip extends StatelessWidget {
                     children: [
                       Text(
                         category.name,
-                        style: T.sans(13.5,
+                        style: Typo.sans(13.5,
                             weight:
                                 selected ? FontWeight.w600 : FontWeight.w400,
                             color: selected
@@ -338,7 +338,7 @@ class _CategoryChip extends StatelessWidget {
                       if (tags.isNotEmpty)
                         Text(tags.join(' · '),
                             style:
-                                T.sans(10.5, color: DS.faint, height: 1.25)),
+                                Typo.sans(10.5, color: DS.faint, height: 1.25)),
                     ],
                   ),
                 ],
@@ -369,7 +369,7 @@ class PaymentMethodPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Metode pembayaran',
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -432,7 +432,7 @@ class _PaymentChip extends StatelessWidget {
                   const SizedBox(width: 7),
                   Text(
                     label,
-                    style: T.sans(13.5,
+                    style: Typo.sans(13.5,
                         weight:
                             selected ? FontWeight.w600 : FontWeight.w400,
                         color: selected ? DS.brandInk : DS.body),

@@ -255,12 +255,12 @@ class _BusinessScreenState extends State<BusinessScreen> {
           const DsWordmark(size: 26),
           const SizedBox(height: 30),
           Text('Ceritakan usaha Anda',
-              style: T.serif(bp.isExpanded ? 32 : 27)),
+              style: Typo.serif(bp.isExpanded ? 32 : 27)),
           const SizedBox(height: 10),
           Text(
             'Tiga hal ini menentukan skema pajak yang berlaku untuk Anda. '
             'Semuanya bisa diubah kapan saja lewat Pengaturan.',
-            style: T.sans(15, color: DS.body, height: 1.55),
+            style: Typo.sans(15, color: DS.body, height: 1.55),
           ),
         ],
       );
@@ -275,7 +275,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
         ),
         const SizedBox(width: 4),
         Expanded(
-          child: Text('Profil usaha', style: T.serif(bp.isExpanded ? 32 : 25)),
+          child: Text('Profil usaha', style: Typo.serif(bp.isExpanded ? 32 : 25)),
         ),
       ],
     );
@@ -286,7 +286,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Jenis usaha',
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -309,7 +309,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Status PKP',
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -349,7 +349,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                   child: Text(
                     'Sebagai PKP, Anda wajib memungut PPN 11% dan '
                     'menerbitkan e-Faktur untuk setiap transaksi.',
-                    style: T.sans(12.5, color: DS.brandInk, height: 1.45),
+                    style: Typo.sans(12.5, color: DS.brandInk, height: 1.45),
                   ),
                 ),
               ],
@@ -379,7 +379,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                   children: [
                     Text('Detail tambahan',
                         style:
-                            T.sans(14, weight: FontWeight.w600, color: DS.ink)),
+                            Typo.sans(14, weight: FontWeight.w600, color: DS.ink)),
                     const SizedBox(width: 6),
                     Icon(
                       _showMore
@@ -390,7 +390,7 @@ class _BusinessScreenState extends State<BusinessScreen> {
                     ),
                     const Spacer(),
                     if (!_showMore)
-                      Text('Opsional', style: T.sans(12.5, color: DS.faint)),
+                      Text('Opsional', style: Typo.sans(12.5, color: DS.faint)),
                   ],
                 ),
               ),
@@ -471,7 +471,7 @@ class _SelectableChip extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: T.sans(14,
+              style: Typo.sans(14,
                   weight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected ? DS.brandInk : DS.body),
             ),
@@ -524,12 +524,12 @@ class _PkpOption extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(label,
-                      style: T.sans(15,
+                      style: Typo.sans(15,
                           weight: FontWeight.w600,
                           color: selected ? DS.brandInk : DS.ink)),
                   const SizedBox(height: 3),
                   Text(subtitle,
-                      style: T.sans(12, color: DS.muted, height: 1.35)),
+                      style: Typo.sans(12, color: DS.muted, height: 1.35)),
                 ],
               ),
             ),
@@ -561,12 +561,12 @@ class _SuccessView extends StatelessWidget {
                 child: Icon(Icons.check_rounded, size: 30, color: DS.brandDeep),
               ),
               const SizedBox(height: 20),
-              Text('Tersimpan', style: T.serif(26)),
+              Text('Tersimpan', style: Typo.serif(26)),
               const SizedBox(height: 8),
               Text(
                 'Profil usaha Anda sudah diperbarui.',
                 textAlign: TextAlign.center,
-                style: T.sans(15, color: DS.body),
+                style: Typo.sans(15, color: DS.body),
               ),
             ],
           ),

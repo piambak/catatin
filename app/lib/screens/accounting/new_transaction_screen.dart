@@ -264,7 +264,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
           Expanded(
             child: Text(
               widget.editId != null ? 'Sunting transaksi' : 'Catat transaksi',
-              style: T.serif(bp.isExpanded ? 30 : 24),
+              style: Typo.serif(bp.isExpanded ? 30 : 24),
             ),
           ),
         ],
@@ -277,7 +277,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Tanggal',
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 6),
         Semantics(
           button: true,
@@ -303,7 +303,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
                           size: 17, color: DS.faint),
                       const SizedBox(width: 10),
                       Text(Tanggal.long(_date),
-                          style: T.sans(15, color: DS.ink)),
+                          style: Typo.sans(15, color: DS.ink)),
                       const Spacer(),
                       Icon(Icons.chevron_right_rounded,
                           size: 20, color: DS.faint),
@@ -340,10 +340,10 @@ class _SuccessView extends StatelessWidget {
               child: Icon(Icons.check_rounded, color: DS.income, size: 34),
             ),
             const SizedBox(height: 20),
-            Text('Transaksi tersimpan', style: T.serif(24)),
+            Text('Transaksi tersimpan', style: Typo.serif(24)),
             const SizedBox(height: 8),
             Text('Mengarahkan kembali ke Pencatatan…',
-                style: T.sans(14, color: DS.muted)),
+                style: Typo.sans(14, color: DS.muted)),
           ],
         ),
       ),

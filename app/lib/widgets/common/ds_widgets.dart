@@ -22,7 +22,7 @@ class DsLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(text.toUpperCase(), style: T.label(size: size, color: color));
+      Text(text.toUpperCase(), style: Typo.label(size: size, color: color));
 }
 
 /// Pil status dengan titik di kiri — dipakai untuk "8 hari lagi".
@@ -62,7 +62,7 @@ class DsStatusPill extends StatelessWidget {
           const SizedBox(width: 7),
           Text(
             text,
-            style: T.sans(12.5,
+            style: Typo.sans(12.5,
                 weight: FontWeight.w600, color: foreground ?? DS.brandInk),
           ),
         ],
@@ -131,7 +131,7 @@ class DsButton extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: T.sans(15,
+            style: Typo.sans(15,
                 weight: kind == DsButtonKind.filled
                     ? FontWeight.w600
                     : FontWeight.w500,
@@ -177,11 +177,11 @@ class DsChoiceChip extends StatelessWidget {
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         children: [
           Flexible(
-            child: Text(label, style: T.sans(14.5, color: DS.body)),
+            child: Text(label, style: Typo.sans(14.5, color: DS.body)),
           ),
           if (trailing != null) ...[
             const SizedBox(width: 12),
-            Text(trailing!, style: T.mono(12.5, color: DS.faint)),
+            Text(trailing!, style: Typo.mono(12.5, color: DS.faint)),
           ],
         ],
       ),
@@ -233,10 +233,10 @@ class DsAnsweredRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label, style: T.sans(12, color: DS.faint, height: 1.3)),
+                    Text(label, style: Typo.sans(12, color: DS.faint, height: 1.3)),
                     const SizedBox(height: 2),
                     Text(value,
-                        style: T.sans(15,
+                        style: Typo.sans(15,
                             weight: FontWeight.w500,
                             color: DS.ink,
                             height: 1.3)),
@@ -245,7 +245,7 @@ class DsAnsweredRow extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text('Ubah',
-                  style: T.sans(13, weight: FontWeight.w500, color: DS.link)),
+                  style: Typo.sans(13, weight: FontWeight.w500, color: DS.link)),
             ],
           ),
         ),
@@ -325,18 +325,18 @@ class DsListRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(title,
-                    style: T.sans(15, color: DS.body, height: 1.3)),
+                    style: Typo.sans(15, color: DS.body, height: 1.3)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(subtitle!,
-                      style: T.sans(12.5, color: DS.faint, height: 1.3)),
+                      style: Typo.sans(12.5, color: DS.faint, height: 1.3)),
                 ],
               ],
             ),
           ),
           if (trailing != null) ...[
             const SizedBox(width: 12),
-            Text(trailing!, style: trailingStyle ?? T.mono(14, color: DS.muted)),
+            Text(trailing!, style: trailingStyle ?? Typo.mono(14, color: DS.muted)),
           ],
         ],
       ),
@@ -429,18 +429,18 @@ class DsTimelineNode extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Text(date, style: T.sans(12.5, color: DS.muted, height: 1.3)),
+        Text(date, style: Typo.sans(12.5, color: DS.muted, height: 1.3)),
         const SizedBox(height: 3),
         Text(
           title,
-          style: T.sans(15,
+          style: Typo.sans(15,
               weight: active ? FontWeight.w600 : FontWeight.w500,
               color: active ? DS.ink : DS.body,
               height: 1.3),
         ),
         const SizedBox(height: 4),
         Text(amount,
-            style: T.mono(14, color: active ? DS.body : DS.muted)),
+            style: Typo.mono(14, color: active ? DS.body : DS.muted)),
       ],
     );
   }
@@ -460,10 +460,10 @@ class DsWordmark extends StatelessWidget {
       child: ExcludeSemantics(
         child: RichText(
           text: TextSpan(
-            style: T.serif(size, color: color ?? DS.wordmark),
+            style: Typo.serif(size, color: color ?? DS.wordmark),
             children: [
               const TextSpan(text: 'Catat'),
-              TextSpan(text: 'in', style: T.serif(size, color: DS.brand)),
+              TextSpan(text: 'in', style: Typo.serif(size, color: DS.brand)),
             ],
           ),
         ),
@@ -512,7 +512,7 @@ class DsField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
@@ -523,10 +523,10 @@ class DsField extends StatelessWidget {
           textInputAction: textInputAction,
           inputFormatters: inputFormatters,
           enabled: enabled,
-          style: T.sans(15, color: DS.ink),
+          style: Typo.sans(15, color: DS.ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: T.sans(15, color: DS.faint),
+            hintStyle: Typo.sans(15, color: DS.faint),
             suffixIcon: suffix,
             filled: true,
             fillColor: enabled ? DS.surface : DS.sunken,
@@ -538,12 +538,12 @@ class DsField extends StatelessWidget {
             focusedBorder: _border(DS.brand, width: 1.5),
             errorBorder: _border(DS.expense),
             focusedErrorBorder: _border(DS.expense, width: 1.5),
-            errorStyle: T.sans(11.5, color: DS.expense),
+            errorStyle: Typo.sans(11.5, color: DS.expense),
           ),
         ),
         if (helper != null) ...[
           const SizedBox(height: 5),
-          Text(helper!, style: T.sans(12, color: DS.faint, height: 1.4)),
+          Text(helper!, style: Typo.sans(12, color: DS.faint, height: 1.4)),
         ],
       ],
     );
@@ -579,7 +579,7 @@ class DsErrorBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(message,
-                style: T.sans(13, color: DS.expense, height: 1.4)),
+                style: Typo.sans(13, color: DS.expense, height: 1.4)),
           ),
         ],
       ),

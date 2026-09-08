@@ -121,7 +121,7 @@ class _NavPill extends StatelessWidget {
                     destination.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: T.sans(10.5,
+                    style: Typo.sans(10.5,
                         weight: selected ? FontWeight.w600 : FontWeight.w400,
                         color: selected ? DS.brandInk : DS.muted,
                         height: 1.2),
@@ -208,7 +208,7 @@ class AppNavRail extends StatelessWidget {
             child: expanded
                 ? Icon(Icons.chevron_left_rounded, size: 20, color: DS.body)
                 : Text('C',
-                    style: T.serif(19, color: DS.invInk, height: 1)),
+                    style: Typo.serif(19, color: DS.invInk, height: 1)),
           ),
         ),
       ),
@@ -224,10 +224,10 @@ class AppNavRail extends StatelessWidget {
             child: RichText(
               overflow: TextOverflow.ellipsis,
               text: TextSpan(
-                style: T.serif(24, color: DS.wordmark),
+                style: Typo.serif(24, color: DS.wordmark),
                 children: [
                   const TextSpan(text: 'Catat'),
-                  TextSpan(text: 'in', style: T.serif(24, color: DS.brand)),
+                  TextSpan(text: 'in', style: Typo.serif(24, color: DS.brand)),
                 ],
               ),
             ),
@@ -246,7 +246,7 @@ class AppNavRail extends StatelessWidget {
       decoration: BoxDecoration(color: DS.wordmark, shape: BoxShape.circle),
       alignment: Alignment.center,
       child: Text(initials,
-          style: T.sans(13.5, weight: FontWeight.w600, color: Colors.white)),
+          style: Typo.sans(13.5, weight: FontWeight.w600, color: Colors.white)),
     );
 
     if (!expanded) return Center(child: avatar);
@@ -266,14 +266,14 @@ class AppNavRail extends StatelessWidget {
                   userName?.isNotEmpty == true ? userName! : 'Pengguna',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: T.sans(13.5, weight: FontWeight.w500, color: DS.ink),
+                  style: Typo.sans(13.5, weight: FontWeight.w500, color: DS.ink),
                 ),
                 if (userRole?.isNotEmpty == true)
                   Text(
                     userRole!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: T.sans(11.5, color: DS.muted),
+                    style: Typo.sans(11.5, color: DS.muted),
                   ),
               ],
             ),
@@ -325,7 +325,7 @@ class _RailItem extends StatelessWidget {
                 destination.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: T.sans(14.5,
+                style: Typo.sans(14.5,
                     weight: selected ? FontWeight.w600 : FontWeight.w400,
                     color: selected ? DS.ink : DS.body),
               ),

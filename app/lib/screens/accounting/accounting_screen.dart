@@ -146,7 +146,7 @@ class _AccountingScreenState extends State<AccountingScreen>
               child: Row(children: [
                 Expanded(
                   child: Text('Pencatatan',
-                      style: T.serif(bp.isExpanded ? 34 : 25)),
+                      style: Typo.serif(bp.isExpanded ? 34 : 25)),
                 ),
                 IconButton(
                   icon: Icon(Icons.star_border_rounded, color: DS.body),
@@ -1812,7 +1812,7 @@ class _ViewTabPill extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label,
-              style: T.sans(13.5,
+              style: Typo.sans(13.5,
                   weight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? DS.brandInk : DS.muted),
             ),

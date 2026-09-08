@@ -167,7 +167,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
             child: Row(children: [
-              Text('Catat Transaksi', style: T.serif(16)),
+              Text('Catat Transaksi', style: Typo.serif(16)),
               const Spacer(),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
@@ -271,7 +271,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
                     : Text('Simpan Transaksi',
-                        style: T.sans(14,
+                        style: Typo.sans(14,
                           weight: FontWeight.w600)),
                 ),
               ),
@@ -304,7 +304,7 @@ class _TypeBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(7),
           border: active ? Border.all(color: color.withValues(alpha: 0.3)) : null),
         child: Center(child: Text(label,
-          style: T.sans(13,
+          style: Typo.sans(13,
             color: active ? color : DS.faint,
             weight: active ? FontWeight.w600 : FontWeight.w400))),
       ),
@@ -328,7 +328,7 @@ class _SheetField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: T.sans(11, color: DS.faint)),
+      Text(label, style: Typo.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       Container(
         height: 42,
@@ -341,17 +341,17 @@ class _SheetField extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(prefix!,
-                style: T.sans(13, color: DS.faint))),
+                style: Typo.sans(13, color: DS.faint))),
             Container(width: 0.5, height: 20, color: DS.hairline),
           ],
           Expanded(child: TextField(
             controller: controller,
             keyboardType: keyboard,
             inputFormatters: formatters,
-            style: T.sans(13),
+            style: Typo.sans(13),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: T.sans(13, color: DS.border),
+              hintStyle: Typo.sans(13, color: DS.border),
               border: InputBorder.none, isDense: true,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10, vertical: 11)),
@@ -370,7 +370,7 @@ class _SheetDisplay extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: T.sans(11, color: DS.faint)),
+      Text(label, style: Typo.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       Container(
         height: 42,
@@ -380,7 +380,7 @@ class _SheetDisplay extends StatelessWidget {
           borderRadius: BorderRadius.circular(9),
           border: Border.all(color: DS.hairline, width: 0.5)),
         child: Row(children: [
-          Expanded(child: Text(value, style: T.sans(13))),
+          Expanded(child: Text(value, style: Typo.sans(13))),
           Icon(Icons.calendar_today_outlined,
             size: 14, color: DS.faint),
         ]),
@@ -390,17 +390,17 @@ class _SheetDisplay extends StatelessWidget {
 }
 
 // Dropdown item helper — avoids Dart record syntax
-class _DdItem<V> {
-  final V    value;
+class _DdItem<T> {
+  final T    value;
   final String label;
   const _DdItem(this.value, this.label);
 }
 
-class _SheetDropdown<V> extends StatefulWidget {
+class _SheetDropdown<T> extends StatefulWidget {
   final String label;
-  final V? value;
-  final List<_DdItem<V>> items;
-  final ValueChanged<V> onChanged;
+  final T? value;
+  final List<_DdItem<T>> items;
+  final ValueChanged<T> onChanged;
 
   const _SheetDropdown({
     required this.label, required this.value,
@@ -408,10 +408,10 @@ class _SheetDropdown<V> extends StatefulWidget {
   });
 
   @override
-  State<_SheetDropdown<V>> createState() => _SheetDropdownState<V>();
+  State<_SheetDropdown<T>> createState() => _SheetDropdownState<T>();
 }
 
-class _SheetDropdownState<V> extends State<_SheetDropdown<V>> {
+class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
   final _link  = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
@@ -466,7 +466,7 @@ class _SheetDropdownState<V> extends State<_SheetDropdown<V>> {
                         : Colors.transparent,
                       child: Row(children: [
                         Expanded(child: Text(item.label,
-                          style: T.sans(13,
+                          style: Typo.sans(13,
                             color: selected
                               ? DS.brand
                               : DS.ink,
@@ -510,7 +510,7 @@ class _SheetDropdownState<V> extends State<_SheetDropdown<V>> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(widget.label,
-        style: T.sans(11, color: DS.faint)),
+        style: Typo.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       CompositedTransformTarget(
         link: _link,
@@ -529,7 +529,7 @@ class _SheetDropdownState<V> extends State<_SheetDropdown<V>> {
             child: Row(children: [
               Expanded(child: Text(
                 widget.value != null ? _displayText : 'Pilih...',
-                style: T.sans(13,
+                style: Typo.sans(13,
                   color: widget.value != null
                     ? DS.ink : DS.border),
                 overflow: TextOverflow.ellipsis)),
@@ -665,7 +665,7 @@ class _TxEditSheetState extends State<TxEditSheet> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           // Header
           Row(children: [
-            Text('Edit Transaksi', style: T.serif(16)),
+            Text('Edit Transaksi', style: Typo.serif(16)),
             const Spacer(),
             GestureDetector(
               onTap: () => Navigator.pop(context),
@@ -758,7 +758,7 @@ class _TxEditSheetState extends State<TxEditSheet> {
                     child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
                 : Text('Simpan Perubahan',
-                    style: T.sans(14,
+                    style: Typo.sans(14,
                       weight: FontWeight.w600)),
             ),
           ),
