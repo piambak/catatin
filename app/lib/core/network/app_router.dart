@@ -89,6 +89,11 @@ Future<String?> _guard(BuildContext context, GoRouterState state) async {
   final isOnboarded = await StorageService.isOnboarded();
   final loc = state.matchedLocation;
 
+  // Fitur Pustaka peraturan dicabut di Fase Dua — tautan lama ke /library
+  // pernah tayang publik dan bisa masih di-bookmark orang. Alih-alih jatuh ke
+  // layar error bawaan go_router, arahkan ke dashboard.
+  if (loc.startsWith('/library')) return AppRoutes.dashboard;
+
   final onAuth = loc == AppRoutes.login ||
       loc == AppRoutes.register ||
       loc == AppRoutes.splash;
