@@ -131,7 +131,7 @@ class _RegItemState extends State<_RegItem> {
       onExit:  (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        color: _hovered ? AppColors.brand.withOpacity(0.04) : Colors.transparent,
+        color: _hovered ? AppColors.brand.withValues(alpha: 0.04) : Colors.transparent,
         child: Container(
           padding: EdgeInsets.only(
             top: 8, bottom: widget.isLast ? 0 : 8),
