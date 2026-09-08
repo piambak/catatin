@@ -76,7 +76,30 @@ extension PtkpLabel on PtkpStatus {
     PtkpStatus.k2:  'K/2',  PtkpStatus.k3:  'K/3',
   }[this]!;
 
-  double get ptkpAmount => AppConstants.ptkp[shortLabel.replaceAll('/','')]! ;
+  /// Kunci status ini di [AppConstants.ptkp].
+  ///
+  /// Versi lama menurunkan kunci dari label tampilan
+  /// (`shortLabel.replaceAll('/','')`) — rapuh, karena mengubah teks yang
+  /// dibaca manusia diam-diam merusak pencarian nilainya. `switch` ini
+  /// exhaustive, jadi menambah status baru tanpa memetakannya gagal saat
+  /// compile, bukan crash di tangan pengguna. Lihat temuan T-5.
+  String get ptkpKey => switch (this) {
+        PtkpStatus.tk0 => 'TK0',
+        PtkpStatus.tk1 => 'TK1',
+        PtkpStatus.tk2 => 'TK2',
+        PtkpStatus.tk3 => 'TK3',
+        PtkpStatus.k0 => 'K0',
+        PtkpStatus.k1 => 'K1',
+        PtkpStatus.k2 => 'K2',
+        PtkpStatus.k3 => 'K3',
+      };
+
+  /// Nilai PTKP setahun.
+  ///
+  /// Nilainya tetap tinggal di [AppConstants.ptkp] — itu konstanta pajak, dan
+  /// menyalinnya ke sini akan mengulang persis masalah T-13 (dua daftar yang
+  /// bisa menyimpang). Kelengkapan pemetaannya dijaga tes, bukan harapan.
+  double get ptkpAmount => AppConstants.ptkp[ptkpKey]!;
 }
 
 class PPh21Result {
@@ -100,7 +123,7 @@ class PPh21Result {
 }
 
 PPh21Result calculatePPh21(double gajiKotor, PtkpStatus status) {
-  final ptkp    = AppConstants.ptkp[status.shortLabel.replaceAll('/','')]!;
+  final ptkp    = status.ptkpAmount;
   final terEntry = AppConstants.terTableA.firstWhere(
     (t) => gajiKotor <= (t['max'] as num).toDouble(),
     orElse: () => AppConstants.terTableA.last,
@@ -134,33 +157,74 @@ class TerRow {
   });
 }
 
+/// Menyusun tabel TER untuk ditampilkan, **diturunkan dari
+/// [AppConstants.terTableA]** — sumber yang sama dengan yang dibaca
+/// [calculatePPh21].
+///
+/// Sebelumnya fungsi ini menyimpan daftar tarif kedua yang ditulis tangan, dan
+/// daftar itu sudah menyimpang dari tabel hitungnya: gaji Rp 8.000.000
+/// ditampilkan 1,5% padahal dihitung 2,0%, Rp 12.000.000 ditampilkan 5,0%
+/// padahal dihitung 6,0%, dan lapisan tertinggi ditulis 19% padahal 34%.
+/// Menurunkan keduanya dari satu sumber membuat divergensi itu tidak mungkin
+/// terjadi lagi. Lihat temuan T-13 di docs/PROJECT_TIMELINE.md.
+///
+/// Lapisan berurutan yang bertarif sama digabung jadi satu rentang, supaya 32
+/// baris mentah tidak semuanya tampil terpisah.
 List<TerRow> buildTerTable(double gajiKotor) {
-  final displayRows = [
-    ('≤ Rp 5.400.000',           5400000.0,   0.000),
-    ('Rp 5.401.000 – 6.300.000', 6300000.0,   0.005),
-    ('Rp 6.301.000 – 7.500.000', 7500000.0,   0.010),
-    ('Rp 7.501.000 – 9.650.000', 9650000.0,   0.015),
-    ('Rp 9.651.000 – 10.050.000',10050000.0,  0.020),
-    ('Rp 10.051.000 – 10.700.000',10700000.0, 0.030),
-    ('Rp 10.701.000 – 11.050.000',11050000.0, 0.040),
-    ('Rp 11.051.000 – 12.500.000',12500000.0, 0.050),
-    ('Rp 12.501.000 – 15.100.000',15100000.0, 0.075),
-    ('Rp 15.101.000 – 19.750.000',19750000.0, 0.100),
-    ('Rp 19.751.000 – 26.450.000',26450000.0, 0.125),
-    ('Rp 26.451.000 – 30.050.000',30050000.0, 0.150),
-    ('> Rp 30.050.000',          double.infinity, 0.190),
-  ];
+  final rows = <TerRow>[];
 
-  return displayRows.map((r) {
-    final (label, max, rate) = r;
-    return TerRow(
-      rangeLabel: label,
-      rate: rate,
-      isActive: gajiKotor > 0 && gajiKotor <= max &&
-          displayRows.indexOf(r) ==
-              displayRows.indexWhere((x) => gajiKotor <= x.$2),
-    );
-  }).toList();
+  double lowerBound = 0;
+  double groupStart = 0;
+  double? groupRate;
+
+  void flush(double upperBound) {
+    if (groupRate == null) return;
+    rows.add(TerRow(
+      rangeLabel: _rangeLabel(groupStart, upperBound),
+      rate: groupRate!,
+      isActive: gajiKotor > groupStart &&
+          (upperBound.isInfinite || gajiKotor <= upperBound),
+    ));
+  }
+
+  for (final entry in AppConstants.terTableA) {
+    final max = (entry['max'] as num).toDouble();
+    final rate = (entry['rate'] as num).toDouble();
+
+    if (groupRate == null) {
+      groupStart = lowerBound;
+      groupRate = rate;
+    } else if (rate != groupRate) {
+      flush(lowerBound);
+      groupStart = lowerBound;
+      groupRate = rate;
+    }
+    lowerBound = max;
+  }
+  flush(lowerBound);
+
+  return rows;
+}
+
+/// `≤ Rp 5.400.000` · `Rp 5.400.001 – 6.300.000` · `> Rp 74.750.000`
+String _rangeLabel(double from, double to) {
+  if (from == 0) return '≤ ${_rupiah(to)}';
+  if (to.isInfinite) return '> ${_rupiah(from)}';
+  return '${_rupiah(from + 1)} – ${_thousands(to)}';
+}
+
+String _rupiah(double value) => 'Rp ${_thousands(value)}';
+
+/// Pemisah ribuan bergaya Indonesia tanpa menarik `intl` ke berkas ini —
+/// service ini sengaja tetap murni dan bebas dependensi.
+String _thousands(double value) {
+  final digits = value.round().toString();
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write('.');
+    buffer.write(digits[i]);
+  }
+  return buffer.toString();
 }
 
 // ─── Scenario Planner ─────────────────────────────────────────────────────────

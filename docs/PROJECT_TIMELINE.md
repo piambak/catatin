@@ -315,10 +315,10 @@ keduanya lebih dalam dari sebelumnya.
 | # | Temuan | Prioritas | Pemilik | Usul masuk |
 | --- | --- | --- | --- | --- |
 | T-1 | Kategori TER B & C tidak ada — PPh 21 salah hitung | 🔴 | Pakar pajak → Frontend | Minggu 5 |
-| T-2 | Nol tes untuk mesin pajak | 🔴 | Frontend | Minggu 3 |
+| T-2 | Nol tes untuk mesin pajak | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-3 | PPh Final: pengecualian omzet Rp500 juta & batas jangka waktu belum ada | 🔴 | Pakar pajak → Frontend | Minggu 5 |
 | T-4 | Angka PKP di layar PPh 21 menyesatkan; rekalkulasi Desember belum ada | 🟡 | Pakar pajak → Frontend | Minggu 6 |
-| T-5 | Null-assertion rawan crash di pemetaan PTKP | 🟡 | Frontend | Minggu 3 |
+| T-5 | Null-assertion rawan crash di pemetaan PTKP | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-6 | 66 pemakaian `withOpacity` yang sudah deprecated | 🟡 | Frontend | Minggu 8 |
 | T-7 | Dua `BuildContext` dipakai lewat async gap | 🟡 | Frontend | Minggu 3 |
 | T-8 | Aksesibilitas nol — tidak ada satu pun `Semantics` | 🟡 | Frontend | Minggu 8 |
@@ -326,6 +326,42 @@ keduanya lebih dalam dari sebelumnya.
 | T-10 | CI tanpa laporan coverage | ⬜ | Frontend | Minggu 8 |
 | T-11 | `flutter_secure_storage` di web perlu diverifikasi sebelum JWT asli | ⬜ | Backend + Frontend | Minggu 5 |
 | T-12 | Belum ada kerangka l10n | ⬜ | Frontend | Fase berikutnya |
+| T-13 | Tabel TER tampilan menyimpang dari tabel hitung | ✅ **Selesai** | Frontend | 8 Sep 2026 |
+
+---
+
+### ✅ T-13 — Tabel TER tampilan menyimpang dari tabel hitung *(selesai 8 Sep 2026)*
+
+Ditemukan saat menulis tes T-2, bukan dari pembacaan kode biasa.
+
+`buildTerTable()` di `simulator_service.dart` menyimpan **daftar tarif kedua**
+yang ditulis tangan, terpisah dari `AppConstants.terTableA` yang dipakai
+`calculatePPh21()` untuk menghitung. Keduanya sudah menyimpang:
+
+| Gaji bulanan | Ditampilkan tabel | Dipakai hitungan |
+| --- | --- | --- |
+| Rp 8.000.000 | 1,5% | **2,0%** |
+| Rp 9.000.000 | 1,5% | **2,5%** |
+| Rp 12.000.000 | 5,0% | **6,0%** |
+| Rp 40.000.000 | 19,0% | **27,0%** |
+
+Artinya pengguna bisa melihat baris tersorot yang menyebut satu tarif, sementara
+angka rupiah di layar yang sama dihitung dengan tarif lain.
+
+**Dampak nyata saat ini: nihil.** `buildTerTable()` hanya dipakai
+`pph21_tab.dart`, dan tab itu sudah tidak terpasang sejak simulator diganti alur
+percakapan. Jadi ini cacat laten — perangkap untuk siapa pun yang menghidupkan
+kembali tab tersebut atau memakai ulang fungsinya, bukan bug yang sedang
+dirasakan pengguna.
+
+**Perbaikan:** `buildTerTable()` sekarang diturunkan dari `terTableA`, dengan
+lapisan berurutan bertarif sama digabung jadi satu rentang. Tidak ada lagi
+daftar kedua yang bisa menyimpang. Tidak ada satu pun tarif yang diubah — ini
+murni menghapus duplikasi, bukan keputusan pajak, jadi tidak menyentuh wewenang
+pakar pajak.
+
+Tes `buildTerTable tarif baris tersorot sama dengan tarif hasil hitung`
+mengunci perbaikannya.
 
 ---
 
@@ -516,6 +552,38 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-08** — Frontend — Menyelesaikan tiga temuan yang tidak bergantung
+  Backend maupun Pakar pajak: **T-2**, **T-5**, dan **T-13** (baru).
+  **T-2** — `test/simulator_service_test.dart` dibuat: 34 tes untuk
+  `calculatePPhFinal`, `calculatePPh21`, `buildTerTable`, dan
+  `calculateScenarios`. Total tes repo naik dari 5 jadi 39, semuanya lulus.
+  Yang diuji sengaja dibatasi pada **konsistensi internal dan sifat
+  struktural** — batas lapisan, monotonisitas tarif, jumlah komponen, tepi
+  ambang PKP, pembagian nol — bukan kebenaran tarif terhadap peraturan.
+  Kebenaran tarif tetap wewenang pakar pajak (T-1, T-3, T-4), dan mengunci
+  angkanya di tes justru akan mengabadikan yang mungkin salah. Satu tes sengaja
+  di-`skip` sebagai penanda T-1: ia menyatakan dua status di kategori TER
+  berbeda tidak boleh menghasilkan tarif sama. Hapus `skip`-nya begitu tabel B
+  dan C masuk — itu sekaligus jadi verifikasi perbaikannya.
+  **T-13 (baru, ditemukan lewat T-2)** — `buildTerTable()` ternyata menyimpan
+  daftar tarif kedua yang ditulis tangan dan sudah menyimpang dari
+  `terTableA`: Rp 8 jt ditampilkan 1,5% tapi dihitung 2,0%, Rp 12 jt
+  ditampilkan 5,0% tapi dihitung 6,0%, lapisan tertinggi ditulis 19% padahal
+  34%. Sekarang diturunkan dari `terTableA` sehingga tidak bisa menyimpang
+  lagi. Nol tarif diubah — murni menghapus duplikasi, bukan keputusan pajak.
+  Dampak ke pengguna saat ini nihil: `buildTerTable()` cuma dipakai
+  `pph21_tab.dart` yang sudah tidak terpasang.
+  **T-5** — pemetaan PTKP tidak lagi lewat label tampilan
+  (`shortLabel.replaceAll('/','')`). Ditambahkan `ptkpKey` dengan `switch`
+  exhaustive, jadi status baru yang belum dipetakan gagal saat compile.
+  Nilainya tetap di `AppConstants.ptkp` — menyalinnya ke service akan
+  mengulang persis masalah T-13 — dan kelengkapannya dijaga dua tes baru.
+  **Belum dikerjakan:** T-9 (`dart format` di CI). `dart format` akan mengubah
+  **57 dari 60 berkas**, jadi harus jadi PR tersendiri supaya tidak
+  menenggelamkan review. T-6, T-7, T-8, T-10 juga masih terbuka dan semuanya
+  tidak terblokir.
+  `flutter analyze` → 0 error, 0 warning. `flutter test` → 39 lulus, 1 di-skip.
 
 - **2026-09-08** — Frontend — Tindak lanjut review PR #2: beresi 4 temuan
   prioritas sebelum merge. (1) `regulation_card.dart` — poin **PPN** dan **PPh
