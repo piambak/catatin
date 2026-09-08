@@ -15,7 +15,6 @@ import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/business_screen.dart';
 import '../constants/app_constants.dart';
 import '../services/storage_service.dart';
-import '../theme/app_theme.dart';
 import '../theme/breakpoints.dart';
 import '../theme/design_tokens.dart';
 import '../../widgets/common/app_nav.dart';
