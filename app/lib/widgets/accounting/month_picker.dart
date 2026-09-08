@@ -208,7 +208,7 @@ class _TxListTileState extends State<TxListTile> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         color: _hovered
-          ? AppColors.brand.withOpacity(0.04)
+          ? AppColors.brand.withValues(alpha: 0.04)
           : Colors.transparent,
         child: InkWell(
           onTap: () => _showDetail(context),
@@ -220,7 +220,7 @@ class _TxListTileState extends State<TxListTile> {
               Container(
                 width: 38, height: 38,
                 decoration: BoxDecoration(
-                  color: tx.category.flutterColor.withOpacity(0.15),
+                  color: tx.category.flutterColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: Center(child: Text(tx.category.icon,
@@ -281,7 +281,7 @@ class _TxDetailContent extends StatelessWidget {
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(
-              color: tx.category.flutterColor.withOpacity(0.15),
+              color: tx.category.flutterColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(11)),
             child: Center(child: Text(tx.category.icon,
               style: const TextStyle(fontSize: 20)))),
@@ -384,9 +384,14 @@ class _TxDetailContent extends StatelessWidget {
         Row(children: [
           Expanded(child: OutlinedButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              // Slight delay so first dialog fully dismisses
-              Future.microtask(() => _openEdit(context, tx));
+              // NavigatorState diambil SEBELUM pop. Sesudah pop, `context`
+              // milik route yang sudah dilepas, dan memakainya di dalam
+              // microtask berarti menyentuh widget mati. NavigatorState
+              // tetap hidup selama Navigator-nya ada. (T-7)
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              // Jeda singkat supaya dialog pertama benar-benar tertutup.
+              Future.microtask(() => _openEdit(navigator, tx));
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.brand,
@@ -441,9 +446,11 @@ class _TxDetailContent extends StatelessWidget {
     );
   }
 
-  void _openEdit(BuildContext context, TxData tx) {
+  /// Menerima [NavigatorState], bukan [BuildContext], supaya pemanggilnya
+  /// tidak perlu menyimpan context lintas async gap. (T-7)
+  void _openEdit(NavigatorState navigator, TxData tx) {
     showDialog(
-      context: context,
+      context: navigator.context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
         backgroundColor: Theme.of(ctx).cardColor,

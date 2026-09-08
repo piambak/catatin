@@ -202,7 +202,7 @@ class _WideKpiCardState extends State<_WideKpiCard> {
             color: _hovered ? AppColors.stone300 : _s.border,
             width: 1.5),
           boxShadow: _hovered ? [BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8, offset: const Offset(0, 3))] : null,
         ),
         child: widget.isLoading
@@ -246,7 +246,7 @@ class _WideKpiCardState extends State<_WideKpiCard> {
                     height: 5,
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: _s.color.withOpacity(0.12),
+                      color: _s.color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: FractionallySizedBox(
@@ -337,7 +337,7 @@ class _NormalKpiCardState extends State<_NormalKpiCard> {
             color: _hovered ? AppColors.stone300 : widget._s.border,
             width: _hovered ? 1.0 : 0.5),
           boxShadow: _hovered ? [BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 6, offset: const Offset(0, 2))] : null,
         ),
         child: widget.isLoading
@@ -504,7 +504,7 @@ class _KpiHistorySheet extends StatelessWidget {
                                 toY: e.value.value,
                                 color: isLast
                                     ? _s.color
-                                    : _s.color.withOpacity(0.25),
+                                    : _s.color.withValues(alpha: 0.25),
                                 width: 18,
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(4)),

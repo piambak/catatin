@@ -1,17 +1,30 @@
 // lib/screens/settings/business_screen.dart
+//
+// Profil usaha bergaya sama dengan layar lain hasil redesain.
+//
+// Dipakai dua kali: sebagai onboarding wajib (`isOnboarding: true`) dan
+// sebagai layar sunting dari Pengaturan. Keduanya dipertahankan.
+//
+// Mengikuti R-6 di PRD: field yang tidak selalu relevan — nama pemilik, NPWP,
+// dan jumlah karyawan — disembunyikan di balik "Detail tambahan", sehingga form
+// terbuka dengan tiga hal saja (nama usaha, jenis usaha, status PKP) alih-alih
+// enam sekaligus. Kalau salah satunya sudah terisi, bagian itu otomatis
+// terbuka, dan validasi yang gagal di dalamnya juga membukanya.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../core/services/business_service.dart';
 import '../../core/services/storage_service.dart';
-import '../../core/theme/app_theme.dart';
-import '../../widgets/common/app_widgets.dart';
+import '../../core/theme/breakpoints.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../widgets/common/ds_widgets.dart';
 
 class BusinessScreen extends StatefulWidget {
-  /// When [isOnboarding] is true, shows a welcome header and
-  /// redirects to dashboard after save instead of popping.
+  /// Saat true, menampilkan header sambutan dan mengarahkan ke dashboard
+  /// setelah simpan alih-alih menutup layar.
   final bool isOnboarding;
 
   const BusinessScreen({super.key, this.isOnboarding = false});
@@ -21,24 +34,30 @@ class BusinessScreen extends StatefulWidget {
 }
 
 class _BusinessScreenState extends State<BusinessScreen> {
-  // ── Controllers ───────────────────────────────────────────
-  final _formKey      = GlobalKey<FormState>();
-  final _nameCtrl     = TextEditingController();
-  final _ownerCtrl    = TextEditingController();
-  final _npwpCtrl     = TextEditingController();
-  final _empCtrl      = TextEditingController(text: '0');
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _ownerCtrl = TextEditingController();
+  final _npwpCtrl = TextEditingController();
+  final _empCtrl = TextEditingController(text: '0');
 
-  // ── State ─────────────────────────────────────────────────
-  String  _businessType = '';
-  bool    _pkpStatus    = false;
-  bool    _loading      = true;
-  bool    _saving       = false;
-  bool    _saved        = false;
+  String _businessType = '';
+  bool _pkpStatus = false;
+  bool _loading = true;
+  bool _saving = false;
+  bool _saved = false;
+  bool _showMore = false;
   String? _existingId;
 
   static const _bizTypes = [
-    'Perdagangan', 'Jasa', 'Manufaktur', 'Kuliner',
-    'Fashion', 'Teknologi', 'Pendidikan', 'Kesehatan', 'Lainnya',
+    'Perdagangan',
+    'Jasa',
+    'Manufaktur',
+    'Kuliner',
+    'Fashion',
+    'Teknologi',
+    'Pendidikan',
+    'Kesehatan',
+    'Lainnya',
   ];
 
   @override
@@ -56,29 +75,36 @@ class _BusinessScreenState extends State<BusinessScreen> {
     super.dispose();
   }
 
-  // ── Load existing profile ─────────────────────────────────
-
   Future<void> _loadExisting() async {
     setState(() => _loading = true);
     final profile = await BusinessService.getCurrent();
+    if (!mounted) return;
+
     if (profile != null) {
       _existingId = profile.id;
-      _nameCtrl.text   = profile.businessName;
-      _ownerCtrl.text  = profile.ownerName ?? '';
-      _npwpCtrl.text   = profile.npwp ?? '';
-      _empCtrl.text    = profile.employeeCount.toString();
+      _nameCtrl.text = profile.businessName;
+      _ownerCtrl.text = profile.ownerName ?? '';
+      _npwpCtrl.text = profile.npwp ?? '';
+      _empCtrl.text = profile.employeeCount.toString();
       setState(() {
         _businessType = profile.businessType;
-        _pkpStatus    = profile.pkpStatus;
+        _pkpStatus = profile.pkpStatus;
+        // Kalau detail tambahan sudah pernah diisi, jangan disembunyikan.
+        _showMore = (profile.npwp?.isNotEmpty ?? false) ||
+            (profile.ownerName?.isNotEmpty ?? false) ||
+            profile.employeeCount > 0;
       });
     }
     setState(() => _loading = false);
   }
 
-  // ── Save ─────────────────────────────────────────────────
-
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // Validasi bisa gagal di field yang sedang tersembunyi — buka dulu
+      // supaya pengguna melihat pesan galatnya.
+      setState(() => _showMore = true);
+      return;
+    }
     if (_businessType.isEmpty) {
       _showError('Pilih jenis usaha terlebih dahulu.');
       return;
@@ -87,33 +113,35 @@ class _BusinessScreenState extends State<BusinessScreen> {
     setState(() => _saving = true);
     try {
       final empCount = int.tryParse(_empCtrl.text.trim()) ?? 0;
+      String? orNull(TextEditingController c) =>
+          c.text.trim().isEmpty ? null : c.text.trim();
 
       if (_existingId != null) {
         await BusinessService.update(
-          id:            _existingId!,
-          businessName:  _nameCtrl.text.trim(),
-          ownerName:     _ownerCtrl.text.trim().isEmpty
-              ? null : _ownerCtrl.text.trim(),
-          npwp:          _npwpCtrl.text.trim().isEmpty
-              ? null : _npwpCtrl.text.trim(),
-          businessType:  _businessType,
-          pkpStatus:     _pkpStatus,
+          id: _existingId!,
+          businessName: _nameCtrl.text.trim(),
+          ownerName: orNull(_ownerCtrl),
+          npwp: orNull(_npwpCtrl),
+          businessType: _businessType,
+          pkpStatus: _pkpStatus,
           employeeCount: empCount,
         );
       } else {
         await BusinessService.create(
-          businessName:  _nameCtrl.text.trim(),
-          ownerName:     _ownerCtrl.text.trim().isEmpty
-              ? null : _ownerCtrl.text.trim(),
-          npwp:          _npwpCtrl.text.trim().isEmpty
-              ? null : _npwpCtrl.text.trim(),
-          businessType:  _businessType,
-          pkpStatus:     _pkpStatus,
+          businessName: _nameCtrl.text.trim(),
+          ownerName: orNull(_ownerCtrl),
+          npwp: orNull(_npwpCtrl),
+          businessType: _businessType,
+          pkpStatus: _pkpStatus,
           employeeCount: empCount,
         );
       }
 
-      setState(() { _saving = false; _saved = true; });
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saved = true;
+      });
       await Future.delayed(const Duration(milliseconds: 900));
 
       if (!mounted) return;
@@ -122,7 +150,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
       } else {
         context.pop();
       }
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
       setState(() => _saving = false);
       _showError('Gagal menyimpan. Coba lagi.');
     }
@@ -131,244 +160,159 @@ class _BusinessScreenState extends State<BusinessScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: AppColors.expense,
+      backgroundColor: DS.expense,
       behavior: SnackBarBehavior.floating,
     ));
   }
 
-  // ── Build ─────────────────────────────────────────────────
+  Future<void> _skip() async {
+    await StorageService.setOnboarded();
+    if (!mounted) return;
+    context.go(AppRoutes.dashboard);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_saved) return _buildSuccess();
+    if (_saved) return const _SuccessView();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _buildAppBar(),
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.brand))
-          : SafeArea(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-                  children: [
-                    if (widget.isOnboarding) _buildOnboardingHeader(),
-                    _buildBasicInfo(),
-                    const SizedBox(height: 14),
-                    _buildBusinessType(),
-                    const SizedBox(height: 14),
-                    _buildTaxInfo(),
-                    const SizedBox(height: 24),
-                    _buildSubmitButton(),
-                    if (widget.isOnboarding) ...[
-                      const SizedBox(height: 12),
-                      _buildSkipButton(),
-                    ],
-                  ],
+      backgroundColor: DS.surface,
+      body: SafeArea(
+        child: BreakpointBuilder(
+          builder: (context, bp) {
+            if (_loading) {
+              return Center(child: CircularProgressIndicator(color: DS.brand));
+            }
+            return Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                    horizontal: Bp.pagePadding(bp), vertical: 28),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _header(bp),
+                        const SizedBox(height: 30),
+                        DsField(
+                          label: 'Nama usaha',
+                          controller: _nameCtrl,
+                          hint: 'Toko Berkah Jaya',
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Nama usaha wajib diisi'
+                              : null,
+                        ),
+                        const SizedBox(height: 26),
+                        _businessTypePicker(),
+                        const SizedBox(height: 26),
+                        _pkpPicker(),
+                        const SizedBox(height: 20),
+                        _moreDetails(),
+                        const SizedBox(height: 30),
+                        DsButton(
+                          label: _saving
+                              ? 'Menyimpan…'
+                              : widget.isOnboarding
+                                  ? 'Simpan dan mulai'
+                                  : 'Simpan perubahan',
+                          onPressed: _saving ? null : _save,
+                          expand: true,
+                          minHeight: 50,
+                        ),
+                        if (widget.isOnboarding) ...[
+                          const SizedBox(height: 12),
+                          Center(
+                            child: DsButton(
+                              label: 'Lewati untuk sekarang',
+                              onPressed: _skip,
+                              kind: DsButtonKind.ghost,
+                              minHeight: 44,
+                              foreground: DS.muted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-    );
-  }
-
-  // ── App bar ───────────────────────────────────────────────
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.dark,
-      foregroundColor: Colors.white,
-      automaticallyImplyLeading: !widget.isOnboarding,
-      leading: widget.isOnboarding
-          ? null
-          : IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () => context.pop(),
-            ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.isOnboarding ? 'Setup Usaha' : 'Profil Usaha',
-            style: AppTextStyles.display(17, color: Theme.of(context).appBarTheme.foregroundColor),
-          ),
-          Text(
-            widget.isOnboarding
-                ? 'Langkah terakhir sebelum mulai'
-                : 'Kelola informasi usaha Anda',
-            style: AppTextStyles.body(11, color: AppColors.darkMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Onboarding welcome ────────────────────────────────────
-
-  Widget _buildOnboardingHeader() {
-    return AppCard(
-      backgroundColor: AppColors.brandSurface,
-      borderColor: AppColors.brand.withOpacity(0.3),
-      padding: const EdgeInsets.all(16),
-      child: Row(children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.brand.withOpacity(0.12),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.business_outlined,
-            color: AppColors.brand, size: 22),
+            );
+          },
         ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hampir selesai!',
-              style: AppTextStyles.body(
-                14, color: AppColors.brand, weight: FontWeight.w600)),
-            const SizedBox(height: 3),
-            Text(
-              'Isi profil usaha agar dashboard dan simulator bisa '
-              'menampilkan data yang relevan untuk bisnis kamu.',
-              style: AppTextStyles.body(12, color: AppColors.stone500),
-            ),
-          ],
-        )),
-      ]),
-    );
-  }
-
-  // ── Basic info (name, owner, NPWP) ───────────────────────
-
-  Widget _buildBasicInfo() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Informasi Dasar',
-            style: AppTextStyles.display(15)),
-          const SizedBox(height: 14),
-
-          // Business name — required
-          _FieldLabel(label: 'Nama Usaha', required: true),
-          TextFormField(
-            controller: _nameCtrl,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              hintText: 'Contoh: Toko Budi Jaya',
-              prefixIcon: Icon(Icons.store_outlined, size: 18),
-            ),
-            validator: (v) => v == null || v.trim().isEmpty
-                ? 'Nama usaha wajib diisi'
-                : v.trim().length < 2
-                    ? 'Nama usaha minimal 2 karakter'
-                    : null,
-          ),
-          const SizedBox(height: 12),
-
-          // Owner name — optional
-          _FieldLabel(label: 'Nama Pemilik', required: false),
-          TextFormField(
-            controller: _ownerCtrl,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              hintText: 'Contoh: Budi Santoso',
-              prefixIcon: Icon(Icons.person_outline_rounded, size: 18),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // NPWP — optional
-          _FieldLabel(label: 'NPWP', required: false),
-          TextFormField(
-            controller: _npwpCtrl,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              _NpwpFormatter(),
-            ],
-            decoration: const InputDecoration(
-              hintText: '00.000.000.0-000.000',
-              prefixIcon: Icon(Icons.badge_outlined, size: 18),
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  // ── Business type grid ────────────────────────────────────
-
-  Widget _buildBusinessType() {
-    return AppCard(
-      child: Column(
+  Widget _header(Breakpoint bp) {
+    if (widget.isOnboarding) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Jenis Usaha', style: AppTextStyles.display(15)),
-          const SizedBox(height: 4),
+          const DsWordmark(size: 26),
+          const SizedBox(height: 30),
+          Text('Ceritakan usaha Anda',
+              style: T.serif(bp.isExpanded ? 32 : 27)),
+          const SizedBox(height: 10),
           Text(
-            'Pilih yang paling sesuai dengan jenis bisnis Anda',
-            style: AppTextStyles.body(12, color: AppColors.stone400),
-          ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 2.4,
-            children: _bizTypes.map((type) {
-              final selected = _businessType == type;
-              return GestureDetector(
-                onTap: () => setState(() => _businessType = type),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.dark : AppColors.bgCard,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.dark
-                          : AppColors.stone200,
-                      width: selected ? 1.5 : 0.5,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    type,
-                    style: AppTextStyles.body(
-                      12,
-                      color: selected ? Colors.white : AppColors.stone600,
-                      weight: selected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }).toList(),
+            'Tiga hal ini menentukan skema pajak yang berlaku untuk Anda. '
+            'Semuanya bisa diubah kapan saja lewat Pengaturan.',
+            style: T.sans(15, color: DS.body, height: 1.55),
           ),
         ],
-      ),
+      );
+    }
+
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => context.pop(),
+          icon: Icon(Icons.arrow_back_rounded, color: DS.body),
+          tooltip: 'Kembali',
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text('Profil usaha', style: T.serif(bp.isExpanded ? 32 : 25)),
+        ),
+      ],
     );
   }
 
-  // ── Tax info (PKP + employee count) ──────────────────────
+  Widget _businessTypePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Jenis usaha',
+            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final type in _bizTypes)
+              _SelectableChip(
+                label: type,
+                selected: _businessType == type,
+                onTap: () => setState(() => _businessType = type),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 
-  Widget _buildTaxInfo() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Informasi Pajak', style: AppTextStyles.display(15)),
-          const SizedBox(height: 14),
-
-          // PKP status
-          _FieldLabel(label: 'Status PKP', required: false),
-          const SizedBox(height: 8),
-          Row(children: [
+  Widget _pkpPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Status PKP',
+            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+        const SizedBox(height: 10),
+        Row(
+          children: [
             Expanded(
               child: _PkpOption(
                 label: 'Bukan PKP',
@@ -386,41 +330,99 @@ class _BusinessScreenState extends State<BusinessScreen> {
                 onTap: () => setState(() => _pkpStatus = true),
               ),
             ),
-          ]),
-
-          if (_pkpStatus) ...[
-            const SizedBox(height: 10),
-            AppCard(
-              backgroundColor: AppColors.warningLight,
-              borderColor: AppColors.warningBorder,
-              padding: const EdgeInsets.all(10),
-              child: Row(children: [
-                const Icon(Icons.info_outline_rounded,
-                  size: 15, color: AppColors.warning),
-                const SizedBox(width: 8),
-                Expanded(child: Text(
-                  'Sebagai PKP, Anda wajib memungut PPN 11% '
-                  'dan menerbitkan e-Faktur untuk setiap transaksi.',
-                  style: AppTextStyles.body(11, color: AppColors.warning),
-                )),
-              ]),
-            ),
           ],
+        ),
+        if (_pkpStatus) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: DS.brandMuted,
+              borderRadius: BorderRadius.circular(Radii.sm),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, size: 16, color: DS.brandDeep),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Sebagai PKP, Anda wajib memungut PPN 11% dan '
+                    'menerbitkan e-Faktur untuk setiap transaksi.',
+                    style: T.sans(12.5, color: DS.brandInk, height: 1.45),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
-          const SizedBox(height: 14),
-
-          // Employee count
-          _FieldLabel(label: 'Jumlah Karyawan', required: false),
-          TextFormField(
+  Widget _moreDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          button: true,
+          expanded: _showMore,
+          label: 'Detail tambahan',
+          child: ExcludeSemantics(
+            child: InkWell(
+              onTap: () => setState(() => _showMore = !_showMore),
+              borderRadius: BorderRadius.circular(Radii.sm),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 44),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Text('Detail tambahan',
+                        style:
+                            T.sans(14, weight: FontWeight.w600, color: DS.ink)),
+                    const SizedBox(width: 6),
+                    Icon(
+                      _showMore
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: DS.muted,
+                    ),
+                    const Spacer(),
+                    if (!_showMore)
+                      Text('Opsional', style: T.sans(12.5, color: DS.faint)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (_showMore) ...[
+          const SizedBox(height: 10),
+          DsField(
+            label: 'Nama pemilik',
+            controller: _ownerCtrl,
+            hint: 'Sesuai KTP',
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 20),
+          DsField(
+            label: 'NPWP',
+            controller: _npwpCtrl,
+            hint: '00.000.000.0-000.000',
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            inputFormatters: [_NpwpFormatter()],
+            helper: 'Kosongkan kalau belum punya.',
+          ),
+          const SizedBox(height: 20),
+          DsField(
+            label: 'Jumlah karyawan',
             controller: _empCtrl,
+            hint: '0',
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              hintText: '0',
-              prefixIcon: Icon(Icons.people_outline_rounded, size: 18),
-              helperText:
-                'Digunakan untuk kalkulasi PPh 21 di Simulator',
-            ),
+            helper: 'Dipakai untuk kalkulasi PPh 21 di Simulator.',
             validator: (v) {
               final n = int.tryParse(v ?? '');
               if (n == null || n < 0) return 'Masukkan angka yang valid';
@@ -428,119 +430,59 @@ class _BusinessScreenState extends State<BusinessScreen> {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Submit button ─────────────────────────────────────────
-
-  Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _saving ? null : _save,
-        child: _saving
-            ? const SizedBox(
-                width: 20, height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white))
-            : Text(
-                _existingId != null
-                    ? 'Simpan Perubahan'
-                    : 'Simpan Profil Usaha',
-              ),
-      ),
-    );
-  }
-
-  // ── Skip button (onboarding only) ────────────────────────
-
-  Widget _buildSkipButton() {
-    return Center(
-      child: TextButton(
-        onPressed: () async {
-          await StorageService.setOnboarded();
-          if (mounted) context.go(AppRoutes.dashboard);
-        },
-        child: Text(
-          'Lewati untuk sekarang',
-          style: AppTextStyles.body(
-            13, color: AppColors.stone400),
-        ),
-      ),
-    );
-  }
-
-  // ── Success state ─────────────────────────────────────────
-
-  Widget _buildSuccess() {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 64, height: 64,
-            decoration: BoxDecoration(
-              color: AppColors.incomeLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_rounded,
-              color: AppColors.income, size: 36),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.isOnboarding
-                ? 'Profil Usaha Tersimpan!'
-                : 'Perubahan Disimpan!',
-            style: AppTextStyles.display(20)),
-          const SizedBox(height: 6),
-          Text(
-            widget.isOnboarding
-                ? 'Menuju dashboard...'
-                : 'Kembali ke pengaturan...',
-            style: AppTextStyles.body(13, color: AppColors.stone400)),
-        ]),
-      ),
+      ],
     );
   }
 }
 
-// ─── Supporting Widgets ───────────────────────────────────────────────────────
+// ── Elemen kecil ─────────────────────────────────────────────────────────────
 
-class _FieldLabel extends StatelessWidget {
+class _SelectableChip extends StatelessWidget {
+  const _SelectableChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
   final String label;
-  final bool required;
-  const _FieldLabel({required this.label, required this.required});
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(children: [
-        Text(label,
-          style: AppTextStyles.body(
-            12, color: AppColors.stone600, weight: FontWeight.w500)),
-        if (!required) ...[
-          const SizedBox(width: 4),
-          Text('(opsional)',
-            style: AppTextStyles.body(11, color: AppColors.stone400)),
-        ],
-        if (required) ...[
-          const SizedBox(width: 2),
-          Text(' *',
-            style: AppTextStyles.body(12, color: AppColors.brand)),
-        ],
-      ]),
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? DS.brandMuted : DS.surface,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Radii.pill),
+              border: Border.all(
+                  color: selected ? DS.brand : DS.border,
+                  width: selected ? 1.5 : 1),
+            ),
+            child: Text(
+              label,
+              style: T.sans(14,
+                  weight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? DS.brandInk : DS.body),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
 class _PkpOption extends StatelessWidget {
-  final String label;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
   const _PkpOption({
     required this.label,
     required this.subtitle,
@@ -548,49 +490,93 @@ class _PkpOption extends StatelessWidget {
     required this.onTap,
   });
 
+  final String label;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.dark : AppColors.bgCard,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? AppColors.dark : AppColors.stone200,
-            width: selected ? 1.5 : 0.5,
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: '$label. $subtitle',
+      child: ExcludeSemantics(
+        child: Material(
+          color: selected ? DS.brandMuted : DS.surface,
+          borderRadius: BorderRadius.circular(Radii.md),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(Radii.md),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 68),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(
+                    color: selected ? DS.brand : DS.border,
+                    width: selected ? 1.5 : 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      style: T.sans(15,
+                          weight: FontWeight.w600,
+                          color: selected ? DS.brandInk : DS.ink)),
+                  const SizedBox(height: 3),
+                  Text(subtitle,
+                      style: T.sans(12, color: DS.muted, height: 1.35)),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-              style: AppTextStyles.body(
-                13,
-                color: selected ? Colors.white : AppColors.stone800,
-                weight: FontWeight.w600,
-              )),
-            const SizedBox(height: 2),
-            Text(subtitle,
-              style: AppTextStyles.body(
-                10,
-                color: selected
-                    ? AppColors.stone400
-                    : AppColors.stone400,
-              )),
-          ],
         ),
       ),
     );
   }
 }
 
-// ─── NPWP Text Formatter ─────────────────────────────────────────────────────
-// Auto-formats as user types: 00.000.000.0-000.000
+class _SuccessView extends StatelessWidget {
+  const _SuccessView();
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: DS.surface,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                    color: DS.brandMuted, shape: BoxShape.circle),
+                child: Icon(Icons.check_rounded, size: 30, color: DS.brandDeep),
+              ),
+              const SizedBox(height: 20),
+              Text('Tersimpan', style: T.serif(26)),
+              const SizedBox(height: 8),
+              Text(
+                'Profil usaha Anda sudah diperbarui.',
+                textAlign: TextAlign.center,
+                style: T.sans(15, color: DS.body),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// `00.000.000.0-000.000`
 class _NpwpFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

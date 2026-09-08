@@ -731,11 +731,11 @@ class _FullCalGridState extends State<_FullCalGrid> {
             }
 
             if (txs.isNotEmpty && c.isCurrent) {
-              if (hasInc && hasExp)     bg = AppColors.brand.withOpacity(.10);
+              if (hasInc && hasExp)     bg = AppColors.brand.withValues(alpha: .10);
               else if (hasInc)          bg = AppColors.incomeLight;
               else                      bg = AppColors.expenseLight;
             }
-            if (isHovered) bg = AppColors.brand.withOpacity(.18);
+            if (isHovered) bg = AppColors.brand.withValues(alpha: .18);
 
             final inc = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
             final exp = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
@@ -979,7 +979,7 @@ class _FilterRow extends StatelessWidget {
       Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
-          color: color.withOpacity(value ? 0.3 : 0.1),
+          color: color.withValues(alpha: value ? 0.3 : 0.1),
           border: Border.all(color: value ? color : AppColors.stone300),
           borderRadius: BorderRadius.circular(2))),
     ]),
@@ -996,7 +996,7 @@ class _LegDot extends StatelessWidget {
     children: [
       Container(width:8,height:8,
         decoration:BoxDecoration(
-          color:color.withOpacity(.3),
+          color:color.withValues(alpha: .3),
           border:Border.all(color:color,width:1),
           borderRadius:BorderRadius.circular(2))),
       const SizedBox(width:4),
@@ -1229,7 +1229,10 @@ class _TotalTab extends StatelessWidget {
             Text('Pemasukan vs Pengeluaran', style: AppTextStyles.display(13)),
             Text('6 bulan terakhir', style: AppTextStyles.body(10, color: AppColors.stone400)),
             const SizedBox(height: 14),
-            _BarChart(allTx: allTx),
+            Semantics(
+              label: 'Grafik batang pemasukan dan pengeluaran enam bulan terakhir',
+              child: ExcludeSemantics(child: _BarChart(allTx: allTx)),
+            ),
             const SizedBox(height: 8),
             Row(children: [
               _LegDot(color: AppColors.income,  label: 'Pemasukan'),
@@ -1246,7 +1249,10 @@ class _TotalTab extends StatelessWidget {
             Text('Tren Laba Kumulatif', style: AppTextStyles.display(13)),
             Text('Akumulasi laba per bulan', style: AppTextStyles.body(10, color: AppColors.stone400)),
             const SizedBox(height: 14),
-            _LineChart(allTx: allTx),
+            Semantics(
+              label: 'Grafik garis tren laba enam bulan terakhir',
+              child: ExcludeSemantics(child: _LineChart(allTx: allTx)),
+            ),
           ]),
         ),
         const SizedBox(height: 10),
@@ -1261,7 +1267,12 @@ class _TotalTab extends StatelessWidget {
                   Text('Komposisi Arus Kas', style: AppTextStyles.display(13)),
                   Text('Pemasukan vs Pengeluaran', style: AppTextStyles.body(10, color: AppColors.stone400)),
                   const SizedBox(height: 14),
-                  _PieChart(income: _totalIncome, expense: _totalExpense),
+                  Semantics(
+                    label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
+                    child: ExcludeSemantics(
+                      child: _PieChart(income: _totalIncome, expense: _totalExpense),
+                    ),
+                  ),
                 ]),
               )),
               const SizedBox(width: 10),
@@ -1270,7 +1281,10 @@ class _TotalTab extends StatelessWidget {
                   Text('Kategori Pengeluaran', style: AppTextStyles.display(13)),
                   Text('Top 5 terbesar', style: AppTextStyles.body(10, color: AppColors.stone400)),
                   const SizedBox(height: 14),
-                  _ExpensePieChart(allTx: allTx),
+                  Semantics(
+                    label: 'Diagram lingkaran komposisi pengeluaran per kategori',
+                    child: ExcludeSemantics(child: _ExpensePieChart(allTx: allTx)),
+                  ),
                 ]),
               )),
             ]);
@@ -1280,14 +1294,22 @@ class _TotalTab extends StatelessWidget {
               Text('Komposisi Arus Kas', style: AppTextStyles.display(13)),
               Text('Pemasukan vs Pengeluaran', style: AppTextStyles.body(10, color: AppColors.stone400)),
               const SizedBox(height: 14),
-              _PieChart(income: _totalIncome, expense: _totalExpense),
+              Semantics(
+                    label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
+                    child: ExcludeSemantics(
+                      child: _PieChart(income: _totalIncome, expense: _totalExpense),
+                    ),
+                  ),
             ])),
             const SizedBox(height: 10),
             AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Kategori Pengeluaran', style: AppTextStyles.display(13)),
               Text('Top 5 terbesar', style: AppTextStyles.body(10, color: AppColors.stone400)),
               const SizedBox(height: 14),
-              _ExpensePieChart(allTx: allTx),
+              Semantics(
+                    label: 'Diagram lingkaran komposisi pengeluaran per kategori',
+                    child: ExcludeSemantics(child: _ExpensePieChart(allTx: allTx)),
+                  ),
             ])),
           ]);
         }),
@@ -1426,7 +1448,7 @@ class _LineChart extends StatelessWidget {
             belowBarData: BarAreaData(
               show: true,
               color: (_profit(allTx) >= 0 ? AppColors.income : AppColors.expense)
-                .withOpacity(0.08)),
+                .withValues(alpha: 0.08)),
           ),
         ],
       )),
@@ -1610,13 +1632,13 @@ class _BarChart extends StatelessWidget {
                 children: [
                   Container(width: 10, height: hi,
                     decoration: BoxDecoration(
-                      color: AppColors.income.withOpacity(0.85),
+                      color: AppColors.income.withValues(alpha: 0.85),
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(3)))),
                   const SizedBox(width: 2),
                   Container(width: 10, height: he,
                     decoration: BoxDecoration(
-                      color: AppColors.expense.withOpacity(0.75),
+                      color: AppColors.expense.withValues(alpha: 0.75),
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(3)))),
                 ],

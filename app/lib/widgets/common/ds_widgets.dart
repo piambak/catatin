@@ -8,6 +8,7 @@
 // R-2 perlu diperbarui. Di luar dua tempat itu, tidak ada bayangan.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/services/theme_notifier.dart';
 import '../../core/theme/design_tokens.dart';
 
@@ -441,6 +442,147 @@ class DsTimelineNode extends StatelessWidget {
         Text(amount,
             style: T.mono(14, color: active ? DS.body : DS.muted)),
       ],
+    );
+  }
+}
+
+/// Wordmark "Catatin" — "Catat" dalam warna teks, "in" dalam warna merek.
+class DsWordmark extends StatelessWidget {
+  const DsWordmark({super.key, this.size = 26, this.color});
+
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Catatin',
+      child: ExcludeSemantics(
+        child: RichText(
+          text: TextSpan(
+            style: T.serif(size, color: color ?? DS.wordmark),
+            children: [
+              const TextSpan(text: 'Catat'),
+              TextSpan(text: 'in', style: T.serif(size, color: DS.brand)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kolom isian dengan label di atas — bukan label mengambang.
+///
+/// Label yang selalu terlihat lebih mudah dipindai daripada label yang naik
+/// saat difokus, terutama di form panjang seperti Profil usaha.
+class DsField extends StatelessWidget {
+  const DsField({
+    super.key,
+    required this.label,
+    this.controller,
+    this.hint,
+    this.helper,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffix,
+    this.validator,
+    this.onSubmitted,
+    this.textInputAction,
+    this.inputFormatters,
+    this.enabled = true,
+  });
+
+  final String label;
+  final TextEditingController? controller;
+  final String? hint;
+  final String? helper;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffix;
+  final String? Function(String?)? validator;
+  final void Function(String)? onSubmitted;
+  final TextInputAction? textInputAction;
+  final List<TextInputFormatter>? inputFormatters;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          validator: validator,
+          onFieldSubmitted: onSubmitted,
+          textInputAction: textInputAction,
+          inputFormatters: inputFormatters,
+          enabled: enabled,
+          style: T.sans(15, color: DS.ink),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: T.sans(15, color: DS.faint),
+            suffixIcon: suffix,
+            filled: true,
+            fillColor: enabled ? DS.surface : DS.sunken,
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            border: _border(DS.border),
+            enabledBorder: _border(DS.border),
+            focusedBorder: _border(DS.brand, width: 1.5),
+            errorBorder: _border(DS.expense),
+            focusedErrorBorder: _border(DS.expense, width: 1.5),
+            errorStyle: T.sans(11.5, color: DS.expense),
+          ),
+        ),
+        if (helper != null) ...[
+          const SizedBox(height: 5),
+          Text(helper!, style: T.sans(12, color: DS.faint, height: 1.4)),
+        ],
+      ],
+    );
+  }
+
+  OutlineInputBorder _border(Color color, {double width = 1}) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(Radii.sm),
+        borderSide: BorderSide(color: color, width: width),
+      );
+}
+
+/// Banner galat inline — dipakai di form auth.
+class DsErrorBanner extends StatelessWidget {
+  const DsErrorBanner({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: DS.expense.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(Radii.sm),
+        border: Border.all(color: DS.expense.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline_rounded, color: DS.expense, size: 17),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message,
+                style: T.sans(13, color: DS.expense, height: 1.4)),
+          ),
+        ],
+      ),
     );
   }
 }

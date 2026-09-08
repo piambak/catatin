@@ -209,10 +209,10 @@ class _NotifTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         color: isPinned
-          ? AppColors.brand.withOpacity(0.06)
+          ? AppColors.brand.withValues(alpha: 0.06)
           : notif.isRead
             ? Colors.transparent
-            : AppColors.brand.withOpacity(0.04),
+            : AppColors.brand.withValues(alpha: 0.04),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

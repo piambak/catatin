@@ -128,7 +128,10 @@ class _ScenarioTabState extends State<ScenarioTab>
             )),
 
             // Mini bar chart
-            _buildBarChart(_results!),
+            Semantics(
+              label: 'Grafik batang perbandingan total pajak antar-skenario',
+              child: ExcludeSemantics(child: _buildBarChart(_results!)),
+            ),
             const SizedBox(height: 14),
           ],
 

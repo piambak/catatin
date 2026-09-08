@@ -319,14 +319,47 @@ keduanya lebih dalam dari sebelumnya.
 | T-3 | PPh Final: pengecualian omzet Rp500 juta & batas jangka waktu belum ada | 🔴 | Pakar pajak → Frontend | Minggu 5 |
 | T-4 | Angka PKP di layar PPh 21 menyesatkan; rekalkulasi Desember belum ada | 🟡 | Pakar pajak → Frontend | Minggu 6 |
 | T-5 | Null-assertion rawan crash di pemetaan PTKP | ✅ **Selesai** | Frontend | 8 Sep 2026 |
-| T-6 | 66 pemakaian `withOpacity` yang sudah deprecated | 🟡 | Frontend | Minggu 8 |
-| T-7 | Dua `BuildContext` dipakai lewat async gap | 🟡 | Frontend | Minggu 3 |
-| T-8 | Aksesibilitas nol — tidak ada satu pun `Semantics` | 🟡 | Frontend | Minggu 8 |
+| T-6 | 66 pemakaian `withOpacity` yang sudah deprecated | ✅ **Selesai** | Frontend | 8 Sep 2026 |
+| T-7 | Dua `BuildContext` dipakai lewat async gap | ✅ **Selesai** | Frontend | 8 Sep 2026 |
+| T-8 | Aksesibilitas nol — tidak ada satu pun `Semantics` | 🟨 **Sebagian** | Frontend | 8 Sep 2026 |
 | T-9 | CI tidak menegakkan `dart format` | 🟡 | Frontend | Minggu 3 |
 | T-10 | CI tanpa laporan coverage | ⬜ | Frontend | Minggu 8 |
 | T-11 | `flutter_secure_storage` di web perlu diverifikasi sebelum JWT asli | ⬜ | Backend + Frontend | Minggu 5 |
 | T-12 | Belum ada kerangka l10n | ⬜ | Frontend | Fase berikutnya |
 | T-13 | Tabel TER tampilan menyimpang dari tabel hitung | ✅ **Selesai** | Frontend | 8 Sep 2026 |
+| T-14 | 3.225 baris widget dashboard jadi yatim setelah redesain | 🟡 | Frontend | Perlu keputusan |
+
+---
+
+### 🟡 T-14 — Widget dashboard lama jadi yatim setelah redesain
+
+Setelah `dashboard_screen.dart` ditulis ulang mengikuti artboard 1b, seluruh
+widget dashboard lama tidak lagi dirujuk siapa pun. Nol referensi eksternal
+untuk kesepuluhnya:
+
+`KpiCard` · `IncomeChartCard` · `PkpBar` · `RecentTransactions` ·
+`DeadlineCard` · `QuickActions` · `TaxTipsCard` · `RegulationCard` ·
+`CalDeadlineCard` · `TaxCalendarCard`
+
+Totalnya **3.225 baris** di `lib/widgets/dashboard/`. Kompilator tidak
+mengeluhkannya karena masing-masing berkas tetap valid — hanya tidak pernah
+dipakai.
+
+Hal serupa berlaku untuk `pph_final_tab.dart` dan `pph21_tab.dart` di
+simulator, yang sengaja dipertahankan sebagai rujukan saat T-1 dikerjakan.
+
+**Butuh keputusan, bukan aksi otomatis:**
+
+- [ ] **Frontend + pemilik produk** — putuskan mana yang dihapus dan mana yang
+      ditahan sebagai rujukan. Menghapusnya mengecilkan repo dan menghilangkan
+      kebingungan "berkas mana yang hidup"; menahannya berguna sampai Pembukuan
+      selesai didesain ulang dan T-1 beres.
+- [ ] Apa pun keputusannya, kerjakan sebagai PR tersendiri — penghapusan 3.000+
+      baris tidak boleh bercampur dengan perubahan lain.
+
+Sampai diputuskan, jangan buang tenaga memperbaiki apa pun di dalamnya —
+pembersihan `withOpacity` (T-6) sudah menyentuh berkas-berkas ini, tapi
+pekerjaan aksesibilitas (T-8) sengaja melewatinya.
 
 ---
 
@@ -552,6 +585,47 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-08** — Frontend — Lanjutan kerja tanpa ketergantungan Backend/Pakar
+  pajak: **T-7** dan **T-6** selesai, **T-8** sebagian, layar auth dan Profil
+  usaha diseragamkan gayanya, dan **T-14** (baru) dicatat.
+  **T-7** — `month_picker.dart` mengambil `NavigatorState` sebelum `pop()`,
+  jadi `context` tidak lagi dibawa masuk ke `Future.microtask` setelah
+  route-nya dilepas. Nol `use_build_context_synchronously` tersisa di repo.
+  **Layar masuk & daftar** — wordmark masih tertulis "NamaAppmu", sisa scaffold
+  yang tidak pernah diganti padahal itu layar pertama yang dilihat siapa pun.
+  Sekarang memakai `DsWordmark` yang sama dengan rail navigasi. Keduanya
+  memakai `DsField`/`DsButton`, dan form dibatasi 420px lalu ditengahkan di
+  layar lebar (sebelumnya membentang penuh).
+  **Profil usaha** — ditulis ulang dengan gaya yang sama. Mengikuti R-6, form
+  kini terbuka dengan tiga hal (nama usaha, jenis usaha, status PKP); nama
+  pemilik, NPWP, dan jumlah karyawan pindah ke "Detail tambahan" yang otomatis
+  terbuka kalau sudah terisi atau kalau validasinya gagal. Mode onboarding,
+  tombol lewati, formatter NPWP, dan layar sukses semuanya dipertahankan.
+  **T-6** — 52 pemakaian `withOpacity` tersisa diganti `withValues(alpha:)` di
+  17 berkas. Nol tersisa. Total isu `flutter analyze` turun dari 92 jadi 40.
+  **T-8 (sebagian)** — label semantik ditambahkan ke seluruh grafik dan
+  indikator yang **benar-benar terjangkau**: empat grafik di tab Total
+  Pencatatan, grafik batang skenario, dan progress bar ambang PKP di
+  `sim_widgets.dart`. Layar hasil redesain (Dashboard, Simulator, Pengaturan,
+  auth, Profil usaha) sudah membawa semantiknya sendiri sejak ditulis.
+  **Belum:** pengukuran kontras dan uji pembaca layar sungguhan — keduanya
+  perlu perangkat, bukan pembacaan kode.
+  **T-14 (baru)** — sepuluh widget dashboard lama (3.225 baris) jadi yatim
+  setelah redesain; nol referensi eksternal. Butuh keputusan hapus-atau-tahan,
+  dan harus jadi PR tersendiri.
+  **T-9 tetap ditahan** sesuai permintaan, dikerjakan setelah semua ini.
+  `flutter analyze` → 0 error, 0 warning, 40 info. `flutter test` → 39 lulus,
+  1 di-skip. `flutter build web --release` → berhasil.
+  **Catatan proses — analyze lokal tidak sama dengan CI.** PR #3 sempat merah
+  karena `unnecessary_non_null_assertion` di `simulator_service.dart`, padahal
+  `flutter analyze` lokal melaporkan nol warning. Sebabnya beda versi: mesin
+  lokal memakai Flutter **3.44.0**, CI memakai **3.44.8**, dan analyzer versi
+  baru menaikkan lint itu jadi warning. Karena `ci.yml` memakai
+  `--no-fatal-infos`, warning menggagalkan build sementara info tidak — jadi
+  "nol warning di lokal" **bukan** jaminan CI hijau. Samakan versi Flutter
+  lokal dengan pin CI, atau perlakukan hasil CI sebagai satu-satunya sumber
+  kebenaran sebelum menyatakan sebuah PR bersih.
 
 - **2026-09-08** — Frontend — Menyelesaikan tiga temuan yang tidak bergantung
   Backend maupun Pakar pajak: **T-2**, **T-5**, dan **T-13** (baru).

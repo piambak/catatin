@@ -334,7 +334,7 @@ class _IncomeChartCardState extends State<IncomeChartCard> {
       spots: pts.asMap().entries
           .map((e) => FlSpot(e.key.toDouble(), e.value))
           .toList(),
-      color: color.withOpacity(opacity),
+      color: color.withValues(alpha: opacity),
       barWidth: dashed ? 1.5 : 2,
       isCurved: true,
       curveSmoothness: 0.35,
@@ -342,7 +342,7 @@ class _IncomeChartCardState extends State<IncomeChartCard> {
         show: true,
         getDotPainter: (_, __, ___, idx) => FlDotCirclePainter(
           radius: 3.5,
-          color: color.withOpacity(opacity),
+          color: color.withValues(alpha: opacity),
           strokeColor: Colors.white,
           strokeWidth: 1.5,
         ),
@@ -350,7 +350,7 @@ class _IncomeChartCardState extends State<IncomeChartCard> {
       dashArray: dashed ? [5, 4] : null,
       belowBarData: BarAreaData(
         show: !dashed,
-        color: color.withOpacity(0.04),
+        color: color.withValues(alpha: 0.04),
       ),
     );
   }
@@ -482,7 +482,7 @@ class _LegendItem extends StatelessWidget {
         SizedBox(
           width: 16, height: 2,
           child: CustomPaint(
-            painter: _DashPainter(color: color.withOpacity(0.6)),
+            painter: _DashPainter(color: color.withValues(alpha: 0.6)),
           ),
         )
       else

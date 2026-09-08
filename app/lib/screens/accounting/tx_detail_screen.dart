@@ -81,7 +81,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
           : AppColors.expenseLight,
       borderColor: tx.isIncome
           ? AppColors.incomeBorder
-          : AppColors.expense.withOpacity(0.3),
+          : AppColors.expense.withValues(alpha: 0.3),
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
       child: Column(children: [
         // Big icon circle
@@ -89,7 +89,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
           width: 52, height: 52,
           decoration: BoxDecoration(
             color: (tx.isIncome ? AppColors.income : AppColors.expense)
-                .withOpacity(0.12),
+                .withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -117,8 +117,8 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
           style: AppTextStyles.body(
             13,
             color: tx.isIncome
-                ? AppColors.income.withOpacity(0.7)
-                : AppColors.expense.withOpacity(0.7),
+                ? AppColors.income.withValues(alpha: 0.7)
+                : AppColors.expense.withValues(alpha: 0.7),
           ),
         ),
       ]),
@@ -216,7 +216,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
     if (_confirmDelete) {
       return AppCard(
         backgroundColor: AppColors.expenseLight,
-        borderColor: AppColors.expense.withOpacity(0.3),
+        borderColor: AppColors.expense.withValues(alpha: 0.3),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(children: [
           Icon(Icons.warning_amber_rounded,
@@ -263,7 +263,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.expense,
           side: BorderSide(
-            color: AppColors.expense.withOpacity(0.4), width: 0.5),
+            color: AppColors.expense.withValues(alpha: 0.4), width: 0.5),
         ),
         onPressed: () => setState(() => _confirmDelete = true),
         icon: Icon(Icons.delete_outline_rounded, size: 16),

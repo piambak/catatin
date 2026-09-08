@@ -109,7 +109,7 @@ class _CalendarTabState extends State<CalendarTab>
                 color: AppColors.expenseLight,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.expense.withOpacity(0.3), width: 0.5),
+                  color: AppColors.expense.withValues(alpha: 0.3), width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,9 +274,9 @@ class _SummaryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.25), width: 0.5),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
         ),
         child: Column(children: [
           Text('$count',
@@ -284,7 +284,7 @@ class _SummaryChip extends StatelessWidget {
               16, color: color, weight: FontWeight.w700)),
           Text(label,
             style: AppTextStyles.body(
-              9, color: color.withOpacity(0.8)),
+              9, color: color.withValues(alpha: 0.8)),
             textAlign: TextAlign.center),
         ]),
       ),

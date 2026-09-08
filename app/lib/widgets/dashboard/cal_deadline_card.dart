@@ -364,7 +364,7 @@ class _CalCellState extends State<_CalCell> {
         ? _colorsFor(widget.event!.type)
         : (Colors.transparent, AppColors.stone500, Colors.transparent);
     final cellBg = _hovered && widget.event != null
-        ? bg.withOpacity(0.7)
+        ? bg.withValues(alpha: 0.7)
         : widget.isToday && widget.event == null
             ? AppColors.stone100
             : (widget.event != null ? bg : Colors.transparent);
@@ -480,7 +480,7 @@ class _LegItem extends StatelessWidget {
       Container(
         width: 7, height: 7,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           border: Border.all(color: color, width: 1),
           borderRadius: BorderRadius.circular(2))),
       const SizedBox(width: 4),

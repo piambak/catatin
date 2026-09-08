@@ -35,7 +35,7 @@ class SimCard extends StatelessWidget {
             Container(
               width: 30, height: 30,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(7),
               ),
               child: Icon(icon, size: 16, color: iconColor),
@@ -171,7 +171,7 @@ class ResultBox extends StatelessWidget {
       AppColors.warningLight, AppColors.warningBorder, AppColors.warning),
     ResultBoxVariant.red   => (
       AppColors.expenseLight,
-      AppColors.expense.withOpacity(0.3),
+      AppColors.expense.withValues(alpha: 0.3),
       AppColors.expense),
   };
 
@@ -227,7 +227,7 @@ class _ResultRowWidget extends StatelessWidget {
         children: [
           Text(row.label,
             style: AppTextStyles.body(
-              row.isBig ? 12 : 11, color: fg.withOpacity(0.75))),
+              row.isBig ? 12 : 11, color: fg.withValues(alpha: 0.75))),
           Text(row.value,
             style: AppTextStyles.mono(
               row.isBig ? 18 : 13,
@@ -266,19 +266,25 @@ class SimPkpBar extends StatelessWidget {
       children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Progres ke batas PKP (Rp 4,8 M/tahun)',
-            style: AppTextStyles.body(11, color: _color.withOpacity(0.8))),
+            style: AppTextStyles.body(11, color: _color.withValues(alpha: 0.8))),
           Text(Pct.formatValue(percent),
             style: AppTextStyles.mono(
               12, color: _color, weight: FontWeight.w600)),
         ]),
         const SizedBox(height: 5),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: (percent / 100).clamp(0.0, 1.0),
-            minHeight: 7,
-            backgroundColor: _color.withOpacity(0.15),
-            valueColor: AlwaysStoppedAnimation(_color),
+        Semantics(
+          label: 'Progres omzet terhadap ambang PKP',
+          value: Pct.formatValue(percent),
+          child: ExcludeSemantics(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: (percent / 100).clamp(0.0, 1.0),
+                minHeight: 7,
+                backgroundColor: _color.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation(_color),
+              ),
+            ),
           ),
         ),
         if (isWarning || isDanger) ...[

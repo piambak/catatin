@@ -347,7 +347,7 @@ class _CalCell extends StatelessWidget {
           duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
             color: isHovered && event != null
-                ? bg.withOpacity(0.7)
+                ? bg.withValues(alpha: 0.7)
                 : cellBg,
             borderRadius: BorderRadius.circular(6),
           ),
@@ -398,7 +398,7 @@ class _LegendItem extends StatelessWidget {
       Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           border: Border.all(color: color, width: 1),
           borderRadius: BorderRadius.circular(2),
         ),

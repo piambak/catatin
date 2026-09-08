@@ -193,7 +193,7 @@ class _PphFinalTabState extends State<PphFinalTab>
     return AppCard(
       key: const ValueKey('ineligible'),
       backgroundColor: AppColors.expenseLight,
-      borderColor: AppColors.expense.withOpacity(0.3),
+      borderColor: AppColors.expense.withValues(alpha: 0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -250,7 +250,7 @@ class AppTheme {
             s.contains(MaterialState.selected) ? AppColors.brand : Colors.white),
           trackColor: MaterialStateProperty.resolveWith((s) =>
             s.contains(MaterialState.selected)
-                ? AppColors.brand.withOpacity(0.4)
+                ? AppColors.brand.withValues(alpha: 0.4)
                 : (isDark ? const Color(0xFF454B55) : const Color(0xFFAAB8CC))),
         ),
 

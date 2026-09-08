@@ -302,7 +302,7 @@ class _TypeBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? Theme.of(context).cardColor : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
-          border: active ? Border.all(color: color.withOpacity(0.3)) : null),
+          border: active ? Border.all(color: color.withValues(alpha: 0.3)) : null),
         child: Center(child: Text(label,
           style: AppTextStyles.body(13,
             color: active ? color : AppColors.stone400,
@@ -443,7 +443,7 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.stone200, width: .5),
               boxShadow: [BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12, offset: const Offset(0, 4))]),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -457,12 +457,12 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
                       widget.onChanged(item.value);
                       _close();
                     },
-                    hoverColor: AppColors.brand.withOpacity(0.05),
+                    hoverColor: AppColors.brand.withValues(alpha: 0.05),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 11),
                       color: selected
-                        ? AppColors.brand.withOpacity(0.07)
+                        ? AppColors.brand.withValues(alpha: 0.07)
                         : Colors.transparent,
                       child: Row(children: [
                         Expanded(child: Text(item.label,

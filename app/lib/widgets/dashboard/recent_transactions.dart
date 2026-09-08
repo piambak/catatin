@@ -123,7 +123,7 @@ class _TxRowState extends State<_TxRow> {
   Color get _iconBg {
     final hex = widget.tx.categoryColor.replaceFirst('#', '');
     final color = Color(int.parse('FF$hex', radix: 16));
-    return color.withOpacity(0.15);
+    return color.withValues(alpha: 0.15);
   }
 
   @override
@@ -137,13 +137,13 @@ class _TxRowState extends State<_TxRow> {
         duration: const Duration(milliseconds: 100),
         decoration: BoxDecoration(
           color: _hovered
-            ? AppColors.brand.withOpacity(0.04)
+            ? AppColors.brand.withValues(alpha: 0.04)
             : Colors.transparent,
           borderRadius: BorderRadius.circular(8)),
         child: InkWell(
           onTap: widget.onTap,
           hoverColor: Colors.transparent,
-          splashColor: AppColors.brand.withOpacity(0.08),
+          splashColor: AppColors.brand.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 9),

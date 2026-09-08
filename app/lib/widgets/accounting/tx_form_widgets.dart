@@ -246,7 +246,7 @@ class CategoryGrid extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected
-                    ? cat.flutterColor.withOpacity(0.12)
+                    ? cat.flutterColor.withValues(alpha: 0.12)
                     : AppColors.bgCard,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(

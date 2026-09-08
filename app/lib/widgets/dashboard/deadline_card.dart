@@ -245,13 +245,13 @@ class SetupPrompt extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       backgroundColor: AppColors.brandSurface,
-      borderColor: AppColors.brand.withOpacity(0.3),
+      borderColor: AppColors.brand.withValues(alpha: 0.3),
       onTap: onTap,
       child: Row(children: [
         Container(
           width: 40, height: 40,
           decoration: BoxDecoration(
-            color: AppColors.brand.withOpacity(0.12),
+            color: AppColors.brand.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.business_outlined,
