@@ -30,6 +30,43 @@
   <title>Catatin</title>
 </head>
 <body>
+  <!--
+    Membersihkan service worker lama.
+
+    Sejak build ini aplikasi tidak lagi mendaftarkan service worker (lihat
+    web/flutter_bootstrap.js), tapi pengunjung yang pernah membuka versi
+    sebelumnya masih menyimpannya di browser. Selama masih terdaftar, ia terus
+    menyajikan berkas lama dari cache — termasuk sesudah hard reload.
+
+    Skrip ini membatalkan pendaftarannya, mengosongkan cache-nya, lalu memuat
+    ulang SEKALI. Penanda di sessionStorage mencegah putaran reload tak
+    berujung. Pengunjung baru tidak terpengaruh: tidak ada yang dibatalkan,
+    jadi tidak ada reload.
+  -->
+  <script>
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        if (!regs.length) return;
+        var done = regs.map(function (r) { return r.unregister(); });
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { caches.delete(k); });
+          });
+        }
+        Promise.all(done).then(function () {
+          try {
+            if (sessionStorage.getItem('sw-cleared')) return;
+            sessionStorage.setItem('sw-cleared', '1');
+          } catch (e) {
+            return; // sessionStorage diblokir — lebih baik tidak reload sama sekali
+          }
+          location.reload();
+        });
+      }).catch(function () {});
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
