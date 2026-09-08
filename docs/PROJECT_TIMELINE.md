@@ -517,6 +517,36 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-08** — Frontend — Tindak lanjut review PR #2: beresi 4 temuan
+  prioritas sebelum merge. (1) `regulation_card.dart` — poin **PPN** dan **PPh
+  Badan** dicabut dari kartu: tarif PPN sedang bergerak (UU HPP 7/2021 → PMK
+  131/2024, konstruksi DPP nilai lain) dan PPh Badan 22% salah sasaran untuk
+  UMKM yang dominan WP orang pribadi (yang berlaku tarif Pasal 17 OP). Keduanya
+  menunggu angka tertulis dari Pakar Regulasi — sejalan dengan temuan T-3.
+  (2) Kata "**tetap**" pada judul PPh Final dibuang, dan body-nya menyebut ada
+  syarat jangka waktu serta ambang omzet tidak kena pajak yang belum dirinci;
+  `maxLines` body dinaikkan 2 → 3 supaya syaratnya tidak terpotong ellipsis.
+  Subtitle jadi "Ringkasan sementara, belum ditinjau pakar pajak". (3) Angka
+  kartu **benar-benar** dirangkai dari `AppConstants.pphFinalRate` dan
+  `pkpThreshold` lewat helper baru `Pct.id()` dan `Rupiah.miliar()` di
+  `core/utils/formatters.dart` — jadi kartu dan Simulator tidak bisa lagi
+  menampilkan tarif yang berbeda. Warna chip sekalian dipindah ke getter tema
+  (`AppColors.expenseLight/expenseBadgeFg`, `warningLight/warningBadgeFg`)
+  karena baris yang sama memang sedang ditulis ulang — sebelumnya literal mode
+  terang yang tidak ikut mode Gelap. (4) Dokumentasi mati dibersihkan sesuai
+  syarat **M1**: blok "Pustaka peraturan" (±40 baris, 3 endpoint) dan catatan
+  "Bookmark peraturan" di `docs/BACKEND.md`, baris fitur di `README.md` +
+  tagline-nya, baris fitur & daftar folder `screens/` di
+  `docs/ARCHITECTURE.md`, opsi area di `.github/ISSUE_TEMPLATE/feature_request.yml`,
+  dan cakupan commit `library` di `CONTRIBUTING.md`. Karena kontraknya sudah
+  tidak ada di `BACKEND.md`, `ApiEndpoints.documents*` ikut dicabut dari
+  `app_constants.dart` (sebelumnya sengaja ditinggal sebagai kontrak backend).
+  **Belum dikerjakan, menyusul:** `StorageKeys.bookmarks` masih ada — mencabutnya
+  perlu keputusan migrasi karena build yang sudah tayang menulis id dokumen ke
+  `localStorage` pengguna; redirect `/library*` → dashboard + `errorBuilder`
+  router; parameter `compact` dan efek hover mati di `_RegItem`. Ketiganya
+  masuk daftar temuan audit di atas.
+
 - **2026-09-08** — Frontend — Audit kode `app/lib` (53 file, ±14.546 baris) di
   atas branch `claude/flutter-project-review-plan-pzmo22`; hasilnya jadi bagian
   baru **"Temuan audit kode — usulan perbaikan"** (T-1 s/d T-12) di dokumen ini.
@@ -559,7 +589,10 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
   "Perpustakaan" dari `MainShell`, sesuaikan indeks `_tabs`/`_screens`.
   (4) `regulation_card.dart` ditulis ulang jadi kartu statis "Info Pajak
   UMKM" berisi 4 poin inline (PPh Final 0,5%, ambang PKP, PPN 11%, PPh Badan
-  22% — dari `AppConstants`, bukan input pakar pajak yang belum ada);
+  22% — ~~dari `AppConstants`~~ **koreksi 8 Sep: angkanya ditulis ulang sebagai
+  literal string, berkas ini tidak meng-import `app_constants.dart`; sudah
+  dibetulkan, lihat entri 8 Sep di bawah**, bukan input pakar pajak yang belum
+  ada);
   `QuickActions` di `deadline_card.dart` kehilangan tombol "Cari Regulasi"
   dan parameter `onLibrary`; 3 titik pemanggilan di `dashboard_screen.dart`
   disesuaikan. `tax_tips_card.dart` tidak disentuh (memang tidak terkopel,
@@ -580,7 +613,8 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
   perlu di-cross-check oleh Backend. Test `MockLibraryRepository` di
   `test/widget_test.dart` juga dihapus (target ujinya sudah tidak ada).
   `flutter analyze` → 0 error/warning, `flutter test` → 5/5 lulus.
-  Belum di-push — commit ada di clone lokal, menunggu kredensial git push.
+  ~~Belum di-push~~ — sudah di-push sebagai commit `151df2e` di PR #2
+  (branch `claude/flutter-project-review-plan-pzmo22`).
 
 - **2026-09-07** — Frontend — Selesai 4 tugas audit Minggu 1: (1) peta rute
   `/library/*` — `library` → `LibraryScreen` (tab nav), `library/bookmarks` →
