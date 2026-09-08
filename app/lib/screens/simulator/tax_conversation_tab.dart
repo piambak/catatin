@@ -130,7 +130,11 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
                   Bp.pagePadding(bp),
                   24 + (wide || _hasResult ? 0 : Bp.bottomInset(bp)),
                 ),
-                child: Center(
+                // Align kiri, bukan Center: kalau lebar tersedia lebih kecil
+                // dari batas maksimum, Center akan menaruh kolom di tengah
+                // sehingga tidak sebaris dengan judul dan tab di atasnya.
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: wide ? 720 : 640),
                     child: Column(

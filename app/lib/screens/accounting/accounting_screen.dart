@@ -1757,6 +1757,10 @@ class _ViewTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Tanpa lebar penuh, Container ini menyusut selebar isinya dan Column
+      // induk (crossAxisAlignment default = center) menaruhnya di tengah,
+      // sehingga tab tidak sebaris dengan judul di atasnya.
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(pad, 0, pad, 14),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: DS.hairline)),

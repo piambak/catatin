@@ -58,7 +58,8 @@ class _SimulatorScreenState extends State<SimulatorScreen>
               children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(pad, 22, pad, 0),
-                  child: Center(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
                     child: ConstrainedBox(
                       constraints:
                           const BoxConstraints(maxWidth: Bp.contentMax),
@@ -127,7 +128,8 @@ class _SimulatorTabs extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: DS.hairline)),
       ),
-      child: Center(
+      child: Align(
+                    alignment: Alignment.centerLeft,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: Bp.contentMax),
           child: AnimatedBuilder(

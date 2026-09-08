@@ -59,17 +59,30 @@ class Rupiah {
 class Pct {
   Pct._();
 
+  /// 0,005 → `0,5%`
+  ///
+  /// Memakai koma desimal sesuai penulisan Indonesia. Sebelumnya kedua fungsi
+  /// ini memakai `toStringAsFixed`, yang selalu menghasilkan titik — jadi
+  /// seluruh persentase di aplikasi tampil sebagai "6.0%" dan "5.9%", padahal
+  /// mockup dan teks peraturan menulis "6,0%" dan "5,9%".
   static String format(double rate, {int decimals = 1}) =>
-      '${(rate * 100).toStringAsFixed(decimals)}%';
+      formatValue(rate * 100, decimals: decimals);
 
+  /// 5,9 → `5,9%`
   static String formatValue(double pct, {int decimals = 1}) =>
-      '${pct.toStringAsFixed(decimals)}%';
+      '${_fixed(decimals).format(pct)}%';
 
-  /// 0,5% — koma desimal sesuai penulisan Indonesia, untuk teks yang dibaca
-  /// pengguna (bukan angka hasil hitung di tabel simulator).
-  static String id(double rate) => '${_desimal.format(rate * 100)}%';
+  /// 0,5% — alias lama, dipertahankan untuk pemanggil yang sudah ada.
+  static String id(double rate) => format(rate);
 
-  static final _desimal = NumberFormat.decimalPattern('id_ID');
+  static final _formats = <int, NumberFormat>{};
+
+  static NumberFormat _fixed(int decimals) => _formats.putIfAbsent(
+        decimals,
+        () => NumberFormat.decimalPattern('id_ID')
+          ..minimumFractionDigits = decimals
+          ..maximumFractionDigits = decimals,
+      );
 }
 
 // ── Date ──────────────────────────────────────────────────────────────────────
