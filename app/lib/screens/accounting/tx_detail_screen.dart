@@ -1,11 +1,29 @@
 // lib/screens/accounting/tx_detail_screen.dart
+//
+// Detail transaksi — digayakan ulang mengikuti mockup Claude Design.
+//
+// Nominal jadi satu angka besar di puncak layar, bukan kartu berwarna; sisanya
+// turun jadi daftar baris berpemisah tipis. Konfirmasi hapus tetap inline
+// (bukan dialog) supaya alur ini tidak menambah lapisan modal — R-5.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/services/accounting_service.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/breakpoints.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
-import '../../widgets/common/app_widgets.dart';
+import '../../widgets/common/ds_widgets.dart';
+
+const _paymentLabels = {
+  'CASH': 'Tunai',
+  'TRANSFER': 'Transfer bank',
+  'QRIS': 'QRIS',
+  'KARTU_DEBIT': 'Kartu debit',
+  'KARTU_KREDIT': 'Kartu kredit',
+  'COD': 'COD',
+  'OTHER': 'Lainnya',
+};
 
 class TxDetailScreen extends StatefulWidget {
   final String txId;
@@ -17,9 +35,9 @@ class TxDetailScreen extends StatefulWidget {
 
 class _TxDetailScreenState extends State<TxDetailScreen> {
   TxData? _tx;
-  bool    _loading       = true;
-  bool    _deleting      = false;
-  bool    _confirmDelete = false;
+  bool _loading = true;
+  bool _deleting = false;
+  bool _confirmDelete = false;
 
   @override
   void initState() {
@@ -30,281 +48,262 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final tx = await AccountingService.getTransaction(widget.txId);
-    setState(() { _tx = tx; _loading = false; });
+    if (!mounted) return;
+    setState(() {
+      _tx = tx;
+      _loading = false;
+    });
   }
 
   Future<void> _delete() async {
     setState(() => _deleting = true);
     await AccountingService.deleteTransaction(widget.txId);
-    if (mounted) context.go('/accounting');
+    if (!mounted) return;
+    context.go('/accounting');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Detail Transaksi'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
+      backgroundColor: DS.surface,
+      body: SafeArea(
+        child: BreakpointBuilder(
+          builder: (context, bp) {
+            final pad = Bp.pagePadding(bp);
+            return Column(
+              children: [
+                _header(pad, bp),
+                Expanded(child: _body(pad)),
+              ],
+            );
+          },
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
-          : _tx == null
-              ? ErrorState(message: 'Transaksi tidak ditemukan.', onRetry: _load)
-              : SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                    child: Column(
-                      children: [
-                        _buildHero(),
-                        const SizedBox(height: 14),
-                        _buildDetails(),
-                        const SizedBox(height: 14),
-                        _buildActions(),
-                      ],
-                    ),
-                  ),
-                ),
     );
   }
 
-  // ── Hero amount card ───────────────────────────────────────────────────────
-
-  Widget _buildHero() {
-    final tx = _tx!;
-    return AppCard(
-      backgroundColor: tx.isIncome
-          ? AppColors.incomeLight
-          : AppColors.expenseLight,
-      borderColor: tx.isIncome
-          ? AppColors.incomeBorder
-          : AppColors.expense.withValues(alpha: 0.3),
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-      child: Column(children: [
-        // Big icon circle
-        Container(
-          width: 52, height: 52,
-          decoration: BoxDecoration(
-            color: (tx.isIncome ? AppColors.income : AppColors.expense)
-                .withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            tx.isIncome
-                ? Icons.arrow_upward_rounded
-                : Icons.arrow_downward_rounded,
-            color: tx.isIncome ? AppColors.income : AppColors.expense,
-            size: 26,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Amount
-        Text(
-          '${tx.isIncome ? '+' : '−'}${Rupiah.format(tx.amount)}',
-          style: AppTextStyles.mono(
-            26,
-            color: tx.isIncome ? AppColors.income : AppColors.expense,
-            weight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          tx.isIncome ? 'Pemasukan' : 'Pengeluaran',
-          style: AppTextStyles.body(
-            13,
-            color: tx.isIncome
-                ? AppColors.income.withValues(alpha: 0.7)
-                : AppColors.expense.withValues(alpha: 0.7),
-          ),
-        ),
-      ]),
-    );
-  }
-
-  // ── Detail rows ────────────────────────────────────────────────────────────
-
-  Widget _buildDetails() {
-    final tx = _tx!;
-    final pmLabels = const {
-      'CASH':         'Tunai',
-      'TRANSFER':     'Transfer Bank',
-      'QRIS':         'QRIS',
-      'KARTU_DEBIT':  'Kartu Debit',
-      'KARTU_KREDIT': 'Kartu Kredit',
-      'COD':          'COD',
-      'OTHER':        'Lainnya',
-    };
-
-    return AppCard(
-      child: Column(children: [
-        _DetailRow(
-          icon: Icons.sell_outlined,
-          label: 'Kategori',
-          child: Row(children: [
-            Text(tx.category.icon, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 6),
-            Text(tx.category.name,
-              style: AppTextStyles.body(14, weight: FontWeight.w500)),
-            if (tx.category.taxRelevant) ...[
-              const SizedBox(width: 6),
-              StatusBadge('Pajak', variant: BadgeVariant.amber),
-            ],
-            if (tx.category.isCogs) ...[
-              const SizedBox(width: 4),
-              StatusBadge('HPP', variant: BadgeVariant.blue),
-            ],
-          ]),
-        ),
-        const Divider(height: 1),
-
-        _DetailRow(
-          icon: Icons.calendar_today_outlined,
-          label: 'Tanggal',
-          value: Tanggal.long(tx.date),
-        ),
-        const Divider(height: 1),
-
-        _DetailRow(
-          icon: Icons.payment_outlined,
-          label: 'Metode Pembayaran',
-          value: pmLabels[tx.paymentMethod] ?? tx.paymentMethod,
-        ),
-
-        if (tx.description != null && tx.description!.isNotEmpty) ...[
-          const Divider(height: 1),
-          _DetailRow(
-            icon: Icons.notes_rounded,
-            label: 'Keterangan',
-            value: tx.description!,
-          ),
-        ],
-
-        if (tx.receiptNote != null && tx.receiptNote!.isNotEmpty) ...[
-          const Divider(height: 1),
-          _DetailRow(
-            icon: Icons.receipt_outlined,
-            label: 'Catatan Nota',
-            value: tx.receiptNote!,
-          ),
-        ],
-
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(children: [
-            Icon(Icons.access_time_rounded,
-              size: 15, color: AppColors.stone300),
-            const SizedBox(width: 8),
-            Text(
-              'Dicatat: ${Tanggal.long(tx.createdAt)}',
-              style: AppTextStyles.body(11, color: AppColors.stone400),
+  Widget _header(double pad, Breakpoint bp) => Padding(
+        padding: EdgeInsets.fromLTRB(pad - 8, 12, pad, 0),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () => context.pop(),
+              icon: Icon(Icons.arrow_back_rounded, color: DS.body),
+              tooltip: 'Kembali',
             ),
-          ]),
-        ),
-      ]),
-    );
-  }
-
-  // ── Action buttons ────────────────────────────────────────────────────────
-
-  Widget _buildActions() {
-    // Delete confirmation strip
-    if (_confirmDelete) {
-      return AppCard(
-        backgroundColor: AppColors.expenseLight,
-        borderColor: AppColors.expense.withValues(alpha: 0.3),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(children: [
-          Icon(Icons.warning_amber_rounded,
-            color: AppColors.expense, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text('Hapus transaksi ini?',
-              style: AppTextStyles.body(13,
-                color: AppColors.expense, weight: FontWeight.w500)),
-          ),
-          TextButton(
-            onPressed: () => setState(() => _confirmDelete = false),
-            child: Text('Batal',
-              style: AppTextStyles.body(13, color: AppColors.stone400)),
-          ),
-          const SizedBox(width: 4),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.expense,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text('Detail transaksi',
+                  style: T.serif(bp.isExpanded ? 30 : 24)),
             ),
-            onPressed: _deleting ? null : _delete,
-            child: _deleting
-                ? const SizedBox(width: 16, height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-                : const Text('Ya, Hapus'),
+          ],
+        ),
+      );
+
+  Widget _body(double pad) {
+    if (_loading) {
+      return Center(child: CircularProgressIndicator(color: DS.brand));
+    }
+
+    final tx = _tx;
+    if (tx == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off_rounded, size: 34, color: DS.faint),
+              const SizedBox(height: 16),
+              Text('Transaksi tidak ditemukan.',
+                  textAlign: TextAlign.center,
+                  style: T.sans(15, color: DS.body)),
+              const SizedBox(height: 20),
+              DsButton(label: 'Coba lagi', onPressed: _load),
+            ],
           ),
-        ]),
+        ),
       );
     }
 
-    // Normal buttons
-    return Row(children: [
-      Expanded(
-        child: OutlinedButton.icon(
-          onPressed: () {},
-          icon: Icon(Icons.edit_outlined, size: 16),
-          label: const Text('Edit'),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(pad, 24, pad, 32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _hero(tx),
+              const SizedBox(height: 32),
+              _details(tx),
+              const SizedBox(height: 30),
+              _actions(),
+            ],
+          ),
         ),
       ),
-      const SizedBox(width: 10),
-      OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.expense,
-          side: BorderSide(
-            color: AppColors.expense.withValues(alpha: 0.4), width: 0.5),
-        ),
-        onPressed: () => setState(() => _confirmDelete = true),
-        icon: Icon(Icons.delete_outline_rounded, size: 16),
-        label: const Text('Hapus'),
-      ),
-    ]);
+    );
   }
-}
 
-// ── Detail Row helper ─────────────────────────────────────────────────────────
+  // ── Nominal ────────────────────────────────────────────────────────────────
 
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String? value;
-  final Widget? child;
+  Widget _hero(TxData tx) {
+    final accent = tx.isIncome ? DS.income : DS.expense;
+    final sign = tx.isIncome ? '+' : '−';
+    final amountText = '$sign${Rupiah.format(tx.amount)}';
+    final typeLabel = tx.isIncome ? 'Pemasukan' : 'Pengeluaran';
 
-  const _DetailRow({
-    required this.icon,
-    required this.label,
-    this.value,
-    this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 16, color: AppColors.stone400),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label,
-              style: AppTextStyles.body(11, color: AppColors.stone400)),
-            const SizedBox(height: 3),
-            child ?? Text(value ?? '',
-              style: AppTextStyles.body(14, weight: FontWeight.w500)),
-          ]),
+    return Semantics(
+      label: '$typeLabel $amountText',
+      child: ExcludeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DsLabel(typeLabel),
+            const SizedBox(height: 12),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(amountText,
+                  style: T.serif(42, color: accent, height: 1, spacing: -1)),
+            ),
+            if (tx.description?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 12),
+              Text(tx.description!,
+                  style: T.sans(16, color: DS.body, height: 1.5)),
+            ],
+          ],
         ),
-      ]),
+      ),
+    );
+  }
+
+  // ── Rincian ────────────────────────────────────────────────────────────────
+
+  Widget _details(TxData tx) {
+    final tags = [
+      if (tx.category.taxRelevant) 'Pajak',
+      if (tx.category.isCogs) 'HPP',
+    ];
+
+    return DsSection(
+      label: 'Rincian',
+      child: Column(
+        children: [
+          DsListRow(
+            title: 'Kategori',
+            trailing:
+                '${tx.category.icon} ${tx.category.name}${tags.isEmpty ? '' : ' · ${tags.join(' · ')}'}',
+            trailingStyle: T.sans(14, color: DS.ink, weight: FontWeight.w500),
+          ),
+          DsListRow(
+            title: 'Tanggal',
+            trailing: Tanggal.long(tx.date),
+            trailingStyle: T.sans(14, color: DS.ink),
+          ),
+          DsListRow(
+            title: 'Metode pembayaran',
+            trailing:
+                _paymentLabels[tx.paymentMethod] ?? tx.paymentMethod,
+            trailingStyle: T.sans(14, color: DS.ink),
+          ),
+          if (tx.receiptNote?.isNotEmpty ?? false)
+            DsListRow(
+              title: 'Catatan nota',
+              trailing: tx.receiptNote!,
+              trailingStyle: T.sans(14, color: DS.ink),
+            ),
+          DsListRow(
+            title: 'Dicatat',
+            trailing: Tanggal.long(tx.createdAt),
+            trailingStyle: T.sans(14, color: DS.muted),
+            showDivider: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Aksi ───────────────────────────────────────────────────────────────────
+
+  Widget _actions() {
+    if (_confirmDelete) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: DS.expense.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: DS.expense.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: DS.expense, size: 19),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Hapus transaksi ini?',
+                      style: T.sans(14.5,
+                          weight: FontWeight.w600, color: DS.expense)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('Tindakan ini tidak bisa dibatalkan.',
+                style: T.sans(13, color: DS.body)),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                DsButton(
+                  label: 'Batal',
+                  onPressed: _deleting
+                      ? null
+                      : () => setState(() => _confirmDelete = false),
+                  kind: DsButtonKind.outlined,
+                  minHeight: 46,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DsButton(
+                    label: _deleting ? 'Menghapus…' : 'Ya, hapus',
+                    onPressed: _deleting ? null : _delete,
+                    expand: true,
+                    minHeight: 46,
+                    background: DS.expense,
+                    foreground: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: DsButton(
+            label: 'Sunting',
+            // Penyuntingan belum tersambung — sama seperti sebelum redesain.
+            onPressed: null,
+            kind: DsButtonKind.outlined,
+            expand: true,
+            minHeight: 48,
+          ),
+        ),
+        const SizedBox(width: 10),
+        DsButton(
+          label: 'Hapus',
+          onPressed: () => setState(() => _confirmDelete = true),
+          kind: DsButtonKind.outlined,
+          minHeight: 48,
+          foreground: DS.expense,
+        ),
+      ],
     );
   }
 }

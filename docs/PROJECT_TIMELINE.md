@@ -328,6 +328,31 @@ keduanya lebih dalam dari sebelumnya.
 | T-12 | Belum ada kerangka l10n | ⬜ | Frontend | Fase berikutnya |
 | T-13 | Tabel TER tampilan menyimpang dari tabel hitung | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-14 | 3.225 baris widget dashboard jadi yatim setelah redesain | 🟡 | Frontend | Perlu keputusan |
+| T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | 🟡 | Frontend | Sebelum kode baru menyebar |
+
+---
+
+### 🟡 T-15 — Kelas tipografi bernama `T` bentrok dengan parameter generic
+
+`design_tokens.dart` mengekspor kelas gaya teks bernama **`T`** (`T.sans`,
+`T.serif`, `T.mono`). `T` juga nama konvensional untuk parameter generic di
+Dart, jadi di dalam kelas generic apa pun nama itu tertutup:
+
+```dart
+class _SheetDropdown<T> ... {
+  Text('x', style: T.sans(14))  // error: 'sans' isn't defined for type 'T'
+}
+```
+
+Terjadi nyata saat menggayakan ulang `tx_add_sheet.dart`, yang punya
+`_DdItem<T>` dan `_SheetDropdown<T>`. Ditambal sementara dengan mengganti
+parameter generic-nya jadi `V` — **itu memperbaiki gejala di tempat yang salah**:
+kode pemanggil dipaksa menghindari nama yang lazim gara-gara token.
+
+- [ ] **Frontend** — ganti nama kelas `T` jadi sesuatu yang tidak bentrok
+      (mis. `Type_`, `Ts`, atau `AppText`), lalu kembalikan generic `V` di
+      `tx_add_sheet.dart` ke `T`. Mekanis tapi menyentuh banyak berkas, jadi
+      PR tersendiri — dan sebaiknya sebelum lebih banyak layar memakai `T`.
 
 ---
 
@@ -585,6 +610,32 @@ Indonesia, tapi biaya memisahkannya naik terus seiring bertambahnya layar.
 
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
+
+- **2026-09-08** — Frontend — Alur transaksi diseragamkan gayanya, dan **T-15**
+  (baru) dicatat.
+  **`tx_form_widgets.dart`** ditulis ulang — ini titik ungkit alur transaksi
+  karena dipakai `new_transaction_screen.dart` **dan** `tx_add_sheet.dart`
+  sekaligus. `TypeToggle` jadi pil segmented; `AmountInput` memakai pola yang
+  sama persis dengan input penghasilan di Simulator (garis bawah warna merek,
+  angka besar, tanpa kotak) sehingga "masukkan nominal rupiah" kini satu pola
+  di seluruh aplikasi; `CategoryGrid` berubah dari grid rasio 2,8 jadi pil yang
+  membungkus dengan target sentuh ≥46; `PaymentMethodPicker` juga — sebelumnya
+  padding vertikalnya cuma 7, jauh di bawah ambang target sentuh.
+  **`new_transaction_screen.dart`** dan **`tx_detail_screen.dart`** ditulis
+  ulang penuh. Di detail, nominal jadi satu angka besar di puncak layar
+  alih-alih kartu berwarna, sisanya turun jadi daftar baris berpemisah tipis.
+  Konfirmasi hapus tetap inline, bukan dialog — menjaga R-5.
+  **`tx_add_sheet.dart`** (770 baris) hanya dipetakan tokennya, tidak ditulis
+  ulang: berkas itu memuat `TxEditSheet` dan dropdown generik dengan logika
+  sendiri, dan menulis ulangnya utuh berisiko tanpa tes yang menjaganya.
+  **T-15 (baru)** — kelas tipografi bernama `T` bentrok dengan parameter
+  generic `T` di `tx_add_sheet.dart`. Ditambal dengan mengganti generic-nya
+  jadi `V`; nama kelasnya sendiri yang sebaiknya diganti. Lihat entrinya.
+  **Emoji sebagai ikon** kategori dan metode bayar dipertahankan — nilainya
+  datang dari data (`cat.icon`, `pm.icon`), jadi menggantinya butuh perubahan
+  di sisi data, bukan di UI.
+  `flutter analyze` → 0 error, 0 warning, 39 info. `flutter test` → 39 lulus,
+  1 di-skip. `flutter build web --release` → berhasil.
 
 - **2026-09-08** — Frontend — Lanjutan kerja tanpa ketergantungan Backend/Pakar
   pajak: **T-7** dan **T-6** selesai, **T-8** sebagian, layar auth dan Profil

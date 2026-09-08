@@ -1,12 +1,27 @@
 // lib/widgets/accounting/tx_form_widgets.dart
+//
+// Komponen form transaksi, digayakan ulang mengikuti mockup Claude Design.
+//
+// Berkas ini dipakai dua tempat sekaligus — `new_transaction_screen.dart` dan
+// `tx_add_sheet.dart` — jadi menggayakan ulang di sini otomatis mengangkat
+// keduanya.
+//
+// Kolom nominal sengaja memakai pola yang sama dengan input penghasilan di
+// Simulator: garis bawah warna merek, angka besar, tanpa kotak. Satu pola
+// untuk "masukkan nominal rupiah" di seluruh aplikasi.
+//
+// Ikon kategori dan metode bayar tetap emoji karena datang dari data
+// (`cat.icon`, `pm.icon`), bukan dari kode. Menggantinya dengan ikon vektor
+// perlu perubahan di sisi data — dicatat, tidak dikerjakan di sini.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../core/services/accounting_service.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 
-// ── Type Toggle (Pemasukan / Pengeluaran) ─────────────────────────────────────
+// ── Pemasukan / Pengeluaran ──────────────────────────────────────────────────
 
 class TypeToggle extends StatelessWidget {
   final bool isIncome;
@@ -23,26 +38,29 @@ class TypeToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.bgSecondary,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.stone200, width: 0.5),
+        color: DS.sunken,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        border: Border.all(color: DS.hairline),
       ),
-      child: Row(children: [
-        _TypeBtn(
-          label: 'Pemasukan',
-          icon: Icons.arrow_upward_rounded,
-          isSelected: isIncome,
-          selectedColor: AppColors.income,
-          onTap: () => onChanged(true),
-        ),
-        _TypeBtn(
-          label: 'Pengeluaran',
-          icon: Icons.arrow_downward_rounded,
-          isSelected: !isIncome,
-          selectedColor: AppColors.expense,
-          onTap: () => onChanged(false),
-        ),
-      ]),
+      child: Row(
+        children: [
+          _TypeBtn(
+            label: 'Pemasukan',
+            icon: Icons.arrow_upward_rounded,
+            selected: isIncome,
+            accent: DS.income,
+            onTap: () => onChanged(true),
+          ),
+          const SizedBox(width: 4),
+          _TypeBtn(
+            label: 'Pengeluaran',
+            icon: Icons.arrow_downward_rounded,
+            selected: !isIncome,
+            accent: DS.expense,
+            onTap: () => onChanged(false),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -50,39 +68,51 @@ class TypeToggle extends StatelessWidget {
 class _TypeBtn extends StatelessWidget {
   final String label;
   final IconData icon;
-  final bool isSelected;
-  final Color selectedColor;
+  final bool selected;
+  final Color accent;
   final VoidCallback onTap;
 
   const _TypeBtn({
-    required this.label, required this.icon,
-    required this.isSelected, required this.selectedColor,
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.accent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
-            color: isSelected ? selectedColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16,
-                color: isSelected ? Colors.white : AppColors.stone400),
-              const SizedBox(width: 6),
-              Text(label,
-                style: AppTextStyles.body(13,
-                  color: isSelected ? Colors.white : AppColors.stone400,
-                  weight: FontWeight.w600)),
-            ],
+      child: Semantics(
+        selected: selected,
+        button: true,
+        child: Material(
+          color: selected ? accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(Radii.pill),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 44),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon,
+                      size: 16, color: selected ? Colors.white : DS.faint),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: T.sans(13.5,
+                          weight: FontWeight.w600,
+                          color: selected ? Colors.white : DS.muted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -90,7 +120,7 @@ class _TypeBtn extends StatelessWidget {
   }
 }
 
-// ── Amount Input ──────────────────────────────────────────────────────────────
+// ── Nominal ──────────────────────────────────────────────────────────────────
 
 class AmountInput extends StatefulWidget {
   final TextEditingController controller;
@@ -111,73 +141,66 @@ class AmountInput extends StatefulWidget {
 class _AmountInputState extends State<AmountInput> {
   @override
   Widget build(BuildContext context) {
-    final color = widget.isIncome ? AppColors.income : AppColors.expense;
-    final rawText = widget.controller.text.replaceAll('.', '').replaceAll(',', '');
-    final parsedAmount = double.tryParse(rawText) ?? 0;
+    final accent = widget.isIncome ? DS.income : DS.expense;
+    final raw =
+        widget.controller.text.replaceAll('.', '').replaceAll(',', '');
+    final parsed = double.tryParse(raw) ?? 0;
+    final hasError = widget.error != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.isIncome ? 'Jumlah Pemasukan' : 'Jumlah Pengeluaran',
-          style: AppTextStyles.body(13, weight: FontWeight.w500),
+          widget.isIncome ? 'Jumlah pemasukan' : 'Jumlah pengeluaran',
+          style: T.sans(13, weight: FontWeight.w500, color: DS.body),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         Container(
+          padding: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: widget.error != null
-                ? AppColors.expense
-                : AppColors.stone300,
-              width: widget.error != null ? 1 : 0.5,
-            ),
-          ),
-          child: Row(children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 14),
-              child: Text('Rp',
-                style: AppTextStyles.mono(14, color: AppColors.stone400)),
-            ),
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  _ThousandSeparatorFormatter(),
-                ],
-                textAlign: TextAlign.right,
-                style: AppTextStyles.mono(20,
-                  color: color, weight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  hintStyle: AppTextStyles.mono(20, color: AppColors.stone300),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.fromLTRB(0, 14, 14, 14),
-                  filled: false,
-                ),
+            border: Border(
+              bottom: BorderSide(
+                color: hasError ? DS.expense : DS.brand,
+                width: 2,
               ),
             ),
-          ]),
-        ),
-        if (parsedAmount > 0 && widget.error == null) ...[
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              Rupiah.format(parsedAmount),
-              style: AppTextStyles.body(11, color: AppColors.stone400),
-            ),
           ),
-        ],
-        if (widget.error != null) ...[
-          const SizedBox(height: 4),
-          Text(widget.error!,
-            style: AppTextStyles.body(11, color: AppColors.expense)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('Rp', style: T.mono(18, color: DS.faint)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: widget.controller,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    _ThousandSeparatorFormatter(),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  style: T.mono(28, color: accent, weight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: '0',
+                    hintStyle: T.mono(28, color: DS.hairline),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          Text(widget.error!, style: T.sans(12, color: DS.expense)),
+        ] else if (parsed > 0) ...[
+          const SizedBox(height: 6),
+          Text(Rupiah.format(parsed), style: T.sans(12, color: DS.faint)),
         ],
       ],
     );
@@ -187,14 +210,14 @@ class _AmountInputState extends State<AmountInput> {
 class _ThousandSeparatorFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue, TextEditingValue newValue) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final digits = newValue.text.replaceAll('.', '');
     if (digits.isEmpty) return newValue.copyWith(text: '');
-    final num = int.tryParse(digits) ?? 0;
-    final formatted = num.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
+    final value = int.tryParse(digits) ?? 0;
+    final formatted = value.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]}.',
+        );
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),
@@ -202,7 +225,7 @@ class _ThousandSeparatorFormatter extends TextInputFormatter {
   }
 }
 
-// ── Category Grid ─────────────────────────────────────────────────────────────
+// ── Kategori ─────────────────────────────────────────────────────────────────
 
 class CategoryGrid extends StatelessWidget {
   final List<TxCategoryData> categories;
@@ -224,70 +247,111 @@ class CategoryGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Kategori',
-          style: AppTextStyles.body(13, weight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 2.8,
-          ),
-          itemCount: categories.length,
-          itemBuilder: (_, i) {
-            final cat = categories[i];
-            final isSelected = cat.id == selectedId;
-            return GestureDetector(
-              onTap: () => onSelected(cat),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                    ? cat.flutterColor.withValues(alpha: 0.12)
-                    : AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(
-                    color: isSelected ? cat.flutterColor : AppColors.stone200,
-                    width: isSelected ? 1.5 : 0.5,
-                  ),
+            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+        const SizedBox(height: 10),
+        if (categories.isEmpty)
+          Text('Tidak ada kategori untuk jenis transaksi ini.',
+              style: T.sans(13, color: DS.muted))
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final cat in categories)
+                _CategoryChip(
+                  category: cat,
+                  selected: cat.id == selectedId,
+                  onTap: () => onSelected(cat),
                 ),
-                child: Row(children: [
-                  Text(cat.icon, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 8),
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(cat.name,
-                        style: AppTextStyles.body(11,
-                          color: isSelected ? cat.flutterColor : AppColors.stone700,
-                          weight: isSelected ? FontWeight.w600 : FontWeight.w400),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                      if (cat.taxRelevant || cat.isCogs)
-                        Text(
-                          [if (cat.isCogs) 'HPP', if (cat.taxRelevant) 'Pajak'].join(' · '),
-                          style: AppTextStyles.body(9, color: AppColors.stone400),
-                        ),
-                    ],
-                  )),
-                ]),
-              ),
-            );
-          },
-        ),
+            ],
+          ),
         if (error != null) ...[
-          const SizedBox(height: 6),
-          Text(error!, style: AppTextStyles.body(11, color: AppColors.expense)),
+          const SizedBox(height: 8),
+          Text(error!, style: T.sans(12, color: DS.expense)),
         ],
       ],
     );
   }
 }
 
-// ── Payment Method Picker ─────────────────────────────────────────────────────
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.category,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final TxCategoryData category;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tags = [
+      if (category.isCogs) 'HPP',
+      if (category.taxRelevant) 'Pajak',
+    ];
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: [category.name, ...tags].join(', '),
+      child: ExcludeSemantics(
+        child: Material(
+          color: selected
+              ? category.flutterColor.withValues(alpha: 0.12)
+              : DS.surface,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(Radii.pill),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 46),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Radii.pill),
+                border: Border.all(
+                  color: selected ? category.flutterColor : DS.border,
+                  width: selected ? 1.5 : 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(category.icon, style: const TextStyle(fontSize: 15)),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        category.name,
+                        style: T.sans(13.5,
+                            weight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: selected
+                                ? category.flutterColor
+                                : DS.body,
+                            height: 1.25),
+                      ),
+                      if (tags.isNotEmpty)
+                        Text(tags.join(' · '),
+                            style:
+                                T.sans(10.5, color: DS.faint, height: 1.25)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Metode pembayaran ────────────────────────────────────────────────────────
 
 class PaymentMethodPicker extends StatelessWidget {
   final String selected;
@@ -304,47 +368,81 @@ class PaymentMethodPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Metode Pembayaran',
-          style: AppTextStyles.body(13, weight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        Row(
-          children: PaymentMethodData.all.map((pm) {
-            final isSelected = pm.value == selected;
-            return Expanded(
-              child: GestureDetector(
+        Text('Metode pembayaran',
+            style: T.sans(13, weight: FontWeight.w500, color: DS.body)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final pm in PaymentMethodData.all)
+              _PaymentChip(
+                icon: pm.icon,
+                label: pm.label,
+                selected: pm.value == selected,
                 onTap: () => onChanged(pm.value),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: EdgeInsets.only(
-                    right: pm.value == PaymentMethodData.all.last.value ? 0 : 5),
-                  padding: const EdgeInsets.symmetric(vertical: 7),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.dark : AppColors.bgCard,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected ? AppColors.dark : AppColors.stone200,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(pm.icon,
-                        style: const TextStyle(fontSize: 14)),
-                      const SizedBox(height: 2),
-                      Text(pm.label,
-                        style: AppTextStyles.body(9,
-                          color: isSelected ? Colors.white : AppColors.stone500),
-                        textAlign: TextAlign.center,
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                ),
               ),
-            );
-          }).toList(),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _PaymentChip extends StatelessWidget {
+  const _PaymentChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: Material(
+          color: selected ? DS.brandMuted : DS.surface,
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(Radii.pill),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 46),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Radii.pill),
+                border: Border.all(
+                  color: selected ? DS.brand : DS.border,
+                  width: selected ? 1.5 : 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(icon, style: const TextStyle(fontSize: 14)),
+                  const SizedBox(width: 7),
+                  Text(
+                    label,
+                    style: T.sans(13.5,
+                        weight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                        color: selected ? DS.brandInk : DS.body),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

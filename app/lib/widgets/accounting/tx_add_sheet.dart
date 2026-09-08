@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/accounting_service.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 
 // ─── Prefill data ────────────────────────────────────────────────────────────
@@ -131,10 +131,10 @@ class _TxAddSheetState extends State<TxAddSheet> {
       if (mounted) {
         Navigator.pop(context);
         widget.onSaved(tx);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Transaksi berhasil disimpan'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Transaksi berhasil disimpan'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.income));
+          backgroundColor: DS.income));
       }
     } catch (_) {
       if (mounted) {
@@ -160,24 +160,24 @@ class _TxAddSheetState extends State<TxAddSheet> {
           // Handle
           Container(margin: const EdgeInsets.only(top: 10, bottom: 4),
             width: 36, height: 4,
-            decoration: BoxDecoration(color: AppColors.stone200,
+            decoration: BoxDecoration(color: DS.hairline,
               borderRadius: BorderRadius.circular(2))),
 
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
             child: Row(children: [
-              Text('Catat Transaksi', style: AppTextStyles.display(16)),
+              Text('Catat Transaksi', style: T.serif(16)),
               const Spacer(),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 28, height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.stone100,
+                    color: DS.hairline,
                     shape: BoxShape.circle),
                   child: Icon(Icons.close_rounded,
-                    size: 16, color: AppColors.stone500))),
+                    size: 16, color: DS.muted))),
             ]),
           ),
 
@@ -188,12 +188,12 @@ class _TxAddSheetState extends State<TxAddSheet> {
               height: 40,
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                color: AppColors.stone100,
+                color: DS.hairline,
                 borderRadius: BorderRadius.circular(10)),
               child: Row(children: [
-                _TypeBtn(label: 'Pemasukan',  active: _isIncome, color: AppColors.income,
+                _TypeBtn(label: 'Pemasukan',  active: _isIncome, color: DS.income,
                   onTap: () => setState(() { _isIncome = true;  _type = 'INCOME';  _category = null; })),
-                _TypeBtn(label: 'Pengeluaran',active: !_isIncome,color: AppColors.expense,
+                _TypeBtn(label: 'Pengeluaran',active: !_isIncome,color: DS.expense,
                   onTap: () => setState(() { _isIncome = false; _type = 'EXPENSE'; _category = null; })),
               ]),
             ),
@@ -262,7 +262,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brand,
+                    backgroundColor: DS.brand,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
@@ -271,7 +271,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
                     : Text('Simpan Transaksi',
-                        style: AppTextStyles.body(14,
+                        style: T.sans(14,
                           weight: FontWeight.w600)),
                 ),
               ),
@@ -304,8 +304,8 @@ class _TypeBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(7),
           border: active ? Border.all(color: color.withValues(alpha: 0.3)) : null),
         child: Center(child: Text(label,
-          style: AppTextStyles.body(13,
-            color: active ? color : AppColors.stone400,
+          style: T.sans(13,
+            color: active ? color : DS.faint,
             weight: active ? FontWeight.w600 : FontWeight.w400))),
       ),
     ),
@@ -328,30 +328,30 @@ class _SheetField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: AppTextStyles.body(11, color: AppColors.stone400)),
+      Text(label, style: T.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       Container(
         height: 42,
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppColors.stone200, width: 0.5)),
+          border: Border.all(color: DS.hairline, width: 0.5)),
         child: Row(children: [
           if (prefix != null) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(prefix!,
-                style: AppTextStyles.body(13, color: AppColors.stone400))),
-            Container(width: 0.5, height: 20, color: AppColors.stone200),
+                style: T.sans(13, color: DS.faint))),
+            Container(width: 0.5, height: 20, color: DS.hairline),
           ],
           Expanded(child: TextField(
             controller: controller,
             keyboardType: keyboard,
             inputFormatters: formatters,
-            style: AppTextStyles.body(13),
+            style: T.sans(13),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: AppTextStyles.body(13, color: AppColors.stone300),
+              hintStyle: T.sans(13, color: DS.border),
               border: InputBorder.none, isDense: true,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10, vertical: 11)),
@@ -370,7 +370,7 @@ class _SheetDisplay extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: AppTextStyles.body(11, color: AppColors.stone400)),
+      Text(label, style: T.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       Container(
         height: 42,
@@ -378,11 +378,11 @@ class _SheetDisplay extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppColors.stone200, width: 0.5)),
+          border: Border.all(color: DS.hairline, width: 0.5)),
         child: Row(children: [
-          Expanded(child: Text(value, style: AppTextStyles.body(13))),
+          Expanded(child: Text(value, style: T.sans(13))),
           Icon(Icons.calendar_today_outlined,
-            size: 14, color: AppColors.stone400),
+            size: 14, color: DS.faint),
         ]),
       ),
     ],
@@ -390,17 +390,17 @@ class _SheetDisplay extends StatelessWidget {
 }
 
 // Dropdown item helper — avoids Dart record syntax
-class _DdItem<T> {
-  final T    value;
+class _DdItem<V> {
+  final V    value;
   final String label;
   const _DdItem(this.value, this.label);
 }
 
-class _SheetDropdown<T> extends StatefulWidget {
+class _SheetDropdown<V> extends StatefulWidget {
   final String label;
-  final T? value;
-  final List<_DdItem<T>> items;
-  final ValueChanged<T> onChanged;
+  final V? value;
+  final List<_DdItem<V>> items;
+  final ValueChanged<V> onChanged;
 
   const _SheetDropdown({
     required this.label, required this.value,
@@ -408,10 +408,10 @@ class _SheetDropdown<T> extends StatefulWidget {
   });
 
   @override
-  State<_SheetDropdown<T>> createState() => _SheetDropdownState<T>();
+  State<_SheetDropdown<V>> createState() => _SheetDropdownState<V>();
 }
 
-class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
+class _SheetDropdownState<V> extends State<_SheetDropdown<V>> {
   final _link  = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
@@ -441,7 +441,7 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.stone200, width: .5),
+              border: Border.all(color: DS.hairline, width: .5),
               boxShadow: [BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12, offset: const Offset(0, 4))]),
@@ -457,24 +457,24 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
                       widget.onChanged(item.value);
                       _close();
                     },
-                    hoverColor: AppColors.brand.withValues(alpha: 0.05),
+                    hoverColor: DS.brand.withValues(alpha: 0.05),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 11),
                       color: selected
-                        ? AppColors.brand.withValues(alpha: 0.07)
+                        ? DS.brand.withValues(alpha: 0.07)
                         : Colors.transparent,
                       child: Row(children: [
                         Expanded(child: Text(item.label,
-                          style: AppTextStyles.body(13,
+                          style: T.sans(13,
                             color: selected
-                              ? AppColors.brand
-                              : AppColors.stone700,
+                              ? DS.brand
+                              : DS.ink,
                             weight: selected
                               ? FontWeight.w500 : FontWeight.w400))),
                         if (selected)
                           Icon(Icons.check_rounded,
-                            size: 15, color: AppColors.brand),
+                            size: 15, color: DS.brand),
                       ]),
                     ),
                   );
@@ -510,7 +510,7 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(widget.label,
-        style: AppTextStyles.body(11, color: AppColors.stone400)),
+        style: T.sans(11, color: DS.faint)),
       const SizedBox(height: 4),
       CompositedTransformTarget(
         link: _link,
@@ -524,20 +524,20 @@ class _SheetDropdownState<T> extends State<_SheetDropdown<T>> {
               color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(9),
               border: Border.all(
-                color: _open ? AppColors.brand : AppColors.stone200,
+                color: _open ? DS.brand : DS.hairline,
                 width: _open ? 1.0 : 0.5)),
             child: Row(children: [
               Expanded(child: Text(
                 widget.value != null ? _displayText : 'Pilih...',
-                style: AppTextStyles.body(13,
+                style: T.sans(13,
                   color: widget.value != null
-                    ? AppColors.stone700 : AppColors.stone300),
+                    ? DS.ink : DS.border),
                 overflow: TextOverflow.ellipsis)),
               AnimatedRotation(
                 turns: _open ? 0.5 : 0,
                 duration: const Duration(milliseconds: 150),
                 child: Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 18, color: AppColors.stone400)),
+                  size: 18, color: DS.faint)),
             ]),
           ),
         ),
@@ -640,10 +640,10 @@ class _TxEditSheetState extends State<TxEditSheet> {
       await Future.delayed(const Duration(milliseconds: 400));
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Transaksi berhasil diperbarui'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Transaksi berhasil diperbarui'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.income));
+          backgroundColor: DS.income));
       }
     } catch (_) {
       if (mounted) {
@@ -665,16 +665,16 @@ class _TxEditSheetState extends State<TxEditSheet> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           // Header
           Row(children: [
-            Text('Edit Transaksi', style: AppTextStyles.display(16)),
+            Text('Edit Transaksi', style: T.serif(16)),
             const Spacer(),
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
                 width: 28, height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.stone100, shape: BoxShape.circle),
+                  color: DS.hairline, shape: BoxShape.circle),
                 child: Icon(Icons.close_rounded,
-                  size: 16, color: AppColors.stone500))),
+                  size: 16, color: DS.muted))),
           ]),
           const SizedBox(height: 14),
 
@@ -683,16 +683,16 @@ class _TxEditSheetState extends State<TxEditSheet> {
             height: 40,
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: AppColors.stone100,
+              color: DS.hairline,
               borderRadius: BorderRadius.circular(10)),
             child: Row(children: [
               _TypeBtn(label: 'Pemasukan', active: _isIncome,
-                color: AppColors.income,
+                color: DS.income,
                 onTap: () => setState(() {
                   _isIncome = true; _type = 'INCOME'; _category = null;
                 })),
               _TypeBtn(label: 'Pengeluaran', active: !_isIncome,
-                color: AppColors.expense,
+                color: DS.expense,
                 onTap: () => setState(() {
                   _isIncome = false; _type = 'EXPENSE'; _category = null;
                 })),
@@ -749,7 +749,7 @@ class _TxEditSheetState extends State<TxEditSheet> {
             child: ElevatedButton(
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brand,
+                backgroundColor: DS.brand,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10))),
@@ -758,7 +758,7 @@ class _TxEditSheetState extends State<TxEditSheet> {
                     child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
                 : Text('Simpan Perubahan',
-                    style: AppTextStyles.body(14,
+                    style: T.sans(14,
                       weight: FontWeight.w600)),
             ),
           ),
