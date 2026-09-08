@@ -181,7 +181,7 @@ List<TerRow> buildTerTable(double gajiKotor) {
     if (groupRate == null) return;
     rows.add(TerRow(
       rangeLabel: _rangeLabel(groupStart, upperBound),
-      rate: groupRate!,
+      rate: groupRate,
       isActive: gajiKotor > groupStart &&
           (upperBound.isInfinite || gajiKotor <= upperBound),
     ));
