@@ -127,10 +127,5 @@ class ApiEndpoints {
   static const dashboardKpiHistory = '/dashboard/kpi-history';
   static const taxCalendar = '/tax-calendar';
 
-  // Pustaka peraturan
-  static const documents = '/documents';
-  static String documentById(String id) => '/documents/$id';
-  static const docCategories = '/documents/categories';
-
   // Simulator pajak murni hitungan lokal — tidak butuh endpoint.
 }

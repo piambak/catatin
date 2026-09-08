@@ -298,46 +298,6 @@ label sumbu X.
 
 ---
 
-### Pustaka peraturan
-
-> ⚠️ Daftarkan rute `/documents/categories` **sebelum** `/documents/{id}` di
-> router backend. Kalau terbalik, `categories` akan ditangkap sebagai id.
-
-#### `GET /documents/categories`
-
-```json
-{ "categories": [ { "id": "c1", "name": "PPh Final UMKM", "slug": "pph-final", "icon": "📊", "color": "#B85C38" } ] }
-```
-
-#### `GET /documents?q=&category=&type=`
-
-```json
-{
-  "documents": [
-    {
-      "id": "d1",
-      "title": "PP 23 Tahun 2018 — PPh Final UMKM",
-      "type": "PP",
-      "category_id": "c1",
-      "summary": "Mengatur tarif PPh Final 0,5% dari peredaran bruto…",
-      "effective_date": "2018-07-01",
-      "status": "ACTIVE",
-      "tags": ["UMKM", "Tarif 0.5%"],
-      "body_html": null
-    }
-  ]
-}
-```
-
-* `type`: `UU` | `PP` | `PMK` | `PER_DJP` | `SE` | `KEP` | `PANDUAN`
-* `status`: `ACTIVE` berarti masih berlaku; nilai lain ditandai "tidak berlaku"
-* `tags` boleh berupa daftar string atau daftar objek `{ "label": "…" }`
-* `body_html` hanya perlu diisi pada endpoint detail
-
-#### `GET /documents/{id}` → `{ "document": { …termasuk `body_html`… } }`
-
----
-
 ### Bentuk error
 
 Semua status non-2xx memakai bentuk yang sama:
@@ -370,8 +330,6 @@ Bahasa Indonesia di `ApiException.userMessage`:
 * **Simulator pajak** (`core/services/simulator_service.dart`) — murni hitungan
   lokal berdasarkan PP 23/2018 dan PMK 168/2023. Tarif dan tabel TER ada di
   `AppConstants`.
-* **Bookmark peraturan** — disimpan di SharedPreferences. Pindahkan ke backend
-  hanya kalau bookmark perlu sinkron antar-perangkat.
 * **Preferensi tema** — lokal.
 
 ---
