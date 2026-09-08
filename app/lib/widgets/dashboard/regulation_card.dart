@@ -4,9 +4,21 @@
 // Fitur Pustaka peraturan dicabut di Fase Dua — kartu ini sekarang berisi
 // info pajak dasar secara inline. Isi masih sementara; menunggu daftar final
 // dari Pakar Regulasi DJP & Kemenkeu (lihat docs/PROJECT_TIMELINE.md Minggu 1).
+//
+// Aturan isi kartu ini, sampai pakar pajak memberi daftar final:
+//
+//   1. Angka pajak TIDAK boleh ditulis ulang sebagai teks di sini. Ambil dari
+//      `AppConstants` supaya kartu dan Simulator tidak pernah menampilkan tarif
+//      yang berbeda setelah tarifnya berubah.
+//   2. Poin yang tarifnya sedang bergerak atau butuh syarat panjang JANGAN
+//      ditayangkan sebelum ada angka tertulis dari pakar. PPN dan PPh Badan
+//      dicabut karena itu — lihat docs/PROJECT_TIMELINE.md, temuan T-3 dan
+//      catatan review PR #2.
 
 import 'package:flutter/material.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 
 class _RegNote {
   final String tag;
@@ -23,38 +35,27 @@ class _RegNote {
     required this.body,
   });
 
-  static const List<_RegNote> defaults = [
+  /// Getter, bukan `const`: warna tag ikut tema (AppColors membaca
+  /// themeNotifier saat diakses) dan angkanya dirangkai dari AppConstants.
+  static List<_RegNote> get defaults => [
     _RegNote(
       tag: 'PPh Final',
-      tagBg: Color(0xFFFCEBEB),
-      tagFg: Color(0xFF791F1F),
-      title: 'PPh Final UMKM tetap 0,5% dari omzet',
-      body: 'Berlaku untuk usaha dengan omzet bruto hingga Rp 4,8 Miliar/tahun '
-          '(PP 23/2018), disetor tiap bulan.',
+      tagBg: AppColors.expenseLight,
+      tagFg: AppColors.expenseBadgeFg,
+      title: 'PPh Final UMKM ${Pct.id(AppConstants.pphFinalRate)} dari omzet',
+      body: 'Berlaku untuk usaha dengan omzet bruto hingga '
+          '${Rupiah.miliar(AppConstants.pkpThreshold)}/tahun (PP 23/2018), '
+          'disetor tiap bulan. Ada syarat jangka waktu dan ambang omzet tidak '
+          'kena pajak yang belum dirinci di sini.',
     ),
     _RegNote(
       tag: 'PKP',
-      tagBg: Color(0xFFFAEEDA),
-      tagFg: Color(0xFF633806),
-      title: 'Wajib PKP saat omzet tembus Rp 4,8 Miliar/tahun',
+      tagBg: AppColors.warningLight,
+      tagFg: AppColors.warningBadgeFg,
+      title: 'Wajib PKP saat omzet tembus '
+          '${Rupiah.miliar(AppConstants.pkpThreshold)}/tahun',
       body: 'Setelah jadi Pengusaha Kena Pajak, usaha wajib memungut dan '
           'menyetor PPN atas transaksinya.',
-    ),
-    _RegNote(
-      tag: 'PPN',
-      tagBg: Color(0xFFE6F1FB),
-      tagFg: Color(0xFF0C447C),
-      title: 'PPN 11% berlaku untuk usaha berstatus PKP',
-      body: 'Dikenakan atas penyerahan barang/jasa kena pajak, dihitung dari '
-          'dasar pengenaan pajak transaksi.',
-    ),
-    _RegNote(
-      tag: 'PPh Badan',
-      tagBg: Color(0xFFEDE9FC),
-      tagFg: Color(0xFF3C3489),
-      title: 'PPh Badan 22% di luar rezim PPh Final',
-      body: 'Berlaku kalau usaha keluar dari skema PPh Final 0,5% (mis. '
-          'omzet lewat ambang batas atau bentuk usaha berubah).',
     ),
   ];
 }
@@ -82,7 +83,8 @@ class RegulationCard extends StatelessWidget {
         children: [
           Text('Info Pajak UMKM', style: AppTextStyles.display(13)),
           const SizedBox(height: 2),
-          Text('Ringkasan aturan dasar — bukan pengganti konsultasi resmi',
+          Text('Ringkasan sementara, belum ditinjau pakar pajak — bukan '
+            'pengganti konsultasi resmi',
             style: AppTextStyles.body(10, color: AppColors.stone400)),
           const SizedBox(height: 10),
 
@@ -174,7 +176,10 @@ class _RegItemState extends State<_RegItem> {
                         note.body,
                         style: AppTextStyles.body(
                           10, color: AppColors.stone500),
-                        maxLines: 2,
+                        // 3 baris, bukan 2: kartu kini berisi 2 poin (bukan 4)
+                        // sehingga ada ruang, dan syarat di ekor kalimat justru
+                        // bagian yang tidak boleh terpotong ellipsis.
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],

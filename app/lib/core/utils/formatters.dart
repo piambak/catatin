@@ -15,11 +15,17 @@ class Rupiah {
 
   static final _compact = NumberFormat.compact(locale: 'id_ID');
 
+  static final _desimal = NumberFormat.decimalPattern('id_ID');
+
   /// Rp 28.500.000
   static String format(num amount) => _full.format(amount);
 
   /// 28,5 Jt  /  4,8 M
   static String compact(num amount) => 'Rp ${_compact.format(amount)}';
+
+  /// Rp 4,8 Miliar — untuk ambang yang lazim ditulis panjang di teks aturan.
+  static String miliar(num amount) =>
+      'Rp ${_desimal.format(amount / 1000000000)} Miliar';
 
   /// Parse "28.500.000" → 28500000
   static double parse(String value) {
@@ -50,6 +56,12 @@ class Pct {
 
   static String formatValue(double pct, {int decimals = 1}) =>
       '${pct.toStringAsFixed(decimals)}%';
+
+  /// 0,5% — koma desimal sesuai penulisan Indonesia, untuk teks yang dibaca
+  /// pengguna (bukan angka hasil hitung di tabel simulator).
+  static String id(double rate) => '${_desimal.format(rate * 100)}%';
+
+  static final _desimal = NumberFormat.decimalPattern('id_ID');
 }
 
 // ── Date ──────────────────────────────────────────────────────────────────────
