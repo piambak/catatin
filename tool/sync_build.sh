@@ -19,10 +19,13 @@ KEEP=(
   .git
   .github
   .claude
+  .codex
   .ok
   .gitignore
   .gitattributes
+  .mcp.json
   .nojekyll
+  .okignore
   app
   tool
   wiki
