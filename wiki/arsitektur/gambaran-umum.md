@@ -8,7 +8,7 @@ web yang tayang.
 ```
 catatin/
 ├── app/            ← kode sumber Flutter (yang kamu sunting)
-├── docs/           ← dokumentasi
+├── wiki/           ← basis pengetahuan (OpenKnowledge)
 ├── tool/           ← skrip build & sinkron
 ├── .github/        ← CI dan template kolaborasi
 │
@@ -23,7 +23,7 @@ catatin/
 Kenapa output ada di root: GitHub Pages repo ini bersumber dari branch `main`
 folder `/ (root)`, dan setting itu hanya bisa diubah pemilik repo. Selama belum
 diubah, root `main` adalah satu-satunya yang tayang. Alur lengkapnya di
-[DEPLOY.md](DEPLOY.md).
+[Rilis & Deploy](../panduan/rilis-dan-deploy.md).
 
 ## Lapisan aplikasi
 
@@ -102,4 +102,4 @@ sebagai `const`, karena nilainya bergantung mode terang/gelap saat runtime.
 Font di-*bundle*, bukan diunduh saat runtime, supaya aplikasi tetap konsisten
 saat offline dan tidak menarik permintaan ke domain pihak ketiga. Hanya berat
 font yang benar-benar dipakai yang ikut dibundel — detailnya di
-[ASSETS.md](ASSETS.md).
+[Aset](aset.md).

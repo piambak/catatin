@@ -10,7 +10,7 @@
 > jadi** (bagian 5–8). Bagian 2–4 deskriptif — itu fakta kode, bukan usulan.
 >
 > Spesifikasi warna, tipografi, spasi, dan komponen ada di dokumen terpisah:
-> **[`DESIGN-TOKENS.md`](DESIGN-TOKENS.md)**.
+> **[`design-tokens.md`](design-tokens.md)**.
 
 ---
 
@@ -41,8 +41,8 @@ Plus satu arah teknis:
 - Menambah/menghapus fitur produk (Pustaka peraturan sudah dicabut di PR
   terpisah — jangan dihidupkan lagi di sini)
 - Mengubah logika perhitungan pajak (itu urusan T-1/T-3/T-4 di
-  [`PROJECT_TIMELINE.md`](PROJECT_TIMELINE.md), butuh pakar pajak)
-- Mengganti backend atau kontrak API (`docs/BACKEND.md` tetap berlaku)
+  [backlog teknis](../proyek/backlog-teknis.md), butuh pakar pajak)
+- Mengganti backend atau kontrak API (`wiki/arsitektur/backend-dan-api.md` tetap berlaku)
 - Mengganti framework — tetap Flutter, tetap `go_router`
 
 ### Prinsip yang mengikat
@@ -263,7 +263,7 @@ Ditulis supaya bisa diuji — tiap butir bisa dijawab "sudah" atau "belum".
 ### R-3 — Palet & tipografi yang dipangkas
 
 - Turun ke **satu warna brand + satu aksen + skala netral + 3 warna semantik**
-  (pemasukan/pengeluaran/peringatan). Detail di `DESIGN-TOKENS.md`.
+  (pemasukan/pengeluaran/peringatan). Detail di `design-tokens.md`.
 - Turun ke **dua** keluarga huruf. Angka memakai *tabular figures* dari
   keluarga teks, bukan `monospace` terpisah.
 - **Kriteria:** jumlah token warna ≤ 16; nol `fontFamily: 'monospace'`.
@@ -406,7 +406,7 @@ Butuh keputusan sebelum implementasi dimulai:
 3. **Urutan kerja** — redesain sekaligus, atau per layar? Kalau per layar,
    dua gaya akan hidup berdampingan sementara. Mana yang lebih bisa diterima?
 4. **Hubungan dengan linimasa Fase Dua** — redesain ini belum ada di
-   [`PROJECT_TIMELINE.md`](PROJECT_TIMELINE.md) Minggu 1–9. Masuk fase ini
+   [linimasa](../proyek/linimasa.md) Minggu 1–9. Masuk fase ini
    (menggeser tanggal rilis 13 Nov) atau jadi fase tersendiri sesudahnya?
 5. **Siapa pemilik desain visualnya** — PRD ini menetapkan batasan dan struktur,
    bukan tampilan akhir. Arah visual (mood, ilustrasi, kepribadian merek) masih

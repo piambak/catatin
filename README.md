@@ -42,7 +42,7 @@ Repo ini menyimpan dua hal sekaligus: kode sumber, dan hasil build yang tayang.
 ```
 catatin/
 ├── app/        Kode sumber Flutter — di sinilah kamu bekerja
-├── docs/       Dokumentasi arsitektur, backend, deploy, aset
+├── wiki/       Seluruh pengetahuan proyek — basis pengetahuan OpenKnowledge
 ├── tool/       Skrip build dan sinkron ke root
 ├── .github/    CI dan template kolaborasi
 │
@@ -81,7 +81,7 @@ Tidak ada layar yang memanggil jaringan langsung, jadi menambah backend berarti
 mengisi satu berkas — bukan menyunting puluhan file antarmuka.
 
 Kontrak tiap endpoint, lengkap dengan contoh JSON dan bentuk error, ada di
-**[docs/BACKEND.md](docs/BACKEND.md)**.
+**[wiki/arsitektur/backend-dan-api.md](wiki/arsitektur/backend-dan-api.md)**.
 
 ## Rilis
 
@@ -89,17 +89,23 @@ Push ke `main` yang menyentuh `app/` → workflow **Publikasi web** membangun
 ulang dan memperbarui root repo → GitHub Pages tayang dalam 1–2 menit.
 
 Perlu rilis manual? `tool/build_web.ps1` (Windows) atau `tool/build_web.sh`.
-Rinciannya, termasuk cara rollback, ada di [docs/DEPLOY.md](docs/DEPLOY.md).
+Rinciannya, termasuk cara rollback, ada di [wiki/panduan/rilis-dan-deploy.md](wiki/panduan/rilis-dan-deploy.md).
 
 ## Dokumentasi
 
-| Dokumen | Isi |
+Seluruh pengetahuan proyek tinggal di satu folder: **[wiki/](wiki/README.md)**,
+dikelola sebagai basis pengetahuan [OpenKnowledge](https://openknowledge.ai).
+
+| Halaman | Isi |
 | --- | --- |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Menyiapkan proyek, alur branch dan PR, gaya kode |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Struktur folder, lapisan aplikasi, aturan yang dijaga |
-| [docs/BACKEND.md](docs/BACKEND.md) | Kontrak API lengkap dan cara memasang backend |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | Alur rilis, build manual, rollback |
-| [docs/ASSETS.md](docs/ASSETS.md) | Font, ikon, dan pertimbangan ukuran bundel |
+| [Beranda wiki](wiki/README.md) | Peta seluruh halaman |
+| [Mulai cepat](wiki/panduan/mulai-cepat.md) | Menjalankan proyek, memilih sumber data |
+| [Kontribusi](wiki/panduan/kontribusi.md) | Alur branch dan PR, gaya kode, berkas mana yang boleh disunting |
+| [Arsitektur](wiki/arsitektur/gambaran-umum.md) | Struktur folder, lapisan aplikasi, aturan yang dijaga |
+| [Backend & API](wiki/arsitektur/backend-dan-api.md) | Kontrak API lengkap dan cara memasang backend |
+| [Rilis & deploy](wiki/panduan/rilis-dan-deploy.md) | Alur rilis, build manual, rollback |
+| [Aturan pajak](wiki/domain/aturan-pajak.md) | PPh Final 0,5%, PPh 21 TER, ambang PKP — dasar hukum tiap angka |
+| [Aset](wiki/arsitektur/aset.md) | Font, ikon, dan pertimbangan ukuran bundel |
 
 ## Teknologi
 
@@ -109,7 +115,7 @@ Flutter · `go_router` · `dio` · `fl_chart` · `shared_preferences` ·
 ## Kontribusi
 
 Isu dan pull request terbuka untuk siapa saja. Baca
-[CONTRIBUTING.md](CONTRIBUTING.md) dulu — isinya singkat, dan menjelaskan satu
+[panduan kontribusi](wiki/panduan/kontribusi.md) dulu — isinya singkat, dan menjelaskan satu
 hal yang sering bikin bingung: berkas mana yang boleh disunting dan mana yang
 digenerate.
 

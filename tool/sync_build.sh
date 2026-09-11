@@ -19,12 +19,13 @@ KEEP=(
   .git
   .github
   .claude
+  .ok
   .gitignore
   .gitattributes
   .nojekyll
   app
-  docs
   tool
+  wiki
   README.md
   CONTRIBUTING.md
   LICENSE

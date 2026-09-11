@@ -1,7 +1,7 @@
 # Design tokens — Catatin
 
 **Versi:** 0.1 (draf) · **Tanggal:** 8 September 2026
-**Pasangan dokumen:** [`PRD-REDESAIN-UI.md`](PRD-REDESAIN-UI.md)
+**Pasangan dokumen:** [`prd-redesain-ui.md`](prd-redesain-ui.md)
 
 > Dokumen ini punya dua bagian. **Bagian A** mengaudit token yang dipakai
 > sekarang — itu fakta dari `app/lib/core/theme/app_theme.dart` dan sebaran
@@ -13,9 +13,9 @@
 
 ---
 
-# Bagian A — Audit keadaan sekarang
+## Bagian A — Audit keadaan sekarang
 
-## A.1 Warna
+### A.1 Warna
 
 `AppColors` di `app_theme.dart` memakai *getter*, bukan konstanta, sehingga
 seluruh aplikasi berganti mode gelap seketika lewat `themeNotifier`. Pola itu
@@ -62,7 +62,7 @@ gelap terpisah. Ditambah `bgPage`, `bgCard`, `bgSecondary`.
 4. **`brandSurface` dan `dark*` tidak punya nilai gelap sama sekali** — dipakai
    apa adanya di kedua mode.
 
-## A.2 Tipografi
+### A.2 Tipografi
 
 Tiga keluarga, dipanggil lewat fungsi pembantu (`serif(size)`, `sans(size)`,
 `mono(size)`), sehingga ukurannya diteruskan sebagai argumen dan tidak ada
@@ -81,7 +81,7 @@ Font di-*bundle*, tidak diunduh saat runtime — bagus untuk offline dan privasi
 Ukuran yang muncul sebagai literal: 10, 11, 13, 14, 16, 17, 20 — tanpa rasio
 yang konsisten.
 
-## A.3 Spasi
+### A.3 Spasi
 
 Tidak ada skala. Nilai `SizedBox` yang benar-benar dipakai, diurut frekuensi:
 
@@ -103,30 +103,30 @@ Tidak ada skala. Nilai `SizedBox` yang benar-benar dipakai, diurut frekuensi:
 **Dua belas nilai berbeda**, termasuk 3 dan 5 yang tidak masuk kelipatan apa
 pun. `EdgeInsets.all()` menambah 13 dan 32.
 
-## A.4 Radius sudut
+### A.4 Radius sudut
 
 Sepuluh nilai berbeda: 2, 3, 6, 7, 8, 9, 10, 12, 14, 20. Yang terbanyak 8 (32×)
 dan 10 (20×), tapi 9 dipakai 14× dan 7 dipakai 9× — beda satu piksel dari
 tetangganya, tidak mungkin disengaja.
 
-## A.5 Elevasi
+### A.5 Elevasi
 
 `elevation: 0` di seluruh tema (app bar, kartu, tombol, dialog). Hanya **3
 `BoxShadow`** tersisa di seluruh `lib/`, dengan `blurRadius` 6, 8, dan 12.
 Aplikasi ini praktis sudah flat — tinggal dituntaskan.
 
-## A.6 Breakpoint
+### A.6 Breakpoint
 
 Tidak ada. Lima nilai literal tersebar di lima file: 480, 500, 600, 680, 700.
 Di atas ~700px tidak ada penanganan.
 
 ---
 
-# Bagian B — Sistem usulan
+## Bagian B — Sistem usulan
 
 Semua target di bawah menjawab R-2 sampai R-4 dan R-10 di PRD.
 
-## B.1 Warna — target ≤16 token
+### B.1 Warna — target ≤16 token
 
 ### Prinsip
 
@@ -174,7 +174,7 @@ Semua target di bawah menjawab R-2 sampai R-4 dan R-10 di PRD.
 - Seluruh `*BadgeFg` — turunkan dari pasangan `*`/`*Muted`
 - Empat langkah netral tengah (`stone100`, `stone300`, `stone600`, `stone800`)
 
-## B.2 Tipografi — dua keluarga
+### B.2 Tipografi — dua keluarga
 
 | Peran | Keluarga | Ukuran | Berat | Tinggi baris |
 | --- | --- | --- | --- | --- |
@@ -205,7 +205,7 @@ const TextStyle(
 
 Skala turun dari 7+ ukuran acak ke **6 langkah**: 11, 12, 14, 16, 20, 28.
 
-## B.3 Spasi — skala 4pt
+### B.3 Spasi — skala 4pt
 
 | Token | Nilai | Dipakai untuk |
 | --- | --- | --- |
@@ -232,7 +232,7 @@ Skala turun dari 7+ ukuran acak ke **6 langkah**: 11, 12, 14, 16, 20, 28.
 > ritme visualnya akan terasa — ini disengaja, tapi perlu dilihat langsung
 > sebelum disetujui.
 
-## B.4 Radius
+### B.4 Radius
 
 | Token | Nilai | Dipakai untuk |
 | --- | --- | --- |
@@ -243,7 +243,7 @@ Skala turun dari 7+ ukuran acak ke **6 langkah**: 11, 12, 14, 16, 20, 28.
 
 Empat nilai, turun dari sepuluh.
 
-## B.5 Elevasi & garis
+### B.5 Elevasi & garis
 
 | Token | Nilai |
 | --- | --- |
@@ -254,7 +254,7 @@ Empat nilai, turun dari sepuluh.
 Perbedaan permukaan dinyatakan lewat `surface` vs `surfaceSunken`, bukan
 bayangan.
 
-## B.6 Kontras — syarat, bukan saran
+### B.6 Kontras — syarat, bukan saran
 
 | Pasangan | Rasio minimum |
 | --- | --- |
@@ -267,7 +267,7 @@ bayangan.
 Setiap pasangan wajib diperiksa **di kedua mode** sebelum token disahkan.
 Nilai gelap di B.1 adalah usulan yang belum diukur.
 
-## B.7 Breakpoint
+### B.7 Breakpoint
 
 Satu file, mis. `app/lib/core/theme/breakpoints.dart`:
 
@@ -282,7 +282,7 @@ boleh muncul di luar file ini (R-4).
 
 ---
 
-## B.8 Komponen inti
+### B.8 Komponen inti
 
 Dibuat publik di `lib/widgets/common/` supaya bisa dipakai ulang (R-7).
 

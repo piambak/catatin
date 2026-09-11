@@ -112,7 +112,7 @@ Kalau nanti hosting pindah ke domain utama (mis. `https://catatin.id/`):
 2. Tambahkan berkas `CNAME` berisi domainnya di root — namanya sudah ada di
    daftar KEEP skrip sinkron, jadi tidak akan terhapus saat build.
 3. Perbarui daftar `Access-Control-Allow-Origin` di backend
-   (lihat [BACKEND.md](BACKEND.md#5-cors-khusus-web)).
+   (lihat [Backend & API](../arsitektur/backend-dan-api.md#5-cors-khusus-web)).
 
 ## Menaikkan versi
 

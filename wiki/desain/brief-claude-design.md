@@ -2,7 +2,7 @@
 
 **Versi:** 0.1 · **Tanggal:** 8 September 2026
 **Referensi visual:** `disen_baru.pdf` (5 halaman: 1a, 1b, 1B, 1c, 1C)
-**Dokumen terkait:** [`PRD-REDESAIN-UI.md`](PRD-REDESAIN-UI.md) · [`DESIGN-TOKENS.md`](DESIGN-TOKENS.md)
+**Dokumen terkait:** [`prd-redesain-ui.md`](prd-redesain-ui.md) · [`design-tokens.md`](design-tokens.md)
 
 > Isinya tiga hal: **prinsip** yang dibaca dari PDF referensi (bagian 1),
 > **prompt siap tempel** untuk Claude Design (bagian 2), dan **alur kerja**
@@ -265,7 +265,7 @@ Bisa jalan **paralel** dengan desain, tidak menunggu apa pun:
 ### Fase 3 — Kunci token dari kanvas
 
 Setelah tata letak disepakati, tarik nilai finalnya kembali ke
-[`DESIGN-TOKENS.md`](DESIGN-TOKENS.md), ganti nilai usulan yang sekarang masih
+[`design-tokens.md`](design-tokens.md), ganti nilai usulan yang sekarang masih
 draf. **Verifikasi kontras di sini**, bukan nanti — nilai gelap di dokumen itu
 belum diukur sama sekali.
 
@@ -286,7 +286,7 @@ Urutan ini bukan selera; tiap langkah membuka langkah berikutnya:
 
 ### Fase 5 — Verifikasi
 
-Jalankan kriteria penerimaan di [`PRD-REDESAIN-UI.md`](PRD-REDESAIN-UI.md)
+Jalankan kriteria penerimaan di [`prd-redesain-ui.md`](prd-redesain-ui.md)
 bagian 7. Tambahan khusus redesain ini:
 
 - [ ] Nol `BoxShadow` di `app/lib`
