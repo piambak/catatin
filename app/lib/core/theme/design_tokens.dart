@@ -4,7 +4,7 @@
 //
 // Lapisan ini SENGAJA hidup berdampingan dengan `AppColors` di app_theme.dart.
 // Layar yang sudah didesain ulang memakai `DS`; layar lama tetap memakai
-// `AppColors` sampai gilirannya tiba. Lihat docs/PRD-REDESAIN-UI.md.
+// `AppColors` sampai gilirannya tiba. Lihat wiki/desain/prd-redesain-ui.md.
 //
 // Mockup-nya hanya menggambar mode terang. Nilai gelap di bawah adalah
 // turunan yang menjaga peran dan urutan kontras yang sama — BELUM diukur

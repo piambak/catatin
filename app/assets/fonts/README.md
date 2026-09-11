@@ -16,4 +16,4 @@ dibundel — jangan menaruh font yang belum dipakai di sini.
 [SIL Open Font License 1.1](https://openfontlicense.org/), yang mengizinkan
 pemakaian dan pembundelan dalam produk komersial.
 
-Penjelasan lengkap soal pilihan aset ada di [`docs/ASSETS.md`](../../../docs/ASSETS.md).
+Penjelasan lengkap soal pilihan aset ada di [`wiki/arsitektur/aset.md`](../../../wiki/arsitektur/aset.md).

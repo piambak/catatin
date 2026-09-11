@@ -166,7 +166,7 @@ class TerRow {
 /// ditampilkan 1,5% padahal dihitung 2,0%, Rp 12.000.000 ditampilkan 5,0%
 /// padahal dihitung 6,0%, dan lapisan tertinggi ditulis 19% padahal 34%.
 /// Menurunkan keduanya dari satu sumber membuat divergensi itu tidak mungkin
-/// terjadi lagi. Lihat temuan T-13 di docs/PROJECT_TIMELINE.md.
+/// terjadi lagi. Lihat temuan T-13 di wiki/proyek/backlog-teknis.md.
 ///
 /// Lapisan berurutan yang bertarif sama digabung jadi satu rentang, supaya 32
 /// baris mentah tidak semuanya tampil terpisah.

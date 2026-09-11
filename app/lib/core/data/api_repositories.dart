@@ -5,7 +5,8 @@
 // Semua panggilan HTTP aplikasi ada di sini — tidak ada satu pun `Dio` di
 // folder `screens/` atau `widgets/`. Path endpoint-nya terkumpul di
 // `core/constants/app_constants.dart` (kelas `ApiEndpoints`), dan bentuk
-// payload yang diharapkan didokumentasikan di `docs/BACKEND.md`.
+// payload yang diharapkan didokumentasikan di
+// `wiki/arsitektur/backend-dan-api.md`.
 //
 // Kontrak error: setiap method melempar [ApiException] (bukan
 // `DioException`) supaya lapisan di atasnya tidak perlu tahu soal Dio.

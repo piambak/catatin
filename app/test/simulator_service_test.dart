@@ -1,6 +1,6 @@
 // test/simulator_service_test.dart
 //
-// Tes untuk mesin pajak — menutup temuan T-2 di docs/PROJECT_TIMELINE.md.
+// Tes untuk mesin pajak — menutup temuan T-2 di wiki/proyek/backlog-teknis.md.
 //
 // `simulator_service.dart` adalah satu-satunya kode di repo yang kesalahannya
 // langsung berujung ke angka pajak salah di layar pengguna, dan sampai berkas

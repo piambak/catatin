@@ -102,7 +102,8 @@ class AppRoutes {
 // ── Endpoint backend ──────────────────────────────────────────────────────────
 //
 // Daftar lengkap path yang dipanggil aplikasi. Semuanya relatif terhadap
-// `AppConfig.apiBaseUrl`. Bentuk request/response-nya ada di `docs/BACKEND.md`.
+// `AppConfig.apiBaseUrl`. Bentuk request/response-nya ada di
+// `wiki/arsitektur/backend-dan-api.md`.
 
 class ApiEndpoints {
   ApiEndpoints._();

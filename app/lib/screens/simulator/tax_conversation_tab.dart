@@ -8,7 +8,7 @@
 // SEMUA kalkulasi memanggil core/services/simulator_service.dart. Layar ini
 // tidak memuat satu pun tarif atau rumus pajak sendiri — itu keputusan sadar
 // supaya bug T-1 (kategori TER B & C belum ada) tetap tinggal di satu tempat
-// dan tidak ikut tersalin ke kode baru. Lihat docs/PROJECT_TIMELINE.md.
+// dan tidak ikut tersalin ke kode baru. Lihat wiki/proyek/backlog-teknis.md.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

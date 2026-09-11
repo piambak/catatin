@@ -4,7 +4,7 @@
 //
 // Menggantikan lima ambang literal yang sebelumnya tersebar inline:
 // 480 (dashboard), 500 (accounting), 600 (kpi_card), 680 (accounting),
-// 700 (dashboard). Lihat docs/PRD-REDESAIN-UI.md R-4.
+// 700 (dashboard). Lihat wiki/desain/prd-redesain-ui.md R-4.
 
 import 'package:flutter/widgets.dart';
 

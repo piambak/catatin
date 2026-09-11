@@ -3,7 +3,7 @@
 // Sebelumnya menarik daftar dokumen dari Pustaka peraturan (LibraryService).
 // Fitur Pustaka peraturan dicabut di Fase Dua — kartu ini sekarang berisi
 // info pajak dasar secara inline. Isi masih sementara; menunggu daftar final
-// dari Pakar Regulasi DJP & Kemenkeu (lihat docs/PROJECT_TIMELINE.md Minggu 1).
+// dari Pakar Regulasi DJP & Kemenkeu (lihat wiki/proyek/linimasa.md Minggu 1).
 //
 // Aturan isi kartu ini, sampai pakar pajak memberi daftar final:
 //
@@ -12,7 +12,7 @@
 //      yang berbeda setelah tarifnya berubah.
 //   2. Poin yang tarifnya sedang bergerak atau butuh syarat panjang JANGAN
 //      ditayangkan sebelum ada angka tertulis dari pakar. PPN dan PPh Badan
-//      dicabut karena itu — lihat docs/PROJECT_TIMELINE.md, temuan T-3 dan
+//      dicabut karena itu — lihat wiki/proyek/backlog-teknis.md, temuan T-3 dan
 //      catatan review PR #2.
 
 import 'package:flutter/material.dart';
