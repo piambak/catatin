@@ -21,12 +21,12 @@ backend, tidak butuh akun. Cara menyambungkannya ke backend ada di
 
 ## 2. Yang boleh dan tidak boleh disunting
 
-```
+```text
 app/          ← SUNTING DI SINI
 wiki/ tool/ .github/   ← boleh
 ```
 
-```
+```text
 index.html  main.dart.js  flutter*.js  version.json  manifest.json
 assets/  canvaskit/  icons/  .last_build_id
 ```
@@ -62,7 +62,7 @@ build web. PR yang CI-nya merah tidak digabung.
 Format [Conventional Commits](https://www.conventionalcommits.org/), badan
 pesan boleh Bahasa Indonesia:
 
-```
+```text
 feat(simulator): tambah skenario PPh 21 untuk karyawan tidak tetap
 fix(accounting): tanggal transaksi tergeser satu hari di zona WITA
 docs(backend): lengkapi kontrak endpoint /tax-calendar

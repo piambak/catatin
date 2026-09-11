@@ -183,7 +183,6 @@ tumbuh terus.
   Usul penjadwalan tiap temuan ada di kolom "Usul masuk" pada tabel ringkasnya —
   perlu dikonfirmasi saat sinkron mingguan, belum disepakati siapa pun.
 
-
 - **2026-09-07** — Frontend — Selesai 4 tugas frontend Minggu 2 (cabut Pustaka
   peraturan) di `app/lib/` pada branch `fitur/audit-original-flutter-vs-app-lib`:
   (1) hapus `library_screen.dart`, `doc_detail_screen.dart`,

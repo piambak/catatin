@@ -5,7 +5,7 @@
 Repo ini menyimpan **dua hal sekaligus**: kode sumber Flutter dan hasil build
 web yang tayang.
 
-```
+```text
 catatin/
 ├── app/            ← kode sumber Flutter (yang kamu sunting)
 ├── wiki/           ← basis pengetahuan (OpenKnowledge)
@@ -27,7 +27,7 @@ diubah, root `main` adalah satu-satunya yang tayang. Alur lengkapnya di
 
 ## Lapisan aplikasi
 
-```
+```text
 ┌──────────────────────────────────────────────────┐
 │ screens/            layar penuh, punya state      │
 │ widgets/            komponen yang dipakai ulang   │

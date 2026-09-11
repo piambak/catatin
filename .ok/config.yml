@@ -57,3 +57,14 @@ content:
 #
 # appearance:
 #   theme: system            # 'light' | 'dark' | 'system'
+
+
+# --- Content rules ---------------------------------------------------------
+# Plugin markdownlint dinyalakan supaya `ok lint` / `ok audit` benar-benar
+# memeriksa isi, bukan sekadar melaporkan "no checks ran". Aturannya sendiri
+# ada di `.markdownlint.json` di root repo — MD013 (panjang baris) dimatikan
+# karena prosa Indonesia di wiki ini memang panjang, dan MD033 dimatikan
+# karena tabel glosarium memakai <br>.
+contentRules:
+  markdownlint:
+    enabled: true

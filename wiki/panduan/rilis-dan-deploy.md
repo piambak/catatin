@@ -12,7 +12,7 @@
 
 ## Alur otomatis
 
-```
+```text
 push ke main (app/**)
         │
         ▼

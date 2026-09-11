@@ -86,7 +86,7 @@ Tempel utuh. Ditulis untuk menghasilkan kanvas multi-artboard, bukan satu layar.
 
 ---
 
-```
+```text
 Buat kanvas desain untuk Catatin — aplikasi pencatatan transaksi dan
 perhitungan pajak untuk UMKM Indonesia. Flutter, tayang sebagai PWA di
 piambak.github.io/catatin dan sebagai aplikasi ponsel.

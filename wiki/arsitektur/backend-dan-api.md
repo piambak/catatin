@@ -46,7 +46,7 @@ flutter run --dart-define-from-file=dart_define.json
 
 ## 2. Di mana kode HTTP-nya
 
-```
+```text
 screens/  →  core/services/  →  core/data/  →  api | hybrid | mock
              (fasad tipis)      (kontrak)
 ```
@@ -339,7 +339,7 @@ Bahasa Indonesia di `ApiException.userMessage`:
 Situs tayang dari `https://piambak.github.io`, jadi backend harus mengizinkan
 origin itu:
 
-```
+```http
 Access-Control-Allow-Origin: https://piambak.github.io
 Access-Control-Allow-Headers: Authorization, Content-Type
 Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS

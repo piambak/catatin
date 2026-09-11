@@ -63,7 +63,7 @@ Plus satu arah teknis:
 Dari `app/lib/core/network/app_router.dart` — `go_router` dengan
 `StatefulShellRoute` untuk 4 tab utama, plus rute layar-penuh di luar shell.
 
-```
+```text
 /                          Splash          — cek sesi, lalu redirect
 /login                     Login
 /register                  Register
