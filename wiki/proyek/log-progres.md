@@ -12,6 +12,30 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-13** — Frontend + Backend — **Masuk & daftar dengan Google.**
+  Tombol Google di layar masuk dan daftar (web + Android) lewat
+  `signInWithOAuth` Supabase; provider Google dan Redirect URLs disetel pemilik
+  akun di dashboard, Client Secret tidak pernah lewat repo. Sesi hasil login
+  diadopsi `AuthService` (web: saat halaman dimuat ulang; Android: event
+  `signedIn` dari deep link). **Keputusan direvisi:** *Confirm email* tetap
+  menyala — kode Supabase Auth menganggap email terverifikasi saat konfirmasi
+  mati, sehingga login Google bisa tergabung ke akun yang didaftarkan orang
+  lain lebih dulu. Form daftar email disembunyikan sampai custom SMTP siap
+  (T-18); Android belum diuji di perangkat (T-20).
+  **Ditemukan saat uji di peramban:** stream Auth Supabase memutar ulang galat
+  lama ke pendengar baru sehingga "dibatalkan" tertimpa "gagal", dan Supabase
+  tidak membersihkan `?error=` dari alamat — keduanya dibereskan. Berkas unduhan
+  `client_secret_*.json` sempat tersimpan di `supabase/`; tidak pernah
+  di-commit, dan polanya kini diabaikan `.gitignore`.
+  **Terverifikasi:** `flutter analyze` 41 info (0 warning/error), `flutter test`
+  83 lulus. `/auth/v1/settings` → `google: true`, `mailer_autoconfirm: false`;
+  `/auth/v1/authorize?provider=google` → 302 ke `accounts.google.com` dengan
+  callback proyek. Build lokal: tombol membuka Google dengan `redirect_to`
+  alamat lokal + PKCE; kembalian `?error=access_denied` menampilkan "Masuk
+  dengan Google dibatalkan." dan alamat bersih; layar daftar hanya tombol
+  Google.
+  **Belum:** login Google sampai selesai dengan akun sungguhan.
+
 - **2026-09-13** — Backend — **Situs publik memakai database Supabase
   asli.** Proyek `catatin` (ref `mhoadvaiarjbbzlltqxy`, Singapore, paket Free)
   dibuat lewat konektor Supabase di Claude, bukan CLI: Node.js belum terpasang,

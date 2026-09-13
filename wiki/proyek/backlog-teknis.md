@@ -38,8 +38,9 @@ mengikutinya.
 | T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-16 | Tenggat PPN Masa meluap ke bulan berikutnya | 🟡 | Pakar pajak → Frontend | Perlu keputusan |
 | T-17 | Login pertama di peramban bersih macet karena token ditulis serentak | ✅ **Selesai** | Frontend | 13 Sep 2026 |
-| T-18 | Pendaftaran situs publik tanpa verifikasi email dan tanpa "Lupa kata sandi?" | 🟡 | Backend + Frontend | Perlu keputusan |
+| T-18 | Daftar dengan email menunggu custom SMTP; "Lupa kata sandi?" belum ada | 🟡 | Backend + Frontend | Fase berikutnya |
 | T-19 | Proyek Supabase paket Free dijeda setelah seminggu tidak aktif | 🟡 | Backend | Perlu keputusan |
+| T-20 | Login Google di Android belum pernah diuji di perangkat | 🟡 | Frontend | Minggu berikutnya |
 
 ---
 
@@ -59,32 +60,49 @@ yang dihitung sebagai "aktivitas" belum dipastikan (TODO: needs source).
 
 ---
 
-### 🟡 T-18 — Pendaftaran situs publik tanpa verifikasi email
+### 🟡 T-20 — Login Google di Android belum pernah diuji di perangkat
 
-**Keputusan 13 Sep 2026:** *Confirm email* di proyek Supabase situs publik
-**dimatikan**. SMTP bawaan Supabase hanya mengirim ke alamat anggota tim
-organisasi, jadi dengan konfirmasi menyala pengunjung umum tidak akan pernah
-menerima tautannya ([sumber](../sumber/supabase-auth-smtp.md)). Custom SMTP
-butuh domain pengirim sendiri, sedangkan situs ini masih di `github.io`.
+Alur Android (browser eksternal → deep link `com.catatin.catatin://login-callback`
+→ event `signedIn`) sudah ditulis dan lolos `flutter analyze` serta tes unit,
+tapi mesin tempat fitur ini dibuat tidak punya Android SDK — belum ada satu APK
+pun yang dibangun dengan perubahan ini.
 
-Konsekuensi yang diterima dengan sadar:
+- [ ] **Frontend** — bangun APK dengan `--dart-define-from-file=dart_define.pages.json`,
+      lalu uji: masuk dengan Google → kembali ke aplikasi → onboarding;
+      batal di halaman Google → kembali ke layar masuk tanpa crash
 
-- Siapa pun bisa mendaftar memakai email orang lain. Dokumen Supabase menyebut
-  mematikan konfirmasi email sebagai celah yang dicari penyerang
-  ([sumber](../sumber/supabase-auth-smtp.md)).
+---
+
+### 🟡 T-18 — Daftar dengan email menunggu custom SMTP
+
+**Keputusan 13 Sep 2026 (direvisi hari yang sama):** *Confirm email* **tetap
+menyala**, dan pengunjung mendaftar lewat **Google**. Keputusan awal mematikan
+konfirmasi dibatalkan sebelum diterapkan: bersama login Google, konfirmasi yang
+mati membuka celah pengambilalihan akun — lihat
+[Supabase §5](../arsitektur/supabase.md#5-pengaturan-auth).
+
+SMTP bawaan Supabase hanya mengirim ke alamat anggota tim organisasi
+([sumber](../sumber/supabase-auth-smtp.md)), jadi pendaftar email tidak akan
+menerima tautan konfirmasinya. Karena itu form **daftar** email disembunyikan di
+mode Supabase (`AppConfig.emailSignUpEnabled`); form **masuk** email tetap ada.
+
+Yang masih kurang:
+
+- Pengunjung tanpa akun Google belum bisa mendaftar.
 - Tautan "Lupa kata sandi?" di layar masuk masih kosong, dan fitur itu juga
-  butuh email. Pengguna yang salah ketik email atau lupa sandi tidak bisa
-  memulihkan akunnya.
+  butuh email.
 - *Leaked password protection* tidak tersedia di paket Free
   ([sumber](../sumber/supabase-pricing-pausing.md)).
 
-- [ ] **Backend** — siapkan domain + custom SMTP, lalu nyalakan lagi
-      *Confirm email*. Aplikasi sudah menangani alurnya: setelah daftar,
-      pengguna diminta membuka tautan di email lalu masuk
+- [ ] **Backend** — siapkan domain + custom SMTP. Custom SMTP butuh domain
+      pengirim sendiri, sedangkan situs ini masih di `github.io`
+- [ ] **Frontend** — setelah SMTP siap, set `"EMAIL_SIGNUP": "true"` di
+      `app/dart_define.pages.json`. Alur konfirmasinya sudah ditangani: setelah
+      daftar, pengguna diminta membuka tautan di email lalu masuk
 - [ ] **Frontend** — alur "Lupa kata sandi?" (`resetPasswordForEmail` + layar
       sandi baru) setelah SMTP siap
-- [ ] **Backend** — pertimbangkan CAPTCHA pendaftaran selama konfirmasi email
-      masih mati
+- [ ] **Backend** — jangan pernah mematikan *Confirm email* selama login Google
+      aktif
 
 ---
 

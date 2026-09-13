@@ -128,6 +128,7 @@ yang memang publik:
 | Supabase publishable key (`sb_publishable_…`) | Ya — tempatnya `app/dart_define.pages.json` |
 | Supabase secret key (`sb_secret_…`), `service_role` lama | **Tidak pernah** |
 | Password database, token akses Supabase CLI, token admin apa pun | **Tidak pernah** |
+| Google OAuth Client Secret, termasuk berkas unduhan `client_secret_*.json` | **Tidak pernah** — tempatnya dashboard Supabase; pola berkasnya sudah diabaikan `.gitignore` |
 
 Publishable key dirancang untuk komponen publik dan hanya menjangkau apa yang
 diizinkan Row Level Security; secret key melewati seluruh RLS dan harus

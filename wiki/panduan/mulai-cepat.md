@@ -70,6 +70,13 @@ mode debug. Karena itu `dart_define.pages.json` yang belum diisi pun aman.
 Tombol "Masuk sebagai pengguna demo" selalu memakai data contoh, apa pun
 modenya.
 
+Di mode Supabase, layar masuk dan daftar menampilkan tombol **Masuk dengan
+Google**. Dari `localhost` tombol itu kembali ke alamat lokal yang sedang
+dibuka — berfungsi selama `http://localhost:*/**` terdaftar di Redirect URLs
+proyek ([Supabase](../arsitektur/supabase.md#masuk-dengan-google)). Form daftar
+dengan email sengaja disembunyikan di mode ini; tampilkan untuk uji lokal
+dengan `--dart-define=EMAIL_SIGNUP=true`.
+
 ### Pakai berkas, bukan flag panjang
 
 ```bash

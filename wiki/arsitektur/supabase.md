@@ -136,6 +136,8 @@ Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 | --- | --- |
 | `AuthRepository.register` | `auth.signUp`, nama disimpan di user metadata. Sesi `null` (konfirmasi email menyala) → 409 "Akun dibuat. Buka tautan konfirmasi…" |
 | `AuthRepository.login` / `me` / `logout` | `signInWithPassword` / `currentUser` / `signOut` |
+| `AuthRepository.signInWithGoogle` | `signInWithOAuth(google)` — web: halaman yang sama pindah ke Google lalu kembali dengan `?code=` (PKCE); Android: browser eksternal kembali lewat deep link `com.catatin.catatin://login-callback` |
+| `AuthRepository.currentSession` | `currentSession` — dipakai `AuthService` untuk mengadopsi sesi hasil login Google |
 | `BusinessRepository.getCurrent` | select `business_profiles` (paling banyak satu baris) |
 | `BusinessRepository.create` / `update` | upsert pada `user_id` / update per id |
 | `TransactionRepository.getCategories` | select `tx_categories` urut `sort_order` |
@@ -166,13 +168,59 @@ Diatur di dashboard, *Authentication*:
 | Pilihan | Akibat |
 | --- | --- |
 | SMTP bawaan + Confirm email **menyala** | Pendaftaran di situs publik macet: SMTP bawaan hanya mengirim ke alamat anggota tim organisasi, maksimal 2 pesan per jam, dan tidak dimaksudkan untuk produksi ([sumber](../sumber/supabase-auth-smtp.md)) |
-| Confirm email **dimatikan** | Pendaftaran langsung aktif. Siapa pun bisa mendaftar memakai email orang lain; dokumen Supabase menyebut mematikan konfirmasi email sebagai celah yang dicari penyerang dan menyarankan tidak mematikannya ([sumber](../sumber/supabase-auth-smtp.md)). Cukup untuk pengembangan dan uji terbatas |
+| Confirm email **dimatikan** | Pendaftaran langsung aktif. Siapa pun bisa mendaftar memakai email orang lain; dokumen Supabase menyebut mematikan konfirmasi email sebagai celah yang dicari penyerang dan menyarankan tidak mematikannya ([sumber](../sumber/supabase-auth-smtp.md)). Cukup untuk pengembangan dan uji terbatas — **tapi tidak bersama login Google**, lihat keputusan di bawah |
 | Custom SMTP + Confirm email **menyala** | Disarankan untuk situs publik. Aplikasi sudah menangani alurnya: setelah daftar, pengguna diminta membuka tautan di email lalu masuk |
 
-**Keputusan 13 Sep 2026 untuk proyek yang tayang: Confirm email dimatikan.**
-Belum ada domain untuk custom SMTP, dan dengan SMTP bawaan pengunjung umum
-tidak akan menerima tautan konfirmasi. Risikonya dan jalan keluarnya dicatat di
-T-18 [backlog teknis](../proyek/backlog-teknis.md).
+**Keputusan untuk proyek yang tayang (13 Sep 2026, direvisi hari yang sama):
+Confirm email tetap MENYALA, dan pendaftaran lewat Google.**
+
+Keputusan awal mematikan Confirm email dibatalkan sebelum sempat diterapkan.
+Supabase menggabungkan identitas dengan email yang sama ke satu akun, dan hanya
+melewati identitas yang emailnya belum terverifikasi
+([sumber](../sumber/supabase-identity-linking.md)). Di kode Supabase Auth,
+saat Confirm email mati (`Mailer.Autoconfirm`) pendaftaran email langsung
+dikonfirmasi dan alamatnya dihitung terverifikasi
+([sumber](../sumber/supabase-identity-linking.md)). Akibatnya: orang lain bisa
+mendaftar lebih dulu dengan Gmail korban dan sandi buatannya, lalu saat korban
+masuk dengan Google, keduanya jadi satu akun yang sandinya dipegang penyerang.
+Untuk aplikasi berisi data keuangan usaha, risiko itu tidak diterima.
+
+Akibatnya di aplikasi: form **daftar** dengan email disembunyikan di mode
+Supabase (`AppConfig.emailSignUpEnabled`, bisa dipaksa lewat define
+`EMAIL_SIGNUP=true|false`), karena SMTP bawaan tidak akan mengirim tautan
+konfirmasinya. Form **masuk** dengan email tetap ada. Sisa pekerjaannya —
+custom SMTP lalu `EMAIL_SIGNUP=true` — dicatat di T-18
+[backlog teknis](../proyek/backlog-teknis.md).
+
+### Masuk dengan Google
+
+Sekali per proyek, oleh pemilik akun — Client Secret tidak pernah lewat repo
+maupun asisten AI.
+
+1. **Google Cloud → Google Auth Platform:** buat project, isi Branding,
+   Audience *External*, lalu **Publish app** (selama *Testing*, hanya test user
+   yang bisa masuk).
+2. **Clients → Create client → Web application**
+   ([sumber](../sumber/supabase-auth-google.md)):
+   - Authorized JavaScript origins: `https://piambak.github.io`
+   - Authorized redirect URIs: `https://mhoadvaiarjbbzlltqxy.supabase.co/auth/v1/callback`
+3. **Supabase → Authentication → Sign In / Providers → Google:** nyalakan,
+   tempel Client ID dan Client Secret.
+4. **Supabase → Authentication → URL Configuration → Redirect URLs:**
+   `https://piambak.github.io/catatin/**`, `http://localhost:*/**`, dan
+   `com.catatin.catatin://login-callback`. Alamat kembali yang tidak terdaftar
+   membuat Supabase mengirim pengguna ke Site URL.
+
+Android tidak butuh OAuth client tersendiri: login berjalan di browser terhadap
+client Web di atas, lalu kembali lewat deep link.
+
+Layar izin Google menampilkan `mhoadvaiarjbbzlltqxy.supabase.co`, bukan nama
+situs. Dokumen Supabase menyebut ini mengurangi kepercayaan dan menyarankan
+custom domain ([sumber](../sumber/supabase-auth-google.md)).
+
+Cek cepat tanpa akun: `GET /auth/v1/settings` → `external.google: true`, dan
+`GET /auth/v1/authorize?provider=google&redirect_to=…` → 302 ke
+`accounts.google.com`.
 
 Cek cepat tanpa dashboard: `GET /auth/v1/settings` dengan publishable key
 mengembalikan `mailer_autoconfirm: true` saat Confirm email mati.
@@ -187,6 +235,7 @@ Tautan "Lupa kata sandi?" di layar masuk belum tersambung.
 | Publishable key `sb_publishable_…` | Ya — di `app/dart_define.pages.json` |
 | Secret key `sb_secret_…` atau `service_role` lama | **Tidak pernah** |
 | Password database | **Tidak pernah** |
+| Google OAuth Client Secret (dan berkas unduhan `client_secret_*.json`) | **Tidak pernah** — hanya di dashboard Supabase; pola berkasnya diabaikan `.gitignore` |
 
 Publishable key memang dirancang untuk komponen publik — dokumentasi Supabase
 menyebutnya aman di halaman web, aplikasi, GitHub Actions, dan kode sumber —
@@ -212,6 +261,16 @@ ganti isi berkas Pages, lalu nonaktifkan yang lama.
   langsung pindah ke layar masuk lewat `refreshListenable`.
 - **Saat aplikasi dibuka**, penanda "sudah masuk" tanpa sesi Supabase dianggap
   sisa sesi lama dan dibersihkan beserta `onboarded` dan `business_id`-nya.
+- **Kembali dari Google.** Di web, `SupabaseBackend.init` menyalakan
+  `detectSessionInUri`, jadi `Supabase.initialize` menukar `?code=` jadi sesi
+  sebelum frame pertama; `AuthService.restoreSession` lalu menyalin sesi itu ke
+  penyimpanan lokal dan menyelaraskan onboarding. Di Android sesi tiba lewat
+  event `signedIn` saat aplikasi berjalan dan diadopsi dengan cara yang sama.
+  Penanda milik akun lain di perangkat itu dibuang dulu.
+- **Login Google gagal atau dibatalkan** tampil sebagai banner di layar masuk,
+  lalu parameter `?error=` dihapus dari alamat (Supabase hanya membersihkannya
+  saat login berhasil). Stream Auth memutar ulang event lama ke pendengar baru,
+  jadi galat callback web dibaca dari alamat, bukan dari stream.
 - **Mode demo** selalu memakai data contoh dan tidak mengirim satu pun request
   ke Supabase — tombol demo tetap berfungsi di situs publik.
 - **Onboarding** diselaraskan setelah masuk: akun yang sudah punya profil usaha
@@ -226,4 +285,4 @@ ganti isi berkas Pages, lalu nonaktifkan yang lama.
 - [Backend & API](backend-dan-api.md) — mode sumber data dan kontrak REST.
 - [Rilis & deploy](../panduan/rilis-dan-deploy.md) — urutan push skema dan rilis.
 - [Kontribusi](../panduan/kontribusi.md) — aturan rahasia di repo.
-- [Backlog teknis](../proyek/backlog-teknis.md) — T-11 (sesi di web), T-16, T-17, T-18 (tanpa verifikasi email), T-19 (proyek Free dijeda).
+- [Backlog teknis](../proyek/backlog-teknis.md) — T-11 (sesi di web), T-16, T-17, T-18 (daftar email menunggu SMTP), T-19 (proyek Free dijeda), T-20 (uji login Google di Android).
