@@ -380,9 +380,11 @@ Build situs publik membaca `app/dart_define.pages.json`. Berkas yang sama
 dipakai `.github/workflows/publish-web.yml`, `ci.yml`, dan `tool/build_web.*`
 tanpa argumen, dan di-commit — bukan disimpan di repo Variables.
 
-* **Supabase** — isi `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`. Selama
-  salah satunya kosong, situs tayang dengan data contoh. Kenapa kedua nilai itu
-  boleh di-commit dijelaskan di [Supabase](supabase.md#6-kunci-dan-rahasia).
+* **Supabase** — isi `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`. Sejak
+  13 Sep 2026 keduanya terisi proyek `catatin`, jadi situs publik memakai
+  database asli. Kalau salah satunya dikosongkan, situs kembali tayang dengan
+  data contoh. Kenapa kedua nilai itu boleh di-commit dijelaskan di
+  [Supabase](supabase.md#6-kunci-dan-rahasia).
 * **REST** — ganti isinya jadi `API_BASE_URL` dan `DATA_SOURCE=api`. URL
   backend ikut ter-compile ke bundel JS publik, jadi memang bukan rahasia.
 

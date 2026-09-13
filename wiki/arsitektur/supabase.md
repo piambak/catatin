@@ -37,6 +37,19 @@ Mode ini aktif lewat `DATA_SOURCE=supabase` (atau otomatis kalau
 `SUPABASE_URL` terisi). Selama URL atau publishable key kosong, aplikasi jalan
 dengan data contoh — jadi berkas Pages yang belum diisi tidak merusak situs.
 
+**Proyek yang dipakai situs publik** (dibuat 13 Sep 2026):
+
+| | |
+| --- | --- |
+| Nama / ref | `catatin` / `mhoadvaiarjbbzlltqxy` |
+| Organisasi | `catatin`, paket Free |
+| Region | `ap-southeast-1` (Singapore), Postgres 17 |
+| Project URL | `https://mhoadvaiarjbbzlltqxy.supabase.co` |
+| Migrasi terpasang | `20260913101045_catatin_skema_awal` |
+
+Proyek paket Free dijeda setelah seminggu tidak aktif — lihat T-19 di
+[backlog teknis](../proyek/backlog-teknis.md).
+
 ## 2. Menyiapkan dari nol
 
 Sekali per proyek. Butuh Node.js (untuk `npx`) dan akun Supabase.
@@ -73,6 +86,21 @@ Sekali per proyek. Butuh Node.js (untuk `npx`) dan akun Supabase.
 7. Setelah alur daftar → onboarding → catat transaksi lulus di lokal, commit
    berkas itu lewat PR. Situs publik ikut tersambung saat PR digabung ke `main`
    ([Rilis & deploy](../panduan/rilis-dan-deploy.md)).
+
+**Cara proyek yang tayang disiapkan.** Proyek `catatin` tidak dibuat lewat
+langkah di atas, melainkan lewat konektor Supabase (MCP) di Claude: proyek
+dibuat dengan password database acak dari Supabase, lalu migrasi diterapkan
+dengan `apply_migration`. Dua akibatnya:
+
+- **Versi migrasi mengikuti waktu penerapan**, bukan nama berkas lokal. Berkas
+  lokal karena itu diganti nama jadi `20260913101045_catatin_skema_awal.sql`
+  supaya `supabase db push` kelak tidak mencoba menjalankannya ulang. Kalau
+  migrasi berikutnya juga diterapkan lewat konektor, samakan lagi nama
+  berkasnya dengan versi di *Database → Migrations*.
+- **`supabase init` belum pernah dijalankan** — `supabase/config.toml` belum
+  ada. Jalankan `init` sebelum `link` saat pertama kali memakai CLI di repo ini.
+  Password database acak itu tidak pernah ditampilkan; kalau `link` memintanya,
+  buat password baru dari dashboard (TODO: needs source untuk letak menunya).
 
 ## 3. Skema
 
@@ -141,6 +169,14 @@ Diatur di dashboard, *Authentication*:
 | Confirm email **dimatikan** | Pendaftaran langsung aktif. Siapa pun bisa mendaftar memakai email orang lain; dokumen Supabase menyebut mematikan konfirmasi email sebagai celah yang dicari penyerang dan menyarankan tidak mematikannya ([sumber](../sumber/supabase-auth-smtp.md)). Cukup untuk pengembangan dan uji terbatas |
 | Custom SMTP + Confirm email **menyala** | Disarankan untuk situs publik. Aplikasi sudah menangani alurnya: setelah daftar, pengguna diminta membuka tautan di email lalu masuk |
 
+**Keputusan 13 Sep 2026 untuk proyek yang tayang: Confirm email dimatikan.**
+Belum ada domain untuk custom SMTP, dan dengan SMTP bawaan pengunjung umum
+tidak akan menerima tautan konfirmasi. Risikonya dan jalan keluarnya dicatat di
+T-18 [backlog teknis](../proyek/backlog-teknis.md).
+
+Cek cepat tanpa dashboard: `GET /auth/v1/settings` dengan publishable key
+mengembalikan `mailer_autoconfirm: true` saat Confirm email mati.
+
 Tautan "Lupa kata sandi?" di layar masuk belum tersambung.
 
 ## 6. Kunci dan rahasia
@@ -190,4 +226,4 @@ ganti isi berkas Pages, lalu nonaktifkan yang lama.
 - [Backend & API](backend-dan-api.md) — mode sumber data dan kontrak REST.
 - [Rilis & deploy](../panduan/rilis-dan-deploy.md) — urutan push skema dan rilis.
 - [Kontribusi](../panduan/kontribusi.md) — aturan rahasia di repo.
-- [Backlog teknis](../proyek/backlog-teknis.md) — T-11 (sesi di web), T-16, T-17.
+- [Backlog teknis](../proyek/backlog-teknis.md) — T-11 (sesi di web), T-16, T-17, T-18 (tanpa verifikasi email), T-19 (proyek Free dijeda).

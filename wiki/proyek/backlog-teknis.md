@@ -38,6 +38,53 @@ mengikutinya.
 | T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-16 | Tenggat PPN Masa meluap ke bulan berikutnya | 🟡 | Pakar pajak → Frontend | Perlu keputusan |
 | T-17 | Login pertama di peramban bersih macet karena token ditulis serentak | ✅ **Selesai** | Frontend | 13 Sep 2026 |
+| T-18 | Pendaftaran situs publik tanpa verifikasi email dan tanpa "Lupa kata sandi?" | 🟡 | Backend + Frontend | Perlu keputusan |
+| T-19 | Proyek Supabase paket Free dijeda setelah seminggu tidak aktif | 🟡 | Backend | Perlu keputusan |
+
+---
+
+### 🟡 T-19 — Proyek Supabase paket Free dijeda setelah seminggu tidak aktif
+
+Proyek Supabase situs publik memakai paket Free. Di paket itu proyek dijeda
+setelah satu minggu tidak aktif; di paket Pro tidak pernah
+([sumber](../sumber/supabase-pricing-pausing.md)).
+
+Selama proyek terjeda, daftar dan masuk di situs publik gagal dengan pesan
+koneksi. Tombol demo tetap jalan karena tidak menyentuh Supabase. Apa persisnya
+yang dihitung sebagai "aktivitas" belum dipastikan (TODO: needs source).
+
+- [ ] **Backend** — pilih: terima risikonya selama masa uji, pasang pemantau
+      yang memberi tahu tim saat proyek terjeda, atau naik ke paket berbayar
+      sebelum situs dipromosikan ke pengguna umum
+
+---
+
+### 🟡 T-18 — Pendaftaran situs publik tanpa verifikasi email
+
+**Keputusan 13 Sep 2026:** *Confirm email* di proyek Supabase situs publik
+**dimatikan**. SMTP bawaan Supabase hanya mengirim ke alamat anggota tim
+organisasi, jadi dengan konfirmasi menyala pengunjung umum tidak akan pernah
+menerima tautannya ([sumber](../sumber/supabase-auth-smtp.md)). Custom SMTP
+butuh domain pengirim sendiri, sedangkan situs ini masih di `github.io`.
+
+Konsekuensi yang diterima dengan sadar:
+
+- Siapa pun bisa mendaftar memakai email orang lain. Dokumen Supabase menyebut
+  mematikan konfirmasi email sebagai celah yang dicari penyerang
+  ([sumber](../sumber/supabase-auth-smtp.md)).
+- Tautan "Lupa kata sandi?" di layar masuk masih kosong, dan fitur itu juga
+  butuh email. Pengguna yang salah ketik email atau lupa sandi tidak bisa
+  memulihkan akunnya.
+- *Leaked password protection* tidak tersedia di paket Free
+  ([sumber](../sumber/supabase-pricing-pausing.md)).
+
+- [ ] **Backend** — siapkan domain + custom SMTP, lalu nyalakan lagi
+      *Confirm email*. Aplikasi sudah menangani alurnya: setelah daftar,
+      pengguna diminta membuka tautan di email lalu masuk
+- [ ] **Frontend** — alur "Lupa kata sandi?" (`resetPasswordForEmail` + layar
+      sandi baru) setelah SMTP siap
+- [ ] **Backend** — pertimbangkan CAPTCHA pendaftaran selama konfirmasi email
+      masih mati
 
 ---
 

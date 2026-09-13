@@ -40,7 +40,8 @@ Seluruh konfigurasi lingkungan tinggal di
 # Data contoh — default, tanpa backend
 flutter run -d chrome
 
-# Supabase proyek ini — konfigurasi yang sama dengan situs publik
+# Supabase proyek ini — konfigurasi yang sama dengan situs publik.
+# Database-nya dipakai pengguna sungguhan: jangan dipakai untuk data coba-coba.
 flutter run -d chrome --dart-define-from-file=dart_define.pages.json
 
 # Backend sedang dibangun

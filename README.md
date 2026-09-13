@@ -85,6 +85,11 @@ antarmuka.
 dan **sengaja di-commit**: kunci itu memang publik, data dijaga Row Level
 Security. Secret key dan password database tidak pernah boleh masuk repo.
 
+Situs publik memakai proyek itu sebagai database asli sejak 13 September 2026.
+Artinya `flutter run` dengan berkas Pages juga menulis ke database yang sama
+dengan pengguna sungguhan — untuk mencoba-coba, pakai data contoh atau tombol
+demo.
+
 - Menyiapkan proyek Supabase dari nol, skema, dan kunci:
   **[wiki/arsitektur/supabase.md](wiki/arsitektur/supabase.md)**
 - Mode sumber data dan kontrak REST tiap endpoint:

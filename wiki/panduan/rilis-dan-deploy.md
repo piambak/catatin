@@ -32,6 +32,21 @@ GitHub Pages men-deploy root main (1–2 menit)
 Commit dari bot hanya menyentuh berkas di root, sedangkan workflow disaring
 `paths: app/**`, jadi tidak ada loop build.
 
+### Kalau push ke `main` tidak memicu workflow sama sekali
+
+Terjadi pada push `ce4639e` (13 Sep 2026): push tercatat, tetapi CI maupun
+Publikasi web tidak membuat run apa pun, padahal push sebelumnya memicu run
+dalam hitungan detik. Penyebabnya tidak terlihat dari akun berakses tulis —
+API izin Actions hanya untuk admin. Picu manual; akses tulis sudah cukup:
+
+```bash
+gh workflow run publish-web.yml --ref main
+gh workflow run ci.yml --ref main
+```
+
+Kalau dispatch pun ditolak, pakai jalur manual di bawah dan minta pemilik repo
+memeriksa *Settings → Actions*.
+
 ### Kalau workflow gagal dengan `403` saat push
 
 Token Actions belum punya izin tulis. Ini setting tingkat repo yang butuh akses
@@ -89,6 +104,10 @@ membutuhkannya:
 npx supabase db push --dry-run
 npx supabase db push
 ```
+
+Migrasi yang diterapkan lewat konektor Supabase (MCP) mendapat versi sesuai
+waktu penerapan — samakan nama berkas lokalnya, lihat
+[Supabase](../arsitektur/supabase.md#2-menyiapkan-dari-nol).
 
 Kalau urutannya terbalik, situs yang baru tayang menembak tabel atau kolom
 yang belum ada. Galatnya tampil sebagai pesan umum di UI; di mode debug pesan

@@ -12,6 +12,29 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-13** — Backend — **Situs publik memakai database Supabase
+  asli.** Proyek `catatin` (ref `mhoadvaiarjbbzlltqxy`, Singapore, paket Free)
+  dibuat lewat konektor Supabase di Claude, bukan CLI: Node.js belum terpasang,
+  dan alur CLI butuh kode login serta password database yang harus diketik
+  pemilik akun. Migrasi diterapkan dengan `apply_migration` sehingga versinya
+  `20260913101045`; berkas lokal diganti nama menyamainya.
+  `app/dart_define.pages.json` diisi URL + publishable key.
+  **Keputusan:** *Confirm email* dimatikan karena belum ada domain untuk custom
+  SMTP — risikonya jadi **T-18**; proyek Free yang dijeda saat sepi jadi
+  **T-19**. Push `ce4639e` sebelumnya ternyata tidak memicu workflow apa pun;
+  cara memicu manual dicatat di [Rilis & deploy](../panduan/rilis-dan-deploy.md).
+  **Terverifikasi:** Security Advisor 0 temuan (Performance hanya 3 info indeks
+  belum terpakai di database kosong). RLS aktif di tiga tabel, 15 kategori,
+  9 policy, `anon` tanpa hak apa pun. Uji isolasi di satu transaksi yang
+  dibatalkan: pengguna B melihat 0 transaksi dan 0 profil milik A, ubah/hapus
+  transaksi A mengenai 0 baris, insert ke usaha A dan menyamar sebagai A
+  ditolak `42501`; `monthly_totals` A benar. REST dengan publishable key tanpa
+  sesi ditolak `401/42501`. `flutter analyze` 41 info, `flutter test` 71 lulus,
+  build web berisi URL proyek; di peramban mode demo jalan tanpa request ke
+  Supabase dan bertahan setelah reload.
+  **Belum:** daftar → onboarding → catat transaksi dengan akun sungguhan di
+  situs yang tayang.
+
 - **2026-09-13** — Frontend — **Aplikasi tersambung ke Supabase** (branch
   `fitur/supabase`), belum aktif karena proyek Supabase-nya belum dibuat.
   **Keputusan:** Supabase dipasang sebagai implementasi repository keempat
