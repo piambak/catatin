@@ -5,11 +5,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/common/ds_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -111,76 +113,98 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         DsErrorBanner(message: _error!),
                         const SizedBox(height: 18),
                       ],
-                      DsField(
-                        label: 'Nama lengkap',
-                        controller: _nameCtrl,
-                        hint: 'Nama Anda',
-                        textInputAction: TextInputAction.next,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Nama wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: 18),
-                      DsField(
-                        label: 'Email',
-                        controller: _emailCtrl,
-                        hint: 'nama@usaha.com',
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email wajib diisi';
-                          if (!v.contains('@')) return 'Format email tidak valid';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 18),
-                      DsField(
-                        label: 'Kata sandi',
-                        controller: _passCtrl,
-                        obscureText: _obscure,
-                        textInputAction: TextInputAction.next,
-                        helper: 'Minimal 6 karakter.',
-                        suffix: IconButton(
-                          tooltip: _obscure
-                              ? 'Tampilkan kata sandi'
-                              : 'Sembunyikan kata sandi',
-                          icon: Icon(
-                            _obscure
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            size: 19,
-                            color: DS.faint,
-                          ),
-                          onPressed: () => setState(() => _obscure = !_obscure),
+                      if (AuthService.googleSignInAvailable) ...[
+                        GoogleSignInButton(
+                          label: 'Daftar dengan Google',
+                          onError: (m) => setState(() => _error = m),
                         ),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'Kata sandi wajib diisi';
-                          }
-                          if (v.length < 6) {
-                            return 'Kata sandi minimal 6 karakter';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 18),
-                      DsField(
-                        label: 'Ulangi kata sandi',
-                        controller: _confCtrl,
-                        obscureText: _obscure,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _submit(),
-                        validator: (v) => v != _passCtrl.text
-                            ? 'Kata sandi tidak sama'
-                            : null,
-                      ),
-                      const SizedBox(height: 24),
-                      DsButton(
-                        label: _loading ? 'Memproses…' : 'Daftar',
-                        onPressed: _loading ? null : _submit,
-                        expand: true,
-                        minHeight: 50,
-                      ),
+                        const SizedBox(height: 22),
+                      ],
+                      // Daftar dengan email disembunyikan selama konfirmasi
+                      // email belum bisa terkirim — lihat
+                      // AppConfig.emailSignUpEnabled.
+                      if (!AppConfig.emailSignUpEnabled)
+                        Text(
+                          'Pendaftaran dengan email segera hadir. Akun Google '
+                          'langsung aktif tanpa kata sandi baru.',
+                          style: Typo.sans(12.5, color: DS.faint, height: 1.45),
+                        )
+                      else ...[
+                        if (AuthService.googleSignInAvailable) ...[
+                          const DsLabeledDivider('atau daftar dengan email'),
+                          const SizedBox(height: 22),
+                        ],
+                        DsField(
+                          label: 'Nama lengkap',
+                          controller: _nameCtrl,
+                          hint: 'Nama Anda',
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Nama wajib diisi'
+                              : null,
+                        ),
+                        const SizedBox(height: 18),
+                        DsField(
+                          label: 'Email',
+                          controller: _emailCtrl,
+                          hint: 'nama@usaha.com',
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Email wajib diisi';
+                            if (!v.contains('@')) return 'Format email tidak valid';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        DsField(
+                          label: 'Kata sandi',
+                          controller: _passCtrl,
+                          obscureText: _obscure,
+                          textInputAction: TextInputAction.next,
+                          helper: 'Minimal 6 karakter.',
+                          suffix: IconButton(
+                            tooltip: _obscure
+                                ? 'Tampilkan kata sandi'
+                                : 'Sembunyikan kata sandi',
+                            icon: Icon(
+                              _obscure
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 19,
+                              color: DS.faint,
+                            ),
+                            onPressed: () => setState(() => _obscure = !_obscure),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Kata sandi wajib diisi';
+                            }
+                            if (v.length < 6) {
+                              return 'Kata sandi minimal 6 karakter';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        DsField(
+                          label: 'Ulangi kata sandi',
+                          controller: _confCtrl,
+                          obscureText: _obscure,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submit(),
+                          validator: (v) => v != _passCtrl.text
+                              ? 'Kata sandi tidak sama'
+                              : null,
+                        ),
+                        const SizedBox(height: 24),
+                        DsButton(
+                          label: _loading ? 'Memproses…' : 'Daftar',
+                          onPressed: _loading ? null : _submit,
+                          expand: true,
+                          minHeight: 50,
+                        ),
+                      ],
                     ],
                   ),
                 ),

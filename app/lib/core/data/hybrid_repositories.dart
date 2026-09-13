@@ -59,6 +59,12 @@ class HybridAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() => _orFallback(api.logout, mock.logout);
+
+  @override
+  Future<void> signInWithGoogle() => api.signInWithGoogle();
+
+  @override
+  Future<AuthResponse?> currentSession() => api.currentSession();
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

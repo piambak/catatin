@@ -13,6 +13,7 @@ import 'package:catatin/core/data/repositories.dart';
 import 'package:catatin/core/data/supabase_repositories.dart';
 import 'package:catatin/core/network/api_client.dart';
 import 'package:catatin/core/network/supabase_client.dart';
+import 'package:catatin/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
@@ -293,6 +294,84 @@ void main() {
     test('tahun saja → setahun penuh; bulan saja → tahun berjalan', () {
       expect(dateRangeFor(year: 2025, now: now)!.until, '2026-01-01');
       expect(dateRangeFor(month: 5, now: now)!.from, '2026-05-01');
+    });
+  });
+
+  group('oauthRedirectUrl', () {
+    test('situs publik: fragment rute dan query dibuang', () {
+      expect(
+        oauthRedirectUrl(Uri.parse('https://piambak.github.io/catatin/#/login')),
+        'https://piambak.github.io/catatin/',
+      );
+    });
+
+    test('build lokal berport kembali ke dirinya sendiri', () {
+      expect(
+        oauthRedirectUrl(
+            Uri.parse('http://localhost:8012/catatin/?code=abc#/register')),
+        'http://localhost:8012/catatin/',
+      );
+    });
+
+    test('tanpa path tetap berakhir garis miring', () {
+      expect(oauthRedirectUrl(Uri.parse('https://catatin.id')),
+          'https://catatin.id/');
+    });
+  });
+
+  group('oauthCallbackError', () {
+    test('pengguna menekan batal di halaman Google', () {
+      final uri = Uri.parse(
+          'https://piambak.github.io/catatin/?error=access_denied&error_description=x');
+      expect(oauthCallbackError(uri, hasSession: false),
+          'Masuk dengan Google dibatalkan.');
+    });
+
+    test('galat lain, termasuk yang dikirim lewat fragment', () {
+      final uri = Uri.parse(
+          'https://piambak.github.io/catatin/#error=server_error&error_code=500');
+      expect(oauthCallbackError(uri, hasSession: false),
+          'Masuk dengan Google gagal. Coba lagi.');
+    });
+
+    test('kode callback yang gagal ditukar jadi sesi', () {
+      final uri = Uri.parse('https://piambak.github.io/catatin/?code=abc');
+      expect(oauthCallbackError(uri, hasSession: false),
+          'Masuk dengan Google gagal. Coba lagi.');
+      expect(oauthCallbackError(uri, hasSession: true), isNull);
+    });
+
+    test('halaman biasa tidak dianggap kembalian Google', () {
+      expect(
+        oauthCallbackError(Uri.parse('https://piambak.github.io/catatin/#/login'),
+            hasSession: false),
+        isNull,
+      );
+    });
+  });
+
+  group('userFromMetadata', () {
+    UserModel user(Map<String, dynamic>? meta, {String? email = 'budi@usaha.com'}) =>
+        userFromMetadata(
+          id: 'u1',
+          email: email,
+          metadata: meta,
+          createdAt: '2026-09-13T01:00:00Z',
+        );
+
+    test('nama dari pendaftaran email', () {
+      expect(user({'name': ' Budi '}).name, 'Budi');
+    });
+
+    test('akun Google: full_name dan picture', () {
+      final u = user({'full_name': 'Budi Santoso', 'picture': 'https://x/p.png'});
+      expect(u.name, 'Budi Santoso');
+      expect(u.image, 'https://x/p.png');
+    });
+
+    test('tanpa nama memakai bagian depan email', () {
+      expect(user(null).name, 'budi');
+      expect(user({'name': ''}, email: null).name, '');
     });
   });
 

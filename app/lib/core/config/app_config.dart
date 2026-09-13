@@ -69,6 +69,16 @@ class AppConfig {
 
   static const String _rawDataSource = String.fromEnvironment('DATA_SOURCE');
 
+  /// `true`/`false` untuk memaksa form daftar dengan email tampil atau
+  /// tersembunyi. Kosong berarti bawaan per mode — lihat [emailSignUpEnabled].
+  static const String _rawEmailSignUp = String.fromEnvironment('EMAIL_SIGNUP');
+
+  /// Alamat yang dibuka browser untuk kembali ke aplikasi Android setelah
+  /// masuk dengan Google. Skema = applicationId; harus terdaftar di intent-filter
+  /// `AndroidManifest.xml` dan di Redirect URLs dashboard Supabase.
+  static const String oauthRedirectMobile =
+      'com.catatin.catatin://login-callback';
+
   /// Cetak request/response HTTP ke konsol. Jangan diaktifkan di rilis publik.
   static const bool enableApiLog = bool.fromEnvironment('ENABLE_API_LOG');
 
@@ -119,6 +129,20 @@ class AppConfig {
 
   /// True kalau ada mode yang benar-benar memanggil jaringan.
   static bool get usesNetwork => dataSource != DataSource.mock;
+
+  /// Apakah layar daftar menampilkan form email + kata sandi.
+  ///
+  /// Di mode Supabase bawaannya **mati**: "Confirm email" sengaja menyala,
+  /// sedangkan SMTP bawaan Supabase tidak mengirim ke pengunjung umum, jadi
+  /// pendaftar email tidak akan pernah menerima tautan konfirmasinya. Daftar
+  /// lewat Google dulu; setelah custom SMTP siap, set `EMAIL_SIGNUP=true`.
+  /// Kenapa konfirmasi tidak dimatikan saja: lihat
+  /// `wiki/arsitektur/supabase.md` bagian Pengaturan Auth.
+  static bool get emailSignUpEnabled => switch (_rawEmailSignUp) {
+        'true' => true,
+        'false' => false,
+        _ => dataSource != DataSource.supabase,
+      };
 
   /// Pesan kalau kombinasi define-nya tidak masuk akal — dicetak sekali
   /// saat startup, bukan dilempar, supaya app tetap bisa jalan mode mock.

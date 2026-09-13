@@ -15,10 +15,12 @@
 // Kontrak galat sama dengan REST: setiap method melempar [ApiException]
 // (lewat `runSupabase`).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../models/models.dart';
+import '../config/app_config.dart';
 import '../network/api_client.dart';
 import '../network/supabase_client.dart';
 import '../services/simulator_service.dart' show generateCalendar;
@@ -85,30 +87,93 @@ class SupabaseAuthRepository implements AuthRepository {
     if (user == null) {
       throw const ApiException(statusCode: 401, message: 'Belum masuk.');
     }
-    return _user(user);
+    return userFromMetadata(
+      id: user.id,
+      email: user.email,
+      metadata: user.userMetadata,
+      createdAt: user.createdAt,
+    );
   }
 
   @override
   Future<void> logout() => runSupabase(() => _db.auth.signOut());
 
+  @override
+  Future<void> signInWithGoogle() => runSupabase(() async {
+        // Web: halaman ini sendiri pindah ke Google (PKCE), lalu kembali ke
+        // alamat yang sama dengan `?code=`; `SupabaseBackend.init` menukarnya
+        // jadi sesi sebelum frame pertama. Android: browser eksternal kembali
+        // lewat deep link [AppConfig.oauthRedirectMobile].
+        final opened = await _db.auth.signInWithOAuth(
+          sb.OAuthProvider.google,
+          redirectTo:
+              kIsWeb ? oauthRedirectUrl(Uri.base) : AppConfig.oauthRedirectMobile,
+        );
+        if (!opened) {
+          throw const ApiException(
+            statusCode: 0,
+            message: 'Halaman masuk Google tidak bisa dibuka.',
+          );
+        }
+      });
+
+  @override
+  Future<AuthResponse?> currentSession() async {
+    final session = _db.auth.currentSession;
+    return session == null ? null : _authResponse(session);
+  }
+
   AuthResponse _authResponse(sb.Session session) => AuthResponse(
         accessToken: session.accessToken,
         refreshToken: session.refreshToken ?? '',
-        user: _user(session.user),
+        user: userFromMetadata(
+          id: session.user.id,
+          email: session.user.email,
+          metadata: session.user.userMetadata,
+          createdAt: session.user.createdAt,
+        ),
       );
+}
 
-  UserModel _user(sb.User user) {
-    final meta = user.userMetadata ?? const <String, dynamic>{};
-    final email = user.email ?? '';
-    final name = (meta['name'] as String?)?.trim() ?? '';
-    return UserModel(
-      id: user.id,
-      name: name.isNotEmpty ? name : email.split('@').first,
-      email: email,
-      image: meta['avatar_url'] as String?,
-      createdAt: DateTime.tryParse(user.createdAt)?.toLocal() ?? DateTime.now(),
-    );
+/// Alamat kembali setelah masuk dengan Google di web: halaman aplikasi ini
+/// tanpa query dan fragment, mis. `https://piambak.github.io/catatin/`.
+///
+/// Diturunkan dari alamat yang sedang dibuka, bukan di-hardcode, supaya build
+/// lokal (`http://localhost:8012/catatin/`) kembali ke dirinya sendiri. Alamat
+/// ini wajib cocok dengan Redirect URLs di dashboard Supabase; kalau tidak,
+/// Supabase mengirim pengguna ke Site URL.
+String oauthRedirectUrl(Uri page) => Uri(
+      scheme: page.scheme,
+      host: page.host,
+      port: page.hasPort ? page.port : null,
+      path: page.path.isEmpty ? '/' : page.path,
+    ).toString();
+
+/// Profil pengguna dari data akun Supabase.
+///
+/// Pendaftar email menyimpan `name` saat daftar; akun Google membawa `name`
+/// atau `full_name` dan foto di `avatar_url` atau `picture`. Tanpa nama sama
+/// sekali, bagian depan alamat email dipakai.
+UserModel userFromMetadata({
+  required String id,
+  required String? email,
+  required Map<String, dynamic>? metadata,
+  required String createdAt,
+}) {
+  final meta = metadata ?? const <String, dynamic>{};
+  String? text(String key) {
+    final value = meta[key];
+    return value is String && value.trim().isNotEmpty ? value.trim() : null;
   }
+
+  final address = email ?? '';
+  return UserModel(
+    id: id,
+    name: text('name') ?? text('full_name') ?? address.split('@').first,
+    email: address,
+    image: text('avatar_url') ?? text('picture'),
+    createdAt: DateTime.tryParse(createdAt)?.toLocal() ?? DateTime.now(),
+  );
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

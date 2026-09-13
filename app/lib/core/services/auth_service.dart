@@ -25,31 +25,68 @@ class AuthService {
   /// ketika tidak ada layar yang sedang memanggil `context.go`.
   static final sessionChanges = _SessionChanges();
 
+  /// Pesan galat masuk dengan Google yang belum ditampilkan layar masuk.
+  static final oauthError = ValueNotifier<String?>(null);
+
+  /// Tombol Google hanya berarti kalau backend-nya Supabase.
+  static bool get googleSignInAvailable =>
+      AppConfig.dataSource == DataSource.supabase;
+
+  /// Login/daftar email sedang berjalan. Selama itu event `signedIn` dari
+  /// Supabase milik alur ini sendiri, jadi pendengar sesi tidak ikut
+  /// menyimpan dan menyinkronkan untuk kedua kalinya.
+  static bool _signingIn = false;
+
   static Future<AuthResponse> register({
     required String name,
     required String email,
     required String password,
-  }) async {
-    final auth = await Repos.auth.register(
-      name: name,
-      email: email,
-      password: password,
-    );
-    await _persist(auth);
-    await _syncBusiness();
-    sessionChanges.notify();
-    return auth;
-  }
+  }) =>
+      _withSigningIn(() async {
+        final auth = await Repos.auth.register(
+          name: name,
+          email: email,
+          password: password,
+        );
+        await _persist(auth);
+        await _syncBusiness();
+        sessionChanges.notify();
+        return auth;
+      });
 
   static Future<AuthResponse> login({
     required String email,
     required String password,
-  }) async {
-    final auth = await Repos.auth.login(email: email, password: password);
-    await _persist(auth);
-    await _syncBusiness();
-    sessionChanges.notify();
-    return auth;
+  }) =>
+      _withSigningIn(() async {
+        final auth = await Repos.auth.login(email: email, password: password);
+        await _persist(auth);
+        await _syncBusiness();
+        sessionChanges.notify();
+        return auth;
+      });
+
+  /// Membuka halaman masuk Google. Di web halaman ini ditinggalkan; hasilnya
+  /// diadopsi [restoreSession] saat aplikasi dimuat ulang. Di Android hasilnya
+  /// tiba lewat pendengar sesi.
+  static Future<void> signInWithGoogle() {
+    oauthError.value = null;
+    _googlePending = true;
+    return Repos.auth.signInWithGoogle();
+  }
+
+  /// Masuk dengan Google sudah dimulai dan belum berakhir (Android). Galat Auth
+  /// lain — mis. refresh token gagal saat offline — tidak boleh tampil sebagai
+  /// "Masuk dengan Google gagal".
+  static bool _googlePending = false;
+
+  static Future<T> _withSigningIn<T>(Future<T> Function() run) async {
+    _signingIn = true;
+    try {
+      return await run();
+    } finally {
+      _signingIn = false;
+    }
   }
 
   /// Masuk tanpa akun. Seluruh data berasal dari contoh lokal dan tidak ada
@@ -106,11 +143,50 @@ class AuthService {
       await StorageService.clearAll();
     }
 
-    SupabaseBackend.listenSignedOut(() async {
-      if (Repos.isDemo) return;
+    // Kebalikannya: Supabase memegang sesi yang belum dikenal penyimpanan
+    // lokal — halaman baru dimuat ulang sebagai kembalian masuk dengan Google.
+    if (!Repos.isDemo && SupabaseBackend.hasSession) {
+      await _adoptSession();
+    }
+    oauthError.value = SupabaseBackend.oauthError;
+
+    SupabaseBackend.listenAuthChanges(
+      onSignedIn: (_) async {
+        _googlePending = false;
+        if (Repos.isDemo || _signingIn) return;
+        if (await _adoptSession()) sessionChanges.notify();
+      },
+      onSignedOut: () async {
+        if (Repos.isDemo) return;
+        await StorageService.clearAll();
+        sessionChanges.notify();
+      },
+      onAuthError: (_) {
+        if (!_googlePending || SupabaseBackend.hasSession) return;
+        _googlePending = false;
+        oauthError.value = 'Masuk dengan Google gagal. Coba lagi.';
+      },
+    );
+  }
+
+  /// Menyalin sesi Supabase ke penyimpanan lokal kalau belum dikenal, lalu
+  /// menyelaraskan onboarding. Mengembalikan `true` kalau ada yang berubah.
+  ///
+  /// Penanda milik akun lain (id berbeda) dibuang dulu beserta onboarding dan
+  /// `business_id`-nya, supaya tidak terbawa ke akun Google yang baru masuk.
+  static Future<bool> _adoptSession() async {
+    final auth = await Repos.auth.currentSession();
+    if (auth == null) return false;
+
+    final loggedIn = await StorageService.isLoggedIn();
+    if (loggedIn) {
+      if (await StorageService.getUserId() == auth.user.id) return false;
       await StorageService.clearAll();
-      sessionChanges.notify();
-    });
+    }
+
+    await _persist(auth);
+    await _syncBusiness();
+    return true;
   }
 
   static Future<void> _persist(AuthResponse auth) => Future.wait([

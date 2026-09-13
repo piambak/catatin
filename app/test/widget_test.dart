@@ -5,6 +5,7 @@
 //
 // Jalankan: flutter test
 
+import 'package:catatin/core/config/app_config.dart';
 import 'package:catatin/core/data/mock_repositories.dart';
 import 'package:catatin/core/data/repositories.dart';
 import 'package:catatin/core/theme/app_theme.dart';
@@ -95,6 +96,23 @@ void main() {
       expect(Repos.transaction, isA<MockTransactionRepository>());
       expect(Repos.auth, isA<MockAuthRepository>());
     });
+  });
+
+  group('MockAuthRepository', () {
+    test('tanpa Supabase tidak ada alur Google dan tidak ada sesi backend',
+        () async {
+      final repo = MockAuthRepository();
+      await expectLater(
+        repo.signInWithGoogle(),
+        throwsA(same(googleSignInUnsupported)),
+      );
+      expect(await repo.currentSession(), isNull);
+    });
+  });
+
+  test('tanpa define, mode mock menampilkan form daftar email', () {
+    expect(AppConfig.dataSource, DataSource.mock);
+    expect(AppConfig.emailSignUpEnabled, isTrue);
   });
 
   testWidgets('tema terpasang tanpa exception', (tester) async {

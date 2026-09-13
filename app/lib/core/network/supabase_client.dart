@@ -16,6 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../config/app_config.dart';
 import 'api_client.dart';
+import 'browser_url.dart';
 
 class SupabaseBackend {
   SupabaseBackend._();
@@ -27,6 +28,10 @@ class SupabaseBackend {
   /// dan hanya bila `AppConfig.dataSource == DataSource.supabase` — mode lain
   /// tidak memuat Supabase sama sekali.
   static Future<void> init() async {
+    // Dibaca sebelum initialize: Supabase membersihkan parameter callback dari
+    // alamat begitu kodenya ditukar.
+    final startUri = Uri.base;
+
     await sb.Supabase.initialize(
       url: AppConfig.supabaseUrl,
       publishableKey: AppConfig.supabasePublishableKey,
@@ -37,35 +42,89 @@ class SupabaseBackend {
         retryCount: 1,
       ),
       authOptions: const sb.FlutterAuthClientOptions(
-        // Tidak ada alur masuk lewat tautan (magic link, OAuth), jadi pengamat
-        // deep link tidak perlu dinyalakan.
-        detectSessionInUri: false,
+        // Wajib untuk masuk dengan Google. Di web, initialize menunggu `?code=`
+        // di alamat awal ditukar jadi sesi; di Android, deep link callback
+        // ditukar saat aplikasi menerimanya.
+        detectSessionInUri: true,
       ),
       debug: AppConfig.enableApiLog,
     );
+
+    if (kIsWeb) {
+      oauthError = oauthCallbackError(startUri, hasSession: hasSession);
+      if (oauthError != null) clearUrlQuery();
+    }
   }
+
+  /// Pesan untuk pengguna kalau halaman ini dibuka sebagai kembalian masuk
+  /// dengan Google yang gagal atau dibatalkan. Diisi [init] (web).
+  static String? oauthError;
 
   /// Apakah klien Supabase sedang memegang sesi.
   static bool get hasSession => client.auth.currentSession != null;
 
-  /// Memanggil [onSignedOut] setiap Supabase mengakhiri sesi dari sisinya
-  /// sendiri — refresh token dicabut atau kedaluwarsa, bukan hanya saat
-  /// pengguna menekan "Keluar".
-  static StreamSubscription<sb.AuthState> listenSignedOut(
-    void Function() onSignedOut,
-  ) {
+  /// Mendengarkan perubahan sesi dari sisi Supabase.
+  ///
+  /// * [onSignedIn] — sesi baru terbentuk saat aplikasi berjalan, mis.
+  ///   kembalian masuk dengan Google lewat deep link di Android.
+  /// * [onSignedOut] — Supabase mengakhiri sesi, termasuk karena refresh token
+  ///   dicabut atau kedaluwarsa, bukan hanya saat pengguna menekan "Keluar".
+  /// * [onAuthError] — galat Auth di stream, mis. kode callback Google yang
+  ///   gagal ditukar lewat deep link. Tidak dipanggil di web: di sana galat
+  ///   callback sudah dibaca [init] dari alamat halaman.
+  ///
+  /// Stream ini memutar ulang seluruh event dan galat sebelumnya ke pendengar
+  /// baru, termasuk yang terjadi selama [init] — callback harus tahan dipanggil
+  /// untuk keadaan yang sudah ditangani.
+  static StreamSubscription<sb.AuthState> listenAuthChanges({
+    required void Function(sb.Session session) onSignedIn,
+    required void Function() onSignedOut,
+    required void Function(sb.AuthException error) onAuthError,
+  }) {
     return client.auth.onAuthStateChange.listen(
       (state) {
-        if (state.event == sb.AuthChangeEvent.signedOut) onSignedOut();
+        switch (state.event) {
+          case sb.AuthChangeEvent.signedIn:
+            final session = state.session;
+            if (session != null) onSignedIn(session);
+          case sb.AuthChangeEvent.signedOut:
+            onSignedOut();
+          default:
+            break;
+        }
       },
       // Tanpa onError, galat di stream ini (mis. refresh gagal karena offline)
       // naik sebagai exception yang tidak tertangani.
       onError: (Object error, StackTrace _) {
         if (kDebugMode) debugPrint('[Catatin] auth Supabase: $error');
+        if (!kIsWeb && error is sb.AuthException) onAuthError(error);
       },
     );
   }
 }
+
+/// Pesan galat kalau [uri] adalah kembalian masuk dengan Google yang tidak
+/// menghasilkan sesi, atau `null` kalau bukan.
+///
+/// Parameter dibaca dari query maupun fragment — bentuk yang dipakai Supabase
+/// untuk alur PKCE dan implicit.
+String? oauthCallbackError(Uri uri, {required bool hasSession}) {
+  final fragment = uri.fragment.contains('=')
+      ? Uri.splitQueryString(uri.fragment.replaceFirst(RegExp(r'^.*\?'), ''))
+      : const <String, String>{};
+  String? param(String key) => uri.queryParameters[key] ?? fragment[key];
+
+  final error = param('error');
+  if (error != null) {
+    return error == 'access_denied'
+        ? 'Masuk dengan Google dibatalkan.'
+        : _oauthFailed;
+  }
+  if (param('code') != null && !hasSession) return _oauthFailed;
+  return null;
+}
+
+const _oauthFailed = 'Masuk dengan Google gagal. Coba lagi.';
 
 /// Menjalankan [call], menerjemahkan galat Supabase jadi [ApiException].
 ///

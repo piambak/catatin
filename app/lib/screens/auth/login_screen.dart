@@ -17,6 +17,7 @@ import '../../core/network/api_client.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../widgets/auth/google_sign_in_button.dart';
 import '../../widgets/common/ds_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,10 +37,33 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    // Kembalian masuk dengan Google yang gagal atau dibatalkan mendarat di
+    // layar ini — web saat halaman dimuat ulang, Android lewat pendengar sesi.
+    _error = _takeOAuthError();
+    AuthService.oauthError.addListener(_onOAuthError);
+  }
+
+  @override
   void dispose() {
+    AuthService.oauthError.removeListener(_onOAuthError);
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
+  }
+
+  /// Mengambil pesan galat Google sekali saja, supaya tidak muncul lagi saat
+  /// layar ini dibuka ulang.
+  String? _takeOAuthError() {
+    final message = AuthService.oauthError.value;
+    if (message != null) AuthService.oauthError.value = null;
+    return message;
+  }
+
+  void _onOAuthError() {
+    final message = _takeOAuthError();
+    if (message != null && mounted) setState(() => _error = message);
   }
 
   Future<void> _submit() async {
@@ -109,6 +133,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         DsErrorBanner(message: _error!),
                         const SizedBox(height: 18),
                       ],
+                      if (AuthService.googleSignInAvailable) ...[
+                        GoogleSignInButton(
+                          label: 'Masuk dengan Google',
+                          onError: (m) => setState(() => _error = m),
+                        ),
+                        const SizedBox(height: 22),
+                        const DsLabeledDivider('atau masuk dengan email'),
+                        const SizedBox(height: 22),
+                      ],
                       DsField(
                         label: 'Email',
                         controller: _emailCtrl,
@@ -166,18 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 26),
                       // ── Mode demo — hapus sebelum produksi ────────────────
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: DS.hairline)),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('atau coba dulu',
-                                style: Typo.sans(12, color: DS.faint)),
-                          ),
-                          Expanded(child: Divider(color: DS.hairline)),
-                        ],
-                      ),
+                      const DsLabeledDivider('atau coba dulu'),
                       const SizedBox(height: 16),
                       DsButton(
                         label: 'Masuk sebagai pengguna demo',

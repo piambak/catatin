@@ -17,10 +17,17 @@
 
 import '../config/app_config.dart';
 import '../../models/models.dart';
+import '../network/api_client.dart';
 import 'api_repositories.dart';
 import 'hybrid_repositories.dart';
 import 'mock_repositories.dart';
 import 'supabase_repositories.dart';
+
+/// Dilempar implementasi yang tidak punya alur OAuth.
+const googleSignInUnsupported = ApiException(
+  statusCode: 409,
+  message: 'Masuk dengan Google hanya tersedia saat tersambung ke Supabase.',
+);
 
 // ── Kontrak ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +50,15 @@ abstract class AuthRepository {
   /// Mengakhiri sesi di sisi backend. Penyimpanan lokal dibersihkan
   /// `AuthService`, bukan di sini.
   Future<void> logout();
+
+  /// Membuka halaman masuk Google. Selesai begitu halaman itu terbuka — sesi
+  /// baru tiba saat pengguna kembali ke aplikasi (web: halaman dimuat ulang;
+  /// Android: deep link), dan diadopsi `AuthService`.
+  Future<void> signInWithGoogle();
+
+  /// Sesi yang sedang dipegang backend, atau `null`. Hanya berarti untuk
+  /// backend yang mengelola sesinya sendiri (Supabase).
+  Future<AuthResponse?> currentSession();
 }
 
 abstract class BusinessRepository {

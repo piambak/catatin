@@ -85,6 +85,7 @@ class DsButton extends StatelessWidget {
     this.minHeight = 46,
     this.background,
     this.foreground,
+    this.leading,
   });
 
   final String label;
@@ -94,6 +95,9 @@ class DsButton extends StatelessWidget {
   final double minHeight;
   final Color? background;
   final Color? foreground;
+
+  /// Ikon di kiri label, mis. logo penyedia login.
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +116,15 @@ class DsButton extends StatelessWidget {
         bg = Colors.transparent;
         fg = foreground ?? DS.body;
     }
+
+    final text = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: Typo.sans(15,
+          weight:
+              kind == DsButtonKind.filled ? FontWeight.w600 : FontWeight.w500,
+          color: fg),
+    );
 
     final button = Material(
       color: bg,
@@ -133,15 +146,16 @@ class DsButton extends StatelessWidget {
           // yang memberi lebar baris penuh sebagai maksimum — itu membuat
           // tiap tombol memakan satu baris sendiri alih-alih berdampingan.
           alignment: expand ? Alignment.center : null,
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Typo.sans(15,
-                weight: kind == DsButtonKind.filled
-                    ? FontWeight.w600
-                    : FontWeight.w500,
-                color: fg),
-          ),
+          child: leading == null
+              ? text
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    leading!,
+                    const SizedBox(width: 10),
+                    Flexible(child: text),
+                  ],
+                ),
         ),
       ),
     );
@@ -558,6 +572,25 @@ class DsField extends StatelessWidget {
       OutlineInputBorder(
         borderRadius: BorderRadius.circular(Radii.sm),
         borderSide: BorderSide(color: color, width: width),
+      );
+}
+
+/// Garis pemisah berketerangan di tengah, mis. "atau masuk dengan email".
+class DsLabeledDivider extends StatelessWidget {
+  const DsLabeledDivider(this.label, {super.key});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(child: Divider(color: DS.hairline)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(label, style: Typo.sans(12, color: DS.faint)),
+          ),
+          Expanded(child: Divider(color: DS.hairline)),
+        ],
       );
 }
 

@@ -15,6 +15,11 @@ app/coverage/
 # Konfigurasi lokal per-kontributor (URL backend, token) — jangan pernah di-commit
 app/dart_define.json
 
+# Unduhan OAuth client Google Cloud berisi Client Secret. Secret itu hanya boleh
+# tinggal di dashboard Supabase dan password manager — lihat
+# wiki/panduan/kontribusi.md bagian rahasia.
+client_secret_*.json
+
 # ── Android ──────────────────────────────────────────────────────────────────
 app/android/.gradle/
 app/android/local.properties

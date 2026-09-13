@@ -69,6 +69,14 @@ class ApiAuthRepository implements AuthRepository {
   /// Kontrak REST belum punya endpoint logout — token cukup dibuang di klien.
   @override
   Future<void> logout() async {}
+
+  /// Kontrak REST belum punya alur OAuth.
+  @override
+  Future<void> signInWithGoogle() async => throw googleSignInUnsupported;
+
+  /// Sesi REST hanya berupa token di penyimpanan lokal.
+  @override
+  Future<AuthResponse?> currentSession() async => null;
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

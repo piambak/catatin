@@ -67,6 +67,13 @@ class MockAuthRepository implements AuthRepository {
   /// Tidak ada sesi di mana pun selain penyimpanan lokal.
   @override
   Future<void> logout() async {}
+
+  /// Layar tidak menampilkan tombol Google di mode ini; ini hanya penjaga.
+  @override
+  Future<void> signInWithGoogle() async => throw googleSignInUnsupported;
+
+  @override
+  Future<AuthResponse?> currentSession() async => null;
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

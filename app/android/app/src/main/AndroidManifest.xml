@@ -27,6 +27,21 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Kembalian masuk dengan Google: browser membuka
+                 com.catatin.catatin://login-callback?code=… dan supabase_flutter
+                 menukarnya jadi sesi. Harus sama dengan
+                 AppConfig.oauthRedirectMobile dan Redirect URLs Supabase. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.catatin.catatin" android:host="login-callback"/>
+            </intent-filter>
+            <!-- Tautan callback di atas milik Supabase, bukan rute aplikasi.
+                 Tanpa ini Flutter ikut meneruskannya ke GoRouter. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false"/>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -43,6 +58,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Membuka halaman masuk Google di browser (Android 11+). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>
