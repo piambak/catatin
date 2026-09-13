@@ -146,16 +146,17 @@ class DsButton extends StatelessWidget {
           // yang memberi lebar baris penuh sebagai maksimum — itu membuat
           // tiap tombol memakan satu baris sendiri alih-alih berdampingan.
           alignment: expand ? Alignment.center : null,
-          child: leading == null
-              ? text
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    leading!,
-                    const SizedBox(width: 10),
-                    Flexible(child: text),
-                  ],
-                ),
+          // Row selalu dipakai, juga tanpa ikon: tingginya ikut minHeight dan
+          // menengahkan label secara vertikal tanpa ikut melebar. Sebelumnya
+          // Text langsung di Container tanpa alignment, jadi label tombol yang
+          // tidak `expand` menempel di tepi atas pil.
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 10)],
+              Flexible(child: text),
+            ],
+          ),
         ),
       ),
     );

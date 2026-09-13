@@ -85,6 +85,29 @@ void main() {
       );
     });
 
+    test('pasang/ganti kata sandi: galat per field dalam Bahasa Indonesia', () {
+      final same = map(const sb.AuthApiException('x', code: 'same_password'));
+      expect(same.statusCode, 400);
+      expect(same.errors, containsPair('password', startsWith('Kata sandi baru')));
+
+      final wrong =
+          map(const sb.AuthApiException('x', code: 'current_password_invalid'));
+      expect(wrong.userMessage, 'Kata sandi saat ini salah.');
+
+      expect(
+        map(const sb.AuthApiException('x', code: 'current_password_required'))
+            .userMessage,
+        'Masukkan kata sandi saat ini.',
+      );
+    });
+
+    test('verifikasi ulang (sesi > 24 jam) meminta masuk ulang, bukan email', () {
+      final e =
+          map(const sb.AuthApiException('x', code: 'reauthentication_needed'));
+      expect(e.statusCode, 409);
+      expect(e.userMessage, contains('masuk lagi dengan Google'));
+    });
+
     test('409 tak dikenal tidak membocorkan pesan server berbahasa Inggris', () {
       final e = map(const sb.AuthApiException(
         'Conflict happened',

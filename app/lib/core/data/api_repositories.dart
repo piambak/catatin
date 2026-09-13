@@ -77,6 +77,21 @@ class ApiAuthRepository implements AuthRepository {
   /// Sesi REST hanya berupa token di penyimpanan lokal.
   @override
   Future<AuthResponse?> currentSession() async => null;
+
+  /// Kontrak REST hanya mengenal email + kata sandi.
+  @override
+  Future<Set<String>> signInProviders() async => {'email'};
+
+  /// Kontrak REST belum punya endpoint ganti kata sandi.
+  @override
+  Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  }) async =>
+      throw const ApiException(
+        statusCode: 409,
+        message: 'Mengganti kata sandi belum tersedia.',
+      );
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

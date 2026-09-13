@@ -65,6 +65,19 @@ class HybridAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResponse?> currentSession() => api.currentSession();
+
+  @override
+  Future<Set<String>> signInProviders() => api.signInProviders();
+
+  @override
+  Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  }) =>
+      api.setPassword(
+        newPassword: newPassword,
+        currentPassword: currentPassword,
+      );
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

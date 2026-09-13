@@ -22,6 +22,7 @@ import '../../core/services/theme_notifier.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../widgets/common/ds_widgets.dart';
+import 'password_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _name;
   String? _email;
   BusinessProfile? _business;
+  Set<String> _providers = const {};
   bool _loading = true;
 
   /// Bagian yang sedang dipilih di panel kiri (hanya dipakai di layar lebar).
@@ -64,11 +66,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ));
       }
     }
+    final providers = AuthService.signInMethodsEditable
+        ? await AuthService.signInProviders()
+        : const <String>{};
     if (!mounted) return;
     setState(() {
       _name = name;
       _email = email;
       _business = business;
+      _providers = providers;
       _loading = false;
     });
   }
@@ -76,6 +82,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _editBusiness() async {
     await context.push(AppRoutes.bizSetup);
     if (mounted) await _load();
+  }
+
+  Future<void> _editPassword() async {
+    final hadPassword = _providers.contains('email');
+    final saved = await showPasswordDialog(
+      context,
+      hasPassword: hadPassword,
+      email: _email,
+    );
+    if (!saved || !mounted) return;
+    final providers = await AuthService.signInProviders();
+    if (!mounted) return;
+    setState(() => _providers = providers);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(hadPassword
+          ? 'Kata sandi diganti.'
+          : 'Kata sandi terpasang. Sekarang Anda juga bisa masuk dengan email '
+              'dan kata sandi.'),
+      behavior: SnackBarBehavior.floating,
+    ));
   }
 
   Future<void> _logout() async {
@@ -140,6 +166,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _businessSection(),
         const SizedBox(height: 26),
         _appearanceSection(),
+        if (AuthService.signInMethodsEditable) ...[
+          const SizedBox(height: 26),
+          _signInSection(),
+        ],
         const SizedBox(height: 26),
         _aboutSection(),
         const SizedBox(height: 30),
@@ -184,6 +214,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _identity(),
+                                  if (AuthService.signInMethodsEditable) ...[
+                                    const SizedBox(height: 30),
+                                    _signInSection(),
+                                  ],
                                   const SizedBox(height: 30),
                                   _logoutButton(),
                                 ],
@@ -340,6 +374,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  /// Satu akun, beberapa cara masuk. Akun Google bisa memasang kata sandi
+  /// supaya juga bisa dibuka dengan email + kata sandi — lihat
+  /// `password_dialog.dart`.
+  Widget _signInSection({bool topBorder = true}) {
+    final hasGoogle = _providers.contains('google');
+    final hasPassword = _providers.contains('email');
+    final email = _email ?? 'email Anda';
+    return DsSection(
+      label: 'Cara masuk',
+      topBorder: topBorder,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasGoogle) const DsListRow(title: 'Google', trailing: 'Terhubung'),
+          DsListRow(
+            title: 'Email & kata sandi',
+            trailing: hasPassword ? 'Aktif' : 'Belum dipasang',
+            trailingStyle: hasPassword
+                ? Typo.sans(14, weight: FontWeight.w600, color: DS.income)
+                : null,
+            showDivider: false,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            hasPassword
+                ? 'Masuk dengan $email dan kata sandi'
+                    '${hasGoogle ? ', atau dengan Google' : ''}.'
+                : 'Pasang kata sandi supaya akun ini juga bisa dibuka dengan '
+                    '$email dan kata sandi — tanpa membuat akun baru.',
+            style: Typo.sans(13, color: DS.muted, height: 1.5),
+          ),
+          const SizedBox(height: 14),
+          DsButton(
+            label: hasPassword ? 'Ganti kata sandi' : 'Pasang kata sandi',
+            onPressed: _editPassword,
+            kind: hasPassword ? DsButtonKind.outlined : DsButtonKind.filled,
+          ),
+        ],
       ),
     );
   }

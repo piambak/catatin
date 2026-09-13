@@ -108,6 +108,12 @@ void main() {
       );
       expect(await repo.currentSession(), isNull);
     });
+
+    test('akun demo masuk dengan email + kata sandi', () async {
+      final repo = MockAuthRepository();
+      expect(await repo.signInProviders(), {'email'});
+      await repo.setPassword(newPassword: 'rahasia123');
+    });
   });
 
   test('tanpa define, mode mock menampilkan form daftar email', () {

@@ -123,6 +123,30 @@ class SupabaseAuthRepository implements AuthRepository {
     return session == null ? null : _authResponse(session);
   }
 
+  /// Dari identitas akun yang dibawa sesi. Supabase membuat identitas `email`
+  /// saat kata sandi pertama dipasang, jadi daftarnya ikut berubah sesudah
+  /// [setPassword] tanpa perlu memuat ulang.
+  @override
+  Future<Set<String>> signInProviders() async => {
+        for (final identity
+            in _db.auth.currentUser?.identities ?? const <sb.UserIdentity>[])
+          identity.provider,
+      };
+
+  /// Akun Google boleh memasang kata sandi pertamanya tanpa kata sandi lama.
+  /// Kalau "Secure password change" menyala di proyek, sesi yang umurnya lebih
+  /// dari 24 jam ditolak dengan `reauthentication_needed` — pesannya meminta
+  /// pengguna masuk ulang, karena verifikasi lewat email belum bisa terkirim.
+  @override
+  Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  }) =>
+      runSupabase(() => _db.auth.updateUser(sb.UserAttributes(
+            password: newPassword,
+            currentPassword: currentPassword,
+          )));
+
   AuthResponse _authResponse(sb.Session session) => AuthResponse(
         accessToken: session.accessToken,
         refreshToken: session.refreshToken ?? '',

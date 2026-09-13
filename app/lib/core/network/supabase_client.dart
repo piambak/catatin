@@ -214,6 +214,33 @@ ApiException _fromAuth(sb.AuthException e) {
         message: 'Kata sandi terlalu lemah.',
         errors: {'password': 'Kata sandi terlalu lemah. Pakai yang lebih panjang.'},
       );
+    case 'same_password':
+      return const ApiException(
+        statusCode: 400,
+        message: 'Kata sandi baru harus berbeda.',
+        errors: {'password': 'Kata sandi baru harus berbeda dari yang lama.'},
+      );
+    case 'current_password_required':
+      return const ApiException(
+        statusCode: 400,
+        message: 'Masukkan kata sandi saat ini.',
+        errors: {'current_password': 'Masukkan kata sandi saat ini.'},
+      );
+    case 'current_password_invalid':
+      return const ApiException(
+        statusCode: 400,
+        message: 'Kata sandi saat ini salah.',
+        errors: {'current_password': 'Kata sandi saat ini salah.'},
+      );
+    case 'reauthentication_needed':
+    case 'reauthentication_not_valid':
+      // Verifikasi ulang Supabase dikirim lewat email, yang belum bisa terkirim
+      // ke pengunjung umum. Sesi yang baru dibuat tidak memerlukannya.
+      return const ApiException(
+        statusCode: 409,
+        message: 'Demi keamanan, kata sandi hanya bisa dipasang tidak lama '
+            'setelah masuk. Keluar, masuk lagi dengan Google, lalu coba lagi.',
+      );
     case 'email_address_invalid':
       return const ApiException(
         statusCode: 400,

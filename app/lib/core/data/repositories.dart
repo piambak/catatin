@@ -59,6 +59,19 @@ abstract class AuthRepository {
   /// Sesi yang sedang dipegang backend, atau `null`. Hanya berarti untuk
   /// backend yang mengelola sesinya sendiri (Supabase).
   Future<AuthResponse?> currentSession();
+
+  /// Cara masuk yang terpasang di akun yang sedang masuk, mis.
+  /// `{'google', 'email'}`. `email` berarti akun punya kata sandi.
+  Future<Set<String>> signInProviders();
+
+  /// Memasang kata sandi pertama atau menggantinya. Sesudahnya akun yang sama
+  /// bisa masuk dengan email + kata sandi, di samping cara yang sudah ada.
+  ///
+  /// [currentPassword] dikirim saat mengganti kata sandi yang sudah ada.
+  Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  });
 }
 
 abstract class BusinessRepository {

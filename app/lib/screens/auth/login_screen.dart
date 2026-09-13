@@ -87,6 +87,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Pemulihan lewat email belum ada (butuh custom SMTP, T-18). Akun yang
+  /// terhubung Google tetap bisa dibuka, lalu kata sandinya diganti di
+  /// Pengaturan.
+  void _forgotPassword() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(AuthService.googleSignInAvailable
+          ? 'Masuk dengan Google, lalu ganti kata sandi di Pengaturan → '
+              'Cara masuk. Pemulihan lewat email belum tersedia.'
+          : 'Pemulihan kata sandi belum tersedia.'),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 6),
+    ));
+  }
+
   Future<void> _enterDemo() async {
     // Sesi demo selalu memakai data contoh, juga di build yang tersambung
     // backend — lihat AuthService.enterDemo.
@@ -188,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: _InlineLink('Lupa kata sandi?',
-                            color: DS.muted, onTap: () {}),
+                            color: DS.muted, onTap: _forgotPassword),
                       ),
                       const SizedBox(height: 18),
                       DsButton(

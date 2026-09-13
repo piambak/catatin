@@ -74,6 +74,17 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResponse?> currentSession() async => null;
+
+  /// Akun demo masuk dengan email + kata sandi.
+  @override
+  Future<Set<String>> signInProviders() async => {'email'};
+
+  @override
+  Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  }) =>
+      Future.delayed(MockData.latency);
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────

@@ -111,6 +111,22 @@ class AuthService {
 
   static Future<UserModel> me() => Repos.auth.me();
 
+  /// Bagian "Cara masuk" di Pengaturan hanya berarti untuk akun Supabase
+  /// sungguhan — bukan sesi demo.
+  static bool get signInMethodsEditable =>
+      googleSignInAvailable && !Repos.isDemo;
+
+  static Future<Set<String>> signInProviders() => Repos.auth.signInProviders();
+
+  static Future<void> setPassword({
+    required String newPassword,
+    String? currentPassword,
+  }) =>
+      Repos.auth.setPassword(
+        newPassword: newPassword,
+        currentPassword: currentPassword,
+      );
+
   static Future<void> logout() async {
     if (!Repos.isDemo) {
       try {
