@@ -89,8 +89,11 @@ mode Supabase (`AppConfig.emailSignUpEnabled`); form **masuk** email tetap ada.
 Yang masih kurang:
 
 - Pengunjung tanpa akun Google belum bisa mendaftar.
-- Tautan "Lupa kata sandi?" di layar masuk masih kosong, dan fitur itu juga
-  butuh email.
+- Pemulihan kata sandi lewat email belum ada. Sementara itu "Lupa kata sandi?"
+  mengarahkan akun yang terhubung Google untuk masuk dengan Google, lalu
+  mengganti kata sandi di Pengaturan → Cara masuk (sejak 13 Sep 2026 akun
+  Google bisa memasang kata sandi — lihat
+  [Supabase](../arsitektur/supabase.md#satu-akun-dua-cara-masuk)).
 - *Leaked password protection* tidak tersedia di paket Free
   ([sumber](../sumber/supabase-pricing-pausing.md)).
 

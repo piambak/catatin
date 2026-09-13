@@ -12,6 +12,29 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-13** — Frontend — **Satu akun, dua cara masuk.** Akun yang daftar
+  lewat Google bisa memasang kata sandi di Pengaturan → Cara masuk, lalu masuk
+  ke akun yang sama dengan email Google + kata sandi — tanpa akun kedua dan
+  tanpa SMTP. Kontrak `AuthRepository` dapat `signInProviders()` dan
+  `setPassword()`; galat `same_password`, `current_password_required`,
+  `current_password_invalid`, dan `reauthentication_needed` diterjemahkan.
+  "Lupa kata sandi?" kini mengarahkan ke jalur Google → Pengaturan. Label
+  `DsButton` yang tidak melebar kini tertengah vertikal (sebelumnya menempel di
+  atas, mis. "Isi profil usaha").
+  **Uji ujung-ke-ujung Google di situs publik (akun pemilik):** daftar →
+  onboarding → catat transaksi → keluar → masuk lagi, dicek di database —
+  identitas `google`, satu profil usaha, transaksi di usaha milik akun yang sama.
+  Percobaan pertama sempat dikembalikan ke `localhost:3000` karena Site URL dan
+  Redirect URLs belum tersimpan di dashboard. Tombol Keluar diuji dengan sesi
+  palsu dan terbukti mengirim `POST /auth/v1/logout`; satu sesi lama pemilik
+  masih tercatat aktif karena logout-nya tidak lewat tombol itu.
+  **Terverifikasi:** `flutter analyze` 41 info, `flutter test` 86 lulus. Di
+  build lokal dengan sesi palsu akun Google: Pengaturan menampilkan Google
+  "Terhubung" dan Email & kata sandi "Belum dipasang", dialog memvalidasi
+  kolom kosong, "Lupa kata sandi?" menampilkan petunjuk.
+  **Belum:** memasang kata sandi lalu masuk dengan email + kata sandi memakai
+  akun sungguhan.
+
 - **2026-09-13** — Frontend + Backend — **Masuk & daftar dengan Google.**
   Tombol Google di layar masuk dan daftar (web + Android) lewat
   `signInWithOAuth` Supabase; provider Google dan Redirect URLs disetel pemilik

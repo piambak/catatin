@@ -138,6 +138,8 @@ Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 | `AuthRepository.login` / `me` / `logout` | `signInWithPassword` / `currentUser` / `signOut` |
 | `AuthRepository.signInWithGoogle` | `signInWithOAuth(google)` — web: halaman yang sama pindah ke Google lalu kembali dengan `?code=` (PKCE); Android: browser eksternal kembali lewat deep link `com.catatin.catatin://login-callback` |
 | `AuthRepository.currentSession` | `currentSession` — dipakai `AuthService` untuk mengadopsi sesi hasil login Google |
+| `AuthRepository.signInProviders` | provider dari `currentUser.identities`, mis. `{google, email}` |
+| `AuthRepository.setPassword` | `updateUser(password:, currentPassword:)` |
 | `BusinessRepository.getCurrent` | select `business_profiles` (paling banyak satu baris) |
 | `BusinessRepository.create` / `update` | upsert pada `user_id` / update per id |
 | `TransactionRepository.getCategories` | select `tx_categories` urut `sort_order` |
@@ -225,7 +227,27 @@ Cek cepat tanpa akun: `GET /auth/v1/settings` → `external.google: true`, dan
 Cek cepat tanpa dashboard: `GET /auth/v1/settings` dengan publishable key
 mengembalikan `mailer_autoconfirm: true` saat Confirm email mati.
 
-Tautan "Lupa kata sandi?" di layar masuk belum tersambung.
+### Satu akun, dua cara masuk
+
+Akun yang daftar lewat Google bisa memasang kata sandi di **Pengaturan → Cara
+masuk**, lalu masuk ke akun yang sama dengan email Google itu + kata sandi.
+Tidak ada akun kedua dan tidak ada email konfirmasi.
+
+- Kata sandi pertama dipasang lewat `updateUser` tanpa kata sandi lama, dan
+  Supabase Auth membuat identitas `email` untuk akun itu. Login kata sandi hanya
+  mensyaratkan akun punya kata sandi dan emailnya terkonfirmasi — akun Google
+  sudah terkonfirmasi ([sumber](../sumber/supabase-auth-update-password.md)).
+- Kalau *Secure password change* dinyalakan di dashboard, sesi yang dibuat
+  lebih dari 24 jam lalu ditolak dengan `reauthentication_needed`
+  ([sumber](../sumber/supabase-auth-update-password.md)). Verifikasi ulangnya
+  lewat email, yang belum bisa terkirim — aplikasi karena itu meminta pengguna
+  keluar lalu masuk lagi dengan Google.
+- Mengganti kata sandi yang sudah ada meminta kata sandi saat ini; server hanya
+  memeriksanya bila opsi kata sandi saat ini diwajibkan
+  ([sumber](../sumber/supabase-auth-update-password.md)).
+- "Lupa kata sandi?" di layar masuk mengarahkan ke jalur ini: masuk dengan
+  Google, lalu ganti kata sandi di Pengaturan. Pemulihan lewat email masih
+  menunggu custom SMTP (T-18).
 
 ## 6. Kunci dan rahasia
 
