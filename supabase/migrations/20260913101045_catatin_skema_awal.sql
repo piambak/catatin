@@ -1,4 +1,4 @@
--- supabase/migrations/20260913154535_catatin_skema_awal.sql
+-- supabase/migrations/20260913101045_catatin_skema_awal.sql
 --
 -- Skema awal Catatin di Supabase: kategori transaksi, profil usaha, transaksi,
 -- dan satu fungsi agregasi bulanan.
