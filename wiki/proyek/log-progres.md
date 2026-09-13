@@ -12,6 +12,44 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-13** — Frontend — **Aplikasi tersambung ke Supabase** (branch
+  `fitur/supabase`), belum aktif karena proyek Supabase-nya belum dibuat.
+  **Keputusan:** Supabase dipasang sebagai implementasi repository keempat
+  (`DATA_SOURCE=supabase`) di samping mock, REST, dan hybrid — Dio tidak
+  dihapus. Skema lewat Supabase CLI di `supabase/migrations/`. Situs publik ikut
+  tersambung lewat `app/dart_define.pages.json` yang di-commit, karena
+  publishable key memang publik dan akun kontributor tidak bisa menyetel repo
+  Variables. Hybrid sengaja tidak dipasangkan dengan Supabase: fallback-nya
+  menutupi login gagal dengan login palsu.
+  **Isi:** `supabase_client.dart` (inisialisasi + penerjemah galat ke
+  `ApiException`), `supabase_repositories.dart`, migrasi tiga tabel ber-RLS +
+  fungsi `monthly_totals`, halaman [Supabase](../arsitektur/supabase.md).
+  Kontrak dapat `logout()` dan `updateTransaction()` — lembar "Edit transaksi"
+  selama ini melapor sukses tanpa menyimpan apa pun.
+  **Bug yang baru kelihatan dengan data asli, ikut dibereskan:** lembar tambah
+  transaksi mengirim `DEBIT` padahal model memakai `KARTU_DEBIT`; pengguna lama
+  bisa terpental bolak-balik antara dashboard dan onboarding; layar Pencatatan,
+  detail, Pengaturan, dan Profil usaha macet di spinner saat request gagal;
+  tombol kembali di detail transaksi dan tambah transaksi melempar galat karena
+  rutenya dibuka dengan `context.go`; dashboard tidak memuat ulang setelah
+  transaksi dicatat; `AppConfig` tidak benar-benar jatuh ke mock walau
+  `configError` bilang begitu; **T-17** — klik pertama tombol demo (dan nanti
+  login pertama pengguna baru) macet karena token ditulis serentak ke secure
+  storage web. Mode demo kini selalu memakai data contoh, juga di build
+  tersambung backend. **T-16** (tenggat PPN meluap) dicatat, menunggu pakar
+  pajak.
+  **Terverifikasi:** `flutter analyze` → 0 error, 0 warning, 41 info (sama
+  persis dengan sebelum perubahan). `flutter test` → 71 lulus, 1 di-skip.
+  `flutter build web --release` dengan berkas Pages → berhasil; `main.dart.js`
+  3.564.704 byte, naik ±143 KB dari build yang tayang. Di peramban: build
+  berkas Pages kosong jatuh ke data contoh; build mode Supabase ke alamat yang
+  sengaja mati memanggil `/auth/v1/token`, menampilkan pesan koneksi tanpa
+  spinner macet, mode demonya jalan tanpa satu pun request ke Supabase, sesi
+  demo lama dibersihkan saat dibuka, dan keluar kembali ke layar masuk.
+  **Belum:** migrasi belum pernah dijalankan ke Postgres sungguhan (Docker lokal
+  mati, proyek belum ada) dan alur daftar → onboarding → catat transaksi
+  belum diuji ujung-ke-ujung.
+
 - **2026-09-08** — Frontend — **T-15 selesai.** Kelas tipografi `T` di
   `design_tokens.dart` diganti nama jadi `Typo` — 142 pemakaian di 15 berkas —
   lalu parameter generic di `tx_add_sheet.dart` dikembalikan dari `V` ke `T`.

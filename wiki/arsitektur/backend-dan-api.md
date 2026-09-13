@@ -1,22 +1,31 @@
 # Menyambungkan Backend
 
 Aplikasi ini sudah dirancang untuk hidup **dengan atau tanpa** backend. Halaman
-ini menjelaskan cara memasangnya dan kontrak API yang diharapkan klien.
+ini menjelaskan mode sumber data dan kontrak API REST yang diharapkan klien.
+
+Backend yang dipakai sekarang adalah **Supabase**. Cara menyiapkannya, skema,
+dan pemetaan kontraknya ada di halaman tersendiri: [Supabase](supabase.md).
 
 ---
 
-## 1. Tiga mode sumber data
+## 1. Empat mode sumber data
 
 Mode dipilih lewat `--dart-define`, tidak pernah dengan menyunting kode.
 
 | Mode | Kapan dipakai | Perilaku |
 | --- | --- | --- |
-| `mock` | Demo publik, kontributor baru, tes | Nol request jaringan. Semua data dari `app/lib/core/data/mock_data.dart`. |
-| `hybrid` | Backend sedang dibangun bertahap | Coba API dulu; kalau endpoint belum ada atau jaringan mati, jatuh ke data mock. |
-| `api` | Produksi | Semua dari backend. Kegagalan naik ke UI sebagai `ApiException`. |
+| `mock` | Tanpa backend: kontributor baru, tes, demo | Nol request jaringan. Semua data dari `app/lib/core/data/mock_data.dart`. |
+| `hybrid` | Backend REST sedang dibangun bertahap | Coba API dulu; kalau endpoint belum ada atau jaringan mati, jatuh ke data mock. |
+| `api` | Backend REST lengkap | Semua dari backend REST. Kegagalan naik ke UI sebagai `ApiException`. |
+| `supabase` | Situs publik dan pengembangan lokal | Akun lewat Supabase Auth, data dari Postgres yang dijaga RLS. Kegagalan naik ke UI sebagai `ApiException`. Lihat [Supabase](supabase.md). |
 
-Tanpa `API_BASE_URL`, aplikasi otomatis jalan mode `mock` — jadi `flutter run`
-polos selalu berhasil.
+Tanpa `API_BASE_URL` maupun `SUPABASE_URL`, aplikasi otomatis jalan mode `mock`
+— jadi `flutter run` polos selalu berhasil. Mode yang konfigurasinya tidak
+lengkap (mis. `DATA_SOURCE=api` tanpa URL) juga jatuh ke `mock`, dengan
+peringatan di konsol saat mode debug.
+
+Apa pun modenya, tombol "Masuk sebagai pengguna demo" selalu memakai data
+contoh tanpa request jaringan.
 
 ```bash
 # Backend lokal, endpoint belum lengkap
@@ -34,10 +43,15 @@ Kalau capek mengetik, salin `app/dart_define.example.json` menjadi
 flutter run --dart-define-from-file=dart_define.json
 ```
 
+Untuk Supabase proyek ini tidak perlu berkas pribadi — pakai berkas yang sama
+dengan situs publik: `--dart-define-from-file=dart_define.pages.json`.
+
 | Define | Default | Arti |
 | --- | --- | --- |
-| `API_BASE_URL` | *(kosong)* | Root URL backend, mis. `https://api.catatin.id/api/v1` |
-| `DATA_SOURCE` | `mock` bila URL kosong, selain itu `hybrid` | `mock` \| `hybrid` \| `api` |
+| `API_BASE_URL` | *(kosong)* | Root URL backend REST, mis. `https://api.catatin.id/api/v1` |
+| `SUPABASE_URL` | *(kosong)* | URL proyek Supabase, mis. `https://<ref>.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | *(kosong)* | Publishable key proyek (`sb_publishable_…`) — publik menurut desain, lihat [Supabase](supabase.md#6-kunci-dan-rahasia) |
+| `DATA_SOURCE` | `supabase` bila `SUPABASE_URL` terisi, `hybrid` bila `API_BASE_URL` terisi, selain itu `mock` | `mock` \| `hybrid` \| `api` \| `supabase` |
 | `ENABLE_API_LOG` | `false` | Cetak request/response ke konsol |
 | `API_CONNECT_TIMEOUT_MS` | `15000` | Timeout koneksi |
 | `API_RECEIVE_TIMEOUT_MS` | `15000` | Timeout baca respons |
@@ -47,11 +61,11 @@ flutter run --dart-define-from-file=dart_define.json
 ## 2. Di mana kode HTTP-nya
 
 ```text
-screens/  →  core/services/  →  core/data/  →  api | hybrid | mock
+screens/  →  core/services/  →  core/data/  →  api | hybrid | mock | supabase
              (fasad tipis)      (kontrak)
 ```
 
-Satu-satunya file yang perlu kamu sunting saat menyambungkan backend:
+Berkas yang disunting saat menyambungkan backend REST:
 
 | Berkas | Isi |
 | --- | --- |
@@ -59,16 +73,20 @@ Satu-satunya file yang perlu kamu sunting saat menyambungkan backend:
 | `app/lib/core/constants/app_constants.dart` | Path endpoint (`ApiEndpoints`) |
 | `app/lib/core/network/api_client.dart` | Konfigurasi Dio, header auth, refresh token |
 
-Tidak ada satu pun `Dio` di `screens/` atau `widgets/`. Kalau kamu merasa perlu
-memanggil HTTP dari layar, itu tanda kontraknya yang kurang — tambahkan method
-di `repositories.dart`.
+Backend Supabase punya pasangannya sendiri — `supabase_repositories.dart` dan
+`supabase_client.dart` — yang dijelaskan di [Supabase](supabase.md).
+
+Tidak ada satu pun `Dio` maupun klien Supabase di `screens/` atau `widgets/`.
+Kalau kamu merasa perlu memanggil jaringan dari layar, itu tanda kontraknya
+yang kurang — tambahkan method di `repositories.dart`.
 
 ### Menambah endpoint baru
 
 1. Tambah path di `ApiEndpoints`.
 2. Tambah method di kelas abstrak yang sesuai di `core/data/repositories.dart`.
-3. Implementasikan di `api_repositories.dart` **dan** `mock_repositories.dart`
-   (analyzer akan menolak kalau salah satunya lupa).
+3. Implementasikan di `api_repositories.dart`, `mock_repositories.dart`,
+   `hybrid_repositories.dart`, **dan** `supabase_repositories.dart` (analyzer
+   akan menolak kalau salah satunya lupa).
 4. Teruskan lewat fasad di `core/services/` supaya layar tidak menyentuh
    repository langsung.
 5. Tambah bagiannya di dokumen ini.
@@ -240,6 +258,11 @@ Query: `month`, `year`, `business_id`, `limit`.
 
 Balas `201`. Isi respons tidak dibaca klien.
 
+#### `PATCH /transactions/{id}`
+
+Body sama dengan `POST /transactions`. `business_id` diabaikan server —
+transaksi tidak pindah usaha. Balas `200`; isi respons tidak dibaca klien.
+
 #### `DELETE /transactions/{id}` → `204`
 
 #### `GET /tx-categories`
@@ -336,6 +359,9 @@ Bahasa Indonesia di `ApiException.userMessage`:
 
 ## 5. CORS (khusus web)
 
+Bagian ini berlaku untuk backend REST buatan sendiri. Pengaturan origin untuk
+Supabase ada di [Supabase](supabase.md#5-pengaturan-auth).
+
 Situs tayang dari `https://piambak.github.io`, jadi backend harus mengizinkan
 origin itu:
 
@@ -350,16 +376,16 @@ gagal total meski backend sehat — dan pesannya di konsol peramban, bukan di UI
 
 ## 6. Menyalakan backend di situs publik
 
-Setelah backend tayang, sunting `.github/workflows/publish-web.yml`:
+Build situs publik membaca `app/dart_define.pages.json`. Berkas yang sama
+dipakai `.github/workflows/publish-web.yml`, `ci.yml`, dan `tool/build_web.*`
+tanpa argumen, dan di-commit — bukan disimpan di repo Variables.
 
-```yaml
-run: |
-  flutter build web --release --base-href "/catatin/" \
-    --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }} \
-    --dart-define=DATA_SOURCE=api
-```
+* **Supabase** — isi `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`. Selama
+  salah satunya kosong, situs tayang dengan data contoh. Kenapa kedua nilai itu
+  boleh di-commit dijelaskan di [Supabase](supabase.md#6-kunci-dan-rahasia).
+* **REST** — ganti isinya jadi `API_BASE_URL` dan `DATA_SOURCE=api`. URL
+  backend ikut ter-compile ke bundel JS publik, jadi memang bukan rahasia.
 
-Simpan URL-nya sebagai **Variable** repo (bukan Secret) — nilainya ikut
-ter-compile ke bundel JS publik, jadi memang bukan rahasia. Jangan pernah
-menaruh API key di `--dart-define`: apa pun yang masuk build web bisa dibaca
-siapa saja.
+Jangan pernah menaruh kunci yang memberi akses melebihi klien publik — secret
+key, token admin, password database — di `--dart-define` atau berkas define:
+apa pun yang masuk build web bisa dibaca siapa saja.

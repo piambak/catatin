@@ -43,6 +43,7 @@ Repo ini menyimpan dua hal sekaligus: kode sumber, dan hasil build yang tayang.
 catatin/
 ├── app/        Kode sumber Flutter — di sinilah kamu bekerja
 ├── wiki/       Seluruh pengetahuan proyek — basis pengetahuan OpenKnowledge
+├── supabase/   Migrasi database Supabase (skema, Row Level Security)
 ├── tool/       Skrip build dan sinkron ke root
 ├── .github/    CI dan template kolaborasi
 │
@@ -57,31 +58,37 @@ memperbarui root sendiri.
 
 ## Menyambungkan backend
 
-Sumber data dipilih saat build lewat `--dart-define`, tanpa mengubah kode:
+Backend Catatin adalah **Supabase**. Sumber data dipilih saat build lewat
+`--dart-define`, tanpa mengubah kode:
 
 ```bash
 # Data contoh — default, tanpa backend
 flutter run -d chrome
 
-# Backend sedang dibangun: pakai API kalau endpoint-nya ada,
+# Supabase proyek ini — konfigurasi yang sama dengan situs publik
+flutter run -d chrome --dart-define-from-file=dart_define.pages.json
+
+# Backend REST buatan sendiri: pakai API kalau endpoint-nya ada,
 # jatuh ke data contoh kalau belum
 flutter run -d chrome \
   --dart-define=API_BASE_URL=http://localhost:8080/api/v1 \
   --dart-define=DATA_SOURCE=hybrid
-
-# Produksi: semua dari backend, error naik ke UI
-flutter run -d chrome \
-  --dart-define=API_BASE_URL=https://api.catatin.id/api/v1 \
-  --dart-define=DATA_SOURCE=api
 ```
 
-Seluruh kode HTTP terkumpul di satu berkas,
-[`app/lib/core/data/api_repositories.dart`](app/lib/core/data/api_repositories.dart).
-Tidak ada layar yang memanggil jaringan langsung, jadi menambah backend berarti
-mengisi satu berkas — bukan menyunting puluhan file antarmuka.
+Tidak ada layar yang memanggil jaringan langsung. Kode Supabase terkumpul di
+[`app/lib/core/data/supabase_repositories.dart`](app/lib/core/data/supabase_repositories.dart),
+kode REST di [`app/lib/core/data/api_repositories.dart`](app/lib/core/data/api_repositories.dart)
+— menambah backend berarti mengisi satu berkas, bukan menyunting puluhan file
+antarmuka.
 
-Kontrak tiap endpoint, lengkap dengan contoh JSON dan bentuk error, ada di
-**[wiki/arsitektur/backend-dan-api.md](wiki/arsitektur/backend-dan-api.md)**.
+`app/dart_define.pages.json` berisi URL proyek Supabase dan *publishable key*,
+dan **sengaja di-commit**: kunci itu memang publik, data dijaga Row Level
+Security. Secret key dan password database tidak pernah boleh masuk repo.
+
+- Menyiapkan proyek Supabase dari nol, skema, dan kunci:
+  **[wiki/arsitektur/supabase.md](wiki/arsitektur/supabase.md)**
+- Mode sumber data dan kontrak REST tiap endpoint:
+  **[wiki/arsitektur/backend-dan-api.md](wiki/arsitektur/backend-dan-api.md)**
 
 ## Rilis
 
@@ -102,15 +109,16 @@ dikelola sebagai basis pengetahuan [OpenKnowledge](https://openknowledge.ai).
 | [Mulai cepat](wiki/panduan/mulai-cepat.md) | Menjalankan proyek, memilih sumber data |
 | [Kontribusi](wiki/panduan/kontribusi.md) | Alur branch dan PR, gaya kode, berkas mana yang boleh disunting |
 | [Arsitektur](wiki/arsitektur/gambaran-umum.md) | Struktur folder, lapisan aplikasi, aturan yang dijaga |
-| [Backend & API](wiki/arsitektur/backend-dan-api.md) | Kontrak API lengkap dan cara memasang backend |
+| [Supabase](wiki/arsitektur/supabase.md) | Menyiapkan backend, skema & RLS, kunci yang boleh di-commit |
+| [Backend & API](wiki/arsitektur/backend-dan-api.md) | Mode sumber data dan kontrak API REST lengkap |
 | [Rilis & deploy](wiki/panduan/rilis-dan-deploy.md) | Alur rilis, build manual, rollback |
 | [Aturan pajak](wiki/domain/aturan-pajak.md) | PPh Final 0,5%, PPh 21 TER, ambang PKP — dasar hukum tiap angka |
 | [Aset](wiki/arsitektur/aset.md) | Font, ikon, dan pertimbangan ukuran bundel |
 
 ## Teknologi
 
-Flutter · `go_router` · `dio` · `fl_chart` · `shared_preferences` ·
-`flutter_secure_storage`
+Flutter · Supabase (`supabase_flutter`) · `go_router` · `dio` · `fl_chart` ·
+`shared_preferences` · `flutter_secure_storage`
 
 ## Kontribusi
 

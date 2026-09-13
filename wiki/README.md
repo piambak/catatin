@@ -17,7 +17,8 @@ pelanggaran gaya markdown.
 | Menjalankan proyeknya sekarang | [Mulai cepat](panduan/mulai-cepat.md) |
 | Tahu berkas mana yang boleh disunting | [Kontribusi](panduan/kontribusi.md) |
 | Paham bentuk repo dan lapisan aplikasi | [Arsitektur](arsitektur/gambaran-umum.md) |
-| Memasang atau menyambungkan backend | [Backend & API](arsitektur/backend-dan-api.md) |
+| Menyiapkan atau memakai Supabase | [Supabase](arsitektur/supabase.md) |
+| Paham mode sumber data dan kontrak REST | [Backend & API](arsitektur/backend-dan-api.md) |
 | Tahu dari mana angka pajaknya datang | [Aturan pajak](domain/aturan-pajak.md) |
 | Paham arti PKP, PTKP, TER, HPP | [Glosarium](domain/glosarium.md) |
 | Merilis atau melakukan rollback | [Rilis & deploy](panduan/rilis-dan-deploy.md) |
@@ -42,9 +43,12 @@ pelanggaran gaya markdown.
 
 - **[Gambaran umum](arsitektur/gambaran-umum.md)** — bentuk repo, lapisan
   aplikasi, isi `app/lib/`, tema, aset.
-- **[Backend & API](arsitektur/backend-dan-api.md)** — tiga mode sumber data,
-  kontrak tiap endpoint dengan contoh JSON, CORS, cara menyalakan backend di
-  situs publik.
+- **[Supabase](arsitektur/supabase.md)** — backend yang dipakai: menyiapkan
+  proyek dari nol, skema & RLS, pemetaan kontrak, pengaturan Auth, kunci mana
+  yang boleh di-commit.
+- **[Backend & API](arsitektur/backend-dan-api.md)** — empat mode sumber data,
+  kontrak REST tiap endpoint dengan contoh JSON, CORS, cara menyalakan backend
+  di situs publik.
 - **[Aset](arsitektur/aset.md)** — font, gambar, ikon PWA, pertimbangan ukuran
   bundel web.
 
@@ -69,9 +73,19 @@ pelanggaran gaya markdown.
 
 - **[Linimasa](proyek/linimasa.md)** — jadwal Fase Dua, Minggu 1–9, milestone
   M1–M5.
-- **[Backlog teknis](proyek/backlog-teknis.md)** — temuan audit kode T-1..T-15
+- **[Backlog teknis](proyek/backlog-teknis.md)** — temuan audit kode T-1..T-17
   beserta statusnya, dan risiko yang sudah diketahui.
 - **[Log progres](proyek/log-progres.md)** — catatan kemajuan harian.
+
+### Sumber
+
+Salinan mentah dokumen eksternal yang dikutip halaman lain. Tidak diringkas dan
+tidak disunting — kalau sumbernya berubah, simpan salinan baru.
+
+- **[Supabase: API keys](sumber/supabase-api-keys.md)** — publishable key,
+  secret key, dan Row Level Security.
+- **[Supabase: custom SMTP](sumber/supabase-auth-smtp.md)** — batas SMTP bawaan
+  dan risiko mematikan konfirmasi email.
 
 ---
 

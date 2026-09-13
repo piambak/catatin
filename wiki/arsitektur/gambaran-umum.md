@@ -9,6 +9,7 @@ web yang tayang.
 catatin/
 ├── app/            ← kode sumber Flutter (yang kamu sunting)
 ├── wiki/           ← basis pengetahuan (OpenKnowledge)
+├── supabase/       ← migrasi database Supabase (skema, RLS)
 ├── tool/           ← skrip build & sinkron
 ├── .github/        ← CI dan template kolaborasi
 │
@@ -40,16 +41,18 @@ diubah, root `main` adalah satu-satunya yang tayang. Alur lengkapnya di
 └───────────────┬──────────────────────────────────┘
                 │ Repos.auth, Repos.dashboard, …
 ┌───────────────▼──────────────────────────────────┐
-│ core/data/          kontrak + 3 implementasi      │
+│ core/data/          kontrak + 4 implementasi      │
 │   repositories.dart      abstrak + pemilih        │
 │   api_repositories.dart  HTTP (Dio)               │
 │   mock_repositories.dart data lokal               │
 │   hybrid_repositories.dart  API → fallback mock   │
+│   supabase_repositories.dart  Supabase            │
 │   mock_data.dart         seluruh data contoh      │
 └───────────────┬──────────────────────────────────┘
                 │
 ┌───────────────▼──────────────────────────────────┐
 │ core/network/       Dio, interceptor auth, error  │
+│                     klien Supabase + galat        │
 │ core/config/        AppConfig (--dart-define)     │
 └──────────────────────────────────────────────────┘
 ```
@@ -60,9 +63,10 @@ Aturan yang dijaga:
    method di kontrak `core/data/repositories.dart`.
 2. **Model tidak tahu asal datanya.** `models/` hanya berisi struktur data dan
    `fromJson` — tidak ada data contoh, tidak ada HTTP.
-3. **Data contoh terkumpul di satu file.** `core/data/mock_data.dart` adalah
-   file yang dihapus kalau backend sudah menggantikan semuanya.
-4. **Konfigurasi lewat `--dart-define`,** bukan konstanta yang di-commit.
+3. **Data contoh terkumpul di satu file.** `core/data/mock_data.dart` tetap
+   dibutuhkan walau backend sudah tayang: mode demo selalu memakainya.
+4. **Konfigurasi lewat `--dart-define`,** bukan konstanta di kode Dart. Nilai
+   publik untuk situs tayang ada di `app/dart_define.pages.json`.
 
 ## Isi `app/lib/`
 
@@ -71,8 +75,8 @@ Aturan yang dijaga:
 | `main.dart` | Bootstrap: orientasi, locale `id_ID`, tema, router |
 | `core/config/` | `AppConfig` — URL backend, mode data, timeout |
 | `core/constants/` | Tarif pajak, PTKP, tabel TER, nama route, path endpoint |
-| `core/data/` | Kontrak repository dan tiga implementasinya |
-| `core/network/` | `ApiClient` (Dio + refresh token), `app_router` (go_router) |
+| `core/data/` | Kontrak repository dan implementasinya: mock, api, hybrid, supabase |
+| `core/network/` | `ApiClient` (Dio + refresh token), `SupabaseBackend` (klien Supabase + penerjemah galat), `app_router` (go_router) |
 | `core/services/` | Fasad yang dipanggil layar; `storage_service`, `theme_notifier`, `simulator_service` |
 | `core/theme/` | `AppColors`, `AppTextStyles`, `AppTheme` terang & gelap |
 | `core/utils/` | Format rupiah dan tanggal |

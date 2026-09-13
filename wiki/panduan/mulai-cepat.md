@@ -33,11 +33,15 @@ Seluruh konfigurasi lingkungan tinggal di
 | --- | --- |
 | `mock` | Semua dari seed lokal. Nol request jaringan. Dipakai demo publik, screenshot, dan tes widget. |
 | `hybrid` | Coba backend dulu, jatuh ke seed lokal kalau endpoint belum ada atau jaringan mati. Mode transisi selagi backend dibangun bertahap. |
-| `api` | Semua dari backend. Kegagalan dilempar sebagai `ApiException` supaya benar-benar kelihatan di UI, bukan disembunyikan. |
+| `api` | Semua dari backend REST. Kegagalan dilempar sebagai `ApiException` supaya benar-benar kelihatan di UI, bukan disembunyikan. |
+| `supabase` | Akun lewat Supabase Auth, data dari Postgres Supabase. Kegagalan dilempar sebagai `ApiException`, sama seperti `api`. |
 
 ```bash
 # Data contoh — default, tanpa backend
 flutter run -d chrome
+
+# Supabase proyek ini — konfigurasi yang sama dengan situs publik
+flutter run -d chrome --dart-define-from-file=dart_define.pages.json
 
 # Backend sedang dibangun
 flutter run -d chrome \
@@ -52,13 +56,18 @@ flutter run -d chrome \
 
 ### Default yang sengaja dibuat "pintar"
 
-Tanpa `API_BASE_URL`, `DATA_SOURCE` apa pun akan jatuh ke `mock`. Artinya
+Tanpa `SUPABASE_URL` maupun `API_BASE_URL`, aplikasi jalan mode `mock`. Artinya
 `flutter run` polos selalu berhasil untuk kontributor baru — tidak ada langkah
-konfigurasi tersembunyi.
+konfigurasi tersembunyi. `SUPABASE_URL` yang terisi otomatis memilih mode
+`supabase`.
 
 Kalau kombinasinya tidak masuk akal (`DATA_SOURCE=api` tapi `API_BASE_URL`
-kosong), aplikasi **tidak** dilempar error: ia mencetak peringatan sekali saat
-startup lalu jalan mode mock. Pesannya juga muncul di layar Pengaturan.
+kosong, atau `DATA_SOURCE=supabase` tanpa publishable key), aplikasi **tidak**
+dilempar error: ia jalan mode mock dan mencetak peringatan sekali di konsol saat
+mode debug. Karena itu `dart_define.pages.json` yang belum diisi pun aman.
+
+Tombol "Masuk sebagai pengguna demo" selalu memakai data contoh, apa pun
+modenya.
 
 ### Pakai berkas, bukan flag panjang
 
@@ -67,10 +76,20 @@ cp dart_define.example.json dart_define.json   # dart_define.json di-gitignore
 flutter run --dart-define-from-file=dart_define.json
 ```
 
-Selain `API_BASE_URL` dan `DATA_SOURCE`, berkas itu mengenal
-`ENABLE_API_LOG` (cetak request/response ke konsol — **jangan** diaktifkan di
-rilis publik), `API_CONNECT_TIMEOUT_MS`, dan `API_RECEIVE_TIMEOUT_MS`
-(keduanya default 15000).
+Selain `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan
+`DATA_SOURCE`, berkas itu mengenal `ENABLE_API_LOG` (cetak request/response ke
+konsol — **jangan** diaktifkan di rilis publik), `API_CONNECT_TIMEOUT_MS`, dan
+`API_RECEIVE_TIMEOUT_MS` (keduanya default 15000).
+
+Dua berkas define, dua fungsi:
+
+| Berkas | Di-commit? | Untuk |
+| --- | --- | --- |
+| `app/dart_define.pages.json` | Ya | Konfigurasi situs publik — Supabase proyek ini. Nilainya publik |
+| `app/dart_define.json` | Tidak (di-gitignore) | Konfigurasi pribadi, mis. backend REST lokal atau proyek Supabase sendiri |
+
+Menyiapkan proyek Supabase dari nol dijelaskan di
+[Supabase](../arsitektur/supabase.md).
 
 ## Sebelum membuka PR
 

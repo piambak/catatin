@@ -35,11 +35,13 @@ Rincian cara tiap aturan dipakai ada di [Aturan pajak](aturan-pajak.md).
 | **`DS`** | Kelas token desain (warna permukaan, teks, aksen) di `app/lib/core/theme/design_tokens.dart`. |
 | **`Typo`** | Kelas gaya teks (`Typo.sans`, `Typo.serif`). Dulu bernama `T`, diganti karena bentrok dengan parameter generic — lihat T-15. |
 | **`Space`, `Radii`** | Token jarak dan radius sudut, sekeluarga dengan `DS` dan `Typo`. |
-| **Mode data** | Pemilihan sumber data saat build: `sample`, `hybrid`, atau `api`. Lihat [Mulai cepat](../panduan/mulai-cepat.md). |
+| **Mode data** | Pemilihan sumber data saat build: `mock`, `hybrid`, `api`, atau `supabase`. Lihat [Mulai cepat](../panduan/mulai-cepat.md). |
+| **RLS** | Row Level Security — kebijakan di Postgres yang menentukan baris mana boleh dibaca dan diubah tiap pengguna. Di backend Supabase, inilah yang menjaga data, bukan kode aplikasi. Lihat [Supabase](../arsitektur/supabase.md). |
+| **Publishable key** | Kunci API Supabase untuk klien publik (`sb_publishable_…`). Boleh ada di repo dan bundel web; berbeda dari secret key yang tidak pernah boleh keluar dari server. |
 | **`--dart-define`** | Cara Flutter menyuntikkan konfigurasi saat build tanpa mengubah kode. Dipakai memilih mode data dan URL backend. |
 | **Repository / fasad** | Lapisan yang memisahkan layar dari sumber data. Seluruh kode HTTP terkumpul di `app/lib/core/data/api_repositories.dart`; layar tidak pernah memanggil jaringan langsung. |
 | **Hasil build di root** | `index.html`, `main.dart.js`, `assets/`, `canvaskit/`, `icons/` di root repo. Digenerate `flutter build web` dan **di-commit sengaja** — itulah yang disajikan GitHub Pages. |
-| **Daftar `KEEP`** | Allowlist di `tool/sync_build.sh`. Apa pun di root yang tidak terdaftar di sana akan dihapus saat build berikutnya. Menambah folder baru di root berarti mendaftarkannya. |
+| **Daftar `KEEP`** | Allowlist di `tool/sync_build.sh` dan `tool/build_web.ps1` — keduanya harus sama. Apa pun di root yang tidak terdaftar di sana akan dihapus saat build berikutnya. Menambah folder baru di root berarti mendaftarkannya. |
 | **`T-1`, `T-2`, …** | Nomor temuan audit kode. Dipakai di dokumen *dan* di komentar kode, jadi keduanya bisa dicocokkan dengan `grep`. Daftarnya di [backlog teknis](../proyek/backlog-teknis.md). |
 | **Fase Dua** | Periode kerja 14 Sep – 13 Nov 2026: mencabut Pustaka peraturan, memperdalam Pembukuan dan Simulator. Lihat [linimasa](../proyek/linimasa.md). |
 

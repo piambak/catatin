@@ -36,6 +36,49 @@ mengikutinya.
 | T-13 | Tabel TER tampilan menyimpang dari tabel hitung | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-14 | 3.225 baris widget dashboard jadi yatim setelah redesain | 🟡 | Frontend | Perlu keputusan |
 | T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | ✅ **Selesai** | Frontend | 8 Sep 2026 |
+| T-16 | Tenggat PPN Masa meluap ke bulan berikutnya | 🟡 | Pakar pajak → Frontend | Perlu keputusan |
+| T-17 | Login pertama di peramban bersih macet karena token ditulis serentak | ✅ **Selesai** | Frontend | 13 Sep 2026 |
+
+---
+
+### ✅ T-17 — Login pertama di peramban bersih macet *(selesai 13 Sep 2026)*
+
+Ditemukan saat menguji build web mode Supabase, lalu terbukti juga terjadi di
+build yang sedang tayang: di peramban tanpa data tersimpan, klik pertama
+"Masuk sebagai pengguna demo" tidak berpindah ke dashboard. Konsol mencatat
+`GoException: Exception during redirect: OperationError`; klik kedua berhasil.
+
+Penyebabnya `StorageService.saveTokens()` menulis access token dan refresh token
+serentak (`Future.wait`). Di web, `flutter_secure_storage_web` 2.1.1 memeriksa
+apakah kunci enkripsi sudah ada di `localStorage` dan membuatnya kalau belum
+(`_getEncryptionKey`). Dua penulisan serentak di peramban bersih sama-sama
+melihat kunci belum ada, masing-masing membuat kunci, dan kunci yang disimpan
+belakangan menimpa yang pertama. Token pertama tidak bisa didekripsi lagi, dan
+penjaga rute yang membacanya melempar galat.
+
+Dengan backend asli yang kena bukan hanya tombol demo: login pertama setiap
+pengguna baru di situs publik akan macet dengan cara yang sama.
+
+**Perbaikan:** kedua token ditulis berurutan, dan `isLoggedIn()` memperlakukan
+token yang tak bisa didekripsi sebagai sesi kosong (tokennya dibersihkan)
+alih-alih melempar galat ke penjaga rute. Diverifikasi di peramban dengan
+penyimpanan bersih: klik pertama langsung masuk, nol galat di konsol.
+
+---
+
+### 🟡 T-16 — Tenggat PPN Masa meluap ke bulan berikutnya
+
+`generateCalendar()` di `simulator_service.dart` menghitung tenggat PPN Masa
+sebagai `DateTime(year, m + 1, 30)`. Untuk masa Januari itu berarti 30 Februari,
+yang oleh Dart digeser jadi 2 Maret (atau 1 Maret di tahun kabisat).
+
+Sejak dashboard mode Supabase mengambil tenggat dari fungsi ini, tanggal yang
+salah ikut tampil untuk usaha berstatus PKP.
+
+- [ ] **Pakar pajak** — pastikan aturannya: tanggal 30 bulan berikutnya, atau
+      akhir bulan berikutnya
+- [ ] **Frontend** — terapkan aturan itu tanpa meluap, dan kunci dengan tes per
+      bulan (terutama Februari)
 
 ---
 
@@ -312,6 +355,13 @@ dan itu perlu dipastikan sebelum JWT asli menggantikan data contoh.
 
 - [ ] **Backend + Frontend** — sebelum Minggu 5, sepakati umur token, mekanisme
       refresh, dan apakah refresh token boleh disimpan di browser sama sekali
+
+**Perkembangan 13 Sep 2026:** dengan backend Supabase, sesi aslinya — termasuk
+refresh token — dikelola klien Supabase di SharedPreferences (`localStorage`
+di web), bukan di secure storage. Umur dan pembaruan token kini diatur Supabase
+Auth; yang tersisa untuk diputuskan adalah apakah penyimpanan di `localStorage`
+itu bisa diterima. Secure storage sendiri sempat membuat login pertama macet —
+lihat T-17.
 
 ### ⬜ T-12 — Belum ada kerangka l10n
 

@@ -8,6 +8,7 @@
 | **Sumber Pages** | branch `main`, folder `/ (root)` |
 | **Base href** | `/catatin/` |
 | **Pemicu** | push ke `main` yang menyentuh `app/**` |
+| **Backend** | Supabase, dikonfigurasi di `app/dart_define.pages.json` — lihat [Supabase](../arsitektur/supabase.md) |
 | **Cadangan** | branch `backup(stable-version)` |
 
 ## Alur otomatis
@@ -19,6 +20,7 @@ push ke main (app/**)
 .github/workflows/publish-web.yml
         │  flutter pub get
         │  flutter build web --release --base-href /catatin/
+        │      --dart-define-from-file=dart_define.pages.json
         │  bash tool/sync_build.sh      ← salin build/web → root
         ▼
 commit "build: publikasi web dari <sha> [skip ci]" ke main
@@ -53,8 +55,17 @@ Linux / macOS / Git Bash:
 ./tool/build_web.sh
 ```
 
-Keduanya menjalankan `flutter build web --release --base-href /catatin/` lalu
-menyalin hasilnya ke root. Sesudahnya:
+Keduanya menjalankan `flutter build web --release --base-href /catatin/` dengan
+`app/dart_define.pages.json` — hasilnya identik dengan yang tayang — lalu
+menyalin hasilnya ke root. Pilihan lain:
+
+| Build | Windows | Linux / macOS / Git Bash |
+| --- | --- | --- |
+| Data contoh, tanpa backend | `.\tool\build_web.ps1 -Mock` | `./tool/build_web.sh --mock` |
+| Backend REST (hybrid) | `.\tool\build_web.ps1 -ApiBaseUrl <url>` | `./tool/build_web.sh <url>` |
+
+Build REST sengaja tidak memakai berkas Pages, supaya dua sumber konfigurasi
+tidak tercampur dalam satu build. Sesudahnya:
 
 ```bash
 git add -A
@@ -64,7 +75,24 @@ git push origin main
 
 > `tool/sync_build.sh` **menghapus** isi root selain daftar KEEP di dalamnya.
 > Kalau kamu menambah berkas baru di root yang bukan hasil build, tambahkan
-> namanya ke daftar KEEP di kedua skrip (`.sh` dan `.ps1`).
+> namanya ke daftar KEEP di kedua skrip (`.sh` dan `.ps1`) — keduanya harus
+> sama persis. `supabase` sudah terdaftar; tanpa itu commit bot menghapus
+> folder migrasi.
+
+## Rilis yang mengubah skema database
+
+Migrasi di `supabase/migrations/` **tidak** diterapkan workflow mana pun.
+Terapkan dulu ke proyek Supabase, baru gabungkan perubahan aplikasi yang
+membutuhkannya:
+
+```bash
+npx supabase db push --dry-run
+npx supabase db push
+```
+
+Kalau urutannya terbalik, situs yang baru tayang menembak tabel atau kolom
+yang belum ada. Galatnya tampil sebagai pesan umum di UI; di mode debug pesan
+aslinya tercetak di konsol.
 
 ## Menguji hasil build secara lokal
 
@@ -111,7 +139,9 @@ Kalau nanti hosting pindah ke domain utama (mis. `https://catatin.id/`):
    `.github/workflows/publish-web.yml`.
 2. Tambahkan berkas `CNAME` berisi domainnya di root — namanya sudah ada di
    daftar KEEP skrip sinkron, jadi tidak akan terhapus saat build.
-3. Perbarui daftar `Access-Control-Allow-Origin` di backend
+3. Perbarui Site URL dan Redirect URLs di pengaturan Auth Supabase
+   (lihat [Supabase](../arsitektur/supabase.md#5-pengaturan-auth)). Kalau
+   memakai backend REST, perbarui juga `Access-Control-Allow-Origin`-nya
    (lihat [Backend & API](../arsitektur/backend-dan-api.md#5-cors-khusus-web)).
 
 ## Menaikkan versi

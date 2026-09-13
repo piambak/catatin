@@ -23,7 +23,7 @@ backend, tidak butuh akun. Cara menyambungkannya ke backend ada di
 
 ```text
 app/          ← SUNTING DI SINI
-wiki/ tool/ .github/   ← boleh
+wiki/ tool/ .github/ supabase/   ← boleh
 ```
 
 ```text
@@ -87,12 +87,14 @@ Cakupan (`dashboard`, `accounting`, `simulator`, `settings`, `auth`, `data`,
 Kalau layarmu butuh data yang belum ada:
 
 1. Tambah method di kontrak `app/lib/core/data/repositories.dart`.
-2. Implementasikan di `mock_repositories.dart` **dan** `api_repositories.dart` —
-   analyzer menolak kalau salah satu lupa.
+2. Implementasikan di `mock_repositories.dart`, `api_repositories.dart`,
+   `hybrid_repositories.dart`, **dan** `supabase_repositories.dart` — analyzer
+   menolak kalau salah satu lupa. Kalau butuh kolom atau tabel baru, tambahkan
+   migrasi di `supabase/migrations/` (lihat [Supabase](../arsitektur/supabase.md#3-skema)).
 3. Teruskan lewat fasad di `app/lib/core/services/`.
 4. Catat kontrak endpoint-nya di [Backend & API](../arsitektur/backend-dan-api.md).
 
-Layar **tidak boleh** memanggil Dio langsung. Kalau terasa perlu, itu tanda
+Layar **tidak boleh** memanggil Dio maupun Supabase langsung. Kalau terasa perlu, itu tanda
 kontraknya yang kurang.
 
 ## 6. Tes
@@ -113,12 +115,28 @@ addTearDown(Repos.reset);
 
 ## 7. Rahasia
 
-Jangan pernah meng-commit URL backend, token, atau kunci API. Konfigurasi
-lingkungan masuk lewat `--dart-define` (lihat `app/dart_define.example.json`).
+Konfigurasi lingkungan masuk lewat `--dart-define` (lihat
+`app/dart_define.example.json`), bukan konstanta di kode Dart.
 
 Khusus web: apa pun yang masuk `--dart-define` **ikut ter-compile ke bundel JS
-publik** dan bisa dibaca siapa saja. URL backend boleh; API key tidak pernah
-boleh.
+publik** dan bisa dibaca siapa saja. Karena itu yang boleh masuk hanya nilai
+yang memang publik:
+
+| Nilai | Boleh di-commit? |
+| --- | --- |
+| URL backend REST, Project URL Supabase | Ya |
+| Supabase publishable key (`sb_publishable_…`) | Ya — tempatnya `app/dart_define.pages.json` |
+| Supabase secret key (`sb_secret_…`), `service_role` lama | **Tidak pernah** |
+| Password database, token akses Supabase CLI, token admin apa pun | **Tidak pernah** |
+
+Publishable key dirancang untuk komponen publik dan hanya menjangkau apa yang
+diizinkan Row Level Security; secret key melewati seluruh RLS dan harus
+dijauhkan dari kontrol versi, termasuk skrip CI
+([sumber](../sumber/supabase-api-keys.md)). Rinciannya di
+[Supabase](../arsitektur/supabase.md#6-kunci-dan-rahasia).
+
+Konfigurasi pribadi — mis. menunjuk backend lokal atau proyek Supabase milikmu
+sendiri — taruh di `app/dart_define.json`, yang di-gitignore.
 
 ## 8. Butuh bantuan?
 
