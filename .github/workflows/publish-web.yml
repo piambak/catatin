@@ -48,12 +48,11 @@ jobs:
 
       - name: Build web
         working-directory: app
-        # Tanpa API_BASE_URL aplikasi tayang dengan data contoh. Saat backend
-        # siap, tambahkan:
-        #   --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }}
-        #   --dart-define=DATA_SOURCE=api
-        # (URL backend publik → pakai Variables, bukan Secrets.)
-        run: flutter build web --release --base-href "/catatin/"
+        # Backend situs publik diatur di app/dart_define.pages.json. Berkas itu
+        # di-commit, bukan disimpan di repo Variables, karena URL Supabase dan
+        # publishable key memang publik (data dijaga Row Level Security). Selama
+        # nilainya kosong, situs tayang dengan data contoh.
+        run: flutter build web --release --base-href "/catatin/" --dart-define-from-file=dart_define.pages.json
 
       - name: Sinkron hasil build ke root
         run: bash tool/sync_build.sh

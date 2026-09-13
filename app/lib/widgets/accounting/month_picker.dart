@@ -471,7 +471,11 @@ class _TxDetailContent extends StatelessWidget {
       case 'CASH':     return 'Tunai';
       case 'TRANSFER': return 'Transfer Bank';
       case 'QRIS':     return 'QRIS';
-      case 'DEBIT':    return 'Kartu Debit';
+      case 'KARTU_DEBIT':
+      case 'DEBIT':    return 'Kartu Debit'; // DEBIT: nilai lama lembar tambah transaksi
+      case 'KARTU_KREDIT': return 'Kartu Kredit';
+      case 'COD':      return 'COD';
+      case 'OTHER':    return 'Lainnya';
       default:         return method;
     }
   }

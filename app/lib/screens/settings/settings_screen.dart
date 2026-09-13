@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/business_service.dart';
 import '../../core/services/storage_service.dart';
@@ -50,7 +51,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _loading = true);
     final name = await StorageService.getUserName();
     final email = await StorageService.getUserEmail();
-    final business = await BusinessService.getCurrent();
+    BusinessProfile? business;
+    try {
+      business = await BusinessService.getCurrent();
+    } on ApiException catch (e) {
+      // Pengaturan tetap bisa dibuka — terutama tombol Keluar — walau profil
+      // usaha gagal dimuat.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.userMessage),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
     if (!mounted) return;
     setState(() {
       _name = name;

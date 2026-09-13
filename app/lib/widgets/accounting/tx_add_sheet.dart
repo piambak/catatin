@@ -4,9 +4,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/accounting_service.dart';
+import '../../core/services/storage_service.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
+
+/// Pilihan metode bayar diturunkan dari [PaymentMethodData.all], bukan ditulis
+/// ulang di sini. Daftar tulisan tangan sebelumnya mengirim `DEBIT`, padahal
+/// model dan database mengenal `KARTU_DEBIT`.
+List<_DdItem<String>> get _paymentItems => [
+      for (final m in PaymentMethodData.all) _DdItem(m.value, m.label),
+    ];
 
 // ─── Prefill data ────────────────────────────────────────────────────────────
 
@@ -64,9 +73,16 @@ class _TxAddSheetState extends State<TxAddSheet> {
   }
 
   Future<void> _loadCategories() async {
-    final cats = await AccountingService.getCategories();
-    if (!mounted) return;
-    setState(() => _allCats = cats);
+    try {
+      final cats = await AccountingService.getCategories();
+      if (!mounted) return;
+      setState(() => _allCats = cats);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.userMessage),
+        behavior: SnackBarBehavior.floating));
+    }
   }
 
   List<TxCategoryData> get _cats =>
@@ -107,8 +123,11 @@ class _TxAddSheetState extends State<TxAddSheet> {
 
     setState(() => _saving = true);
     try {
+      // Backend Supabase mengambil usaha dari server; id lokal ini dipakai
+      // data contoh dan kontrak REST.
+      final businessId = await StorageService.getBusinessId() ?? '';
       await AccountingService.createTransaction(
-        businessId:    'b1',
+        businessId:    businessId,
         type:          _type,
         amount:        amount,
         categoryId:    _category!.id,
@@ -119,7 +138,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
       // Build a local TxData for immediate UI update
       final tx = TxData(
         id:            DateTime.now().millisecondsSinceEpoch.toString(),
-        businessId:    'b1',
+        businessId:    businessId,
         date:          _date,
         type:          _type,
         amount:        amount,
@@ -136,11 +155,11 @@ class _TxAddSheetState extends State<TxAddSheet> {
           behavior: SnackBarBehavior.floating,
           backgroundColor: DS.income));
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Gagal menyimpan. Coba lagi.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(apiException(e).userMessage),
           behavior: SnackBarBehavior.floating));
       }
     }
@@ -229,10 +248,7 @@ class _TxAddSheetState extends State<TxAddSheet> {
                   child: _SheetDropdown<String>(
                     label: 'Metode Bayar',
                     value: _payMethod,
-                    items: [
-                      _DdItem('CASH','Tunai'), _DdItem('TRANSFER','Transfer'),
-                      _DdItem('QRIS','QRIS'),  _DdItem('DEBIT','Kartu Debit'),
-                    ],
+                    items: _paymentItems,
                     onChanged: (v) => setState(() => _payMethod = v),
                   ),
                 ),
@@ -588,15 +604,24 @@ class _TxEditSheetState extends State<TxEditSheet> {
   }
 
   Future<void> _loadCategories() async {
-    final cats = await AccountingService.getCategories();
-    if (!mounted) return;
-    setState(() {
-      _allCats  = cats;
-      _category = cats.firstWhere(
-        (c) => c.id == widget.tx.category.id,
-        orElse: () => widget.tx.category,
-      );
-    });
+    try {
+      final cats = await AccountingService.getCategories();
+      if (!mounted) return;
+      setState(() {
+        _allCats  = cats;
+        _category = cats.firstWhere(
+          (c) => c.id == widget.tx.category.id,
+          orElse: () => widget.tx.category,
+        );
+      });
+    } on ApiException catch (e) {
+      // Kategori transaksi ini sudah ada di payload, jadi form tetap bisa
+      // disimpan walau daftar lengkapnya gagal dimuat.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.userMessage),
+        behavior: SnackBarBehavior.floating));
+    }
   }
 
   @override
@@ -636,8 +661,22 @@ class _TxEditSheetState extends State<TxEditSheet> {
     }
     setState(() => _saving = true);
     try {
-      // In real app: call AccountingService.updateTransaction(...)
-      await Future.delayed(const Duration(milliseconds: 400));
+      final ok = await AccountingService.updateTransaction(
+        id:            widget.tx.id,
+        businessId:    widget.tx.businessId,
+        type:          _type,
+        amount:        amount,
+        categoryId:    _category!.id,
+        description:   _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        date:          _date.toIso8601String().substring(0, 10),
+        paymentMethod: _payMethod,
+        // Form ini tidak punya kolom catatan struk — pertahankan nilai lama.
+        receiptNote:   widget.tx.receiptNote,
+      );
+      if (!ok) {
+        throw const ApiException(
+          statusCode: 404, message: 'Transaksi tidak ditemukan.');
+      }
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -645,11 +684,11 @@ class _TxEditSheetState extends State<TxEditSheet> {
           behavior: SnackBarBehavior.floating,
           backgroundColor: DS.income));
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Gagal menyimpan. Coba lagi.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(apiException(e).userMessage),
           behavior: SnackBarBehavior.floating));
       }
     }
@@ -719,10 +758,7 @@ class _TxEditSheetState extends State<TxEditSheet> {
             Expanded(child: _SheetDropdown<String>(
               label: 'Metode Bayar',
               value: _payMethod,
-              items: [
-                _DdItem('CASH','Tunai'), _DdItem('TRANSFER','Transfer'),
-                _DdItem('QRIS','QRIS'), _DdItem('DEBIT','Kartu Debit'),
-              ],
+              items: _paymentItems,
               onChanged: (v) => setState(() => _payMethod = v))),
           ]),
           const SizedBox(height: 10),

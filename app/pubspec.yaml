@@ -19,6 +19,8 @@ dependencies:
   # ── Jaringan ────────────────────────────────────────────────
   dio: ^5.4.3 # HTTP client
   pretty_dio_logger: ^1.3.1 # log request/response (aktif lewat ENABLE_API_LOG)
+  supabase_flutter: ^2.17.2 # auth + Postgres (aktif lewat DATA_SOURCE=supabase)
+  http: ^1.6.0 # sudah ikut lewat supabase; diimpor langsung untuk mengenali ClientException
 
   # ── Penyimpanan lokal ───────────────────────────────────────
   flutter_secure_storage: ^10.3.0 # token JWT

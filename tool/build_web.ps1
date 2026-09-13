@@ -4,11 +4,15 @@
 
 .EXAMPLE
   .\tool\build_web.ps1
-  Build mode mock — sama dengan yang tayang di GitHub Pages.
+  Sama dengan yang tayang di GitHub Pages: memakai app\dart_define.pages.json.
+
+.EXAMPLE
+  .\tool\build_web.ps1 -Mock
+  Build data contoh, tanpa backend.
 
 .EXAMPLE
   .\tool\build_web.ps1 -ApiBaseUrl "https://api.contoh.id/api/v1"
-  Build yang menembak backend sungguhan.
+  Build yang menembak backend REST (mode hybrid).
 
 .NOTES
   Base href wajib "/catatin/" karena situs tayang di sub-direktori
@@ -16,7 +20,8 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$ApiBaseUrl = ""
+    [string]$ApiBaseUrl = "",
+    [switch]$Mock
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,10 +31,11 @@ $App   = Join-Path $Root "app"
 $Build = Join-Path $App "build\web"
 
 # Root repo yang bukan hasil build — jangan sampai terhapus.
+# Harus sama persis dengan daftar KEEP di tool/sync_build.sh.
 $Keep = @(
-    ".git", ".github", ".claude",
-    ".gitignore", ".gitattributes", ".nojekyll",
-    "app", "docs", "tool",
+    ".git", ".github", ".claude", ".codex", ".ok",
+    ".gitignore", ".gitattributes", ".mcp.json", ".nojekyll", ".okignore",
+    "app", "supabase", "tool", "wiki",
     "README.md", "CONTRIBUTING.md", "LICENSE", "CNAME"
 )
 
@@ -45,11 +51,16 @@ try {
 
     $defines = @()
     if ($ApiBaseUrl) {
+        # Sengaja tanpa dart_define.pages.json: --dart-define menimpa nilai dari
+        # berkas, jadi mencampur keduanya diam-diam menghasilkan build campuran.
         $defines += "--dart-define=API_BASE_URL=$ApiBaseUrl"
         $defines += "--dart-define=DATA_SOURCE=hybrid"
-        Write-Host "-> build tersambung backend: $ApiBaseUrl"
-    } else {
+        Write-Host "-> build tersambung backend REST: $ApiBaseUrl"
+    } elseif ($Mock) {
         Write-Host "-> build mode mock (tanpa backend)"
+    } else {
+        $defines += "--dart-define-from-file=dart_define.pages.json"
+        Write-Host "-> build sama dengan situs publik (dart_define.pages.json)"
     }
 
     Write-Host "-> flutter build web --release --base-href /catatin/"

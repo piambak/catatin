@@ -14,6 +14,7 @@ import '../../screens/dashboard/notification_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/business_screen.dart';
 import '../constants/app_constants.dart';
+import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/theme_notifier.dart';
 import '../theme/breakpoints.dart';
@@ -23,6 +24,9 @@ import '../../widgets/common/app_nav.dart';
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
   redirect: _guard,
+  // Penjaga rute dievaluasi ulang setiap status masuk berubah — termasuk saat
+  // backend mengakhiri sesi tanpa ada layar yang memanggil context.go.
+  refreshListenable: AuthService.sessionChanges,
   routes: [
     // ── Auth ──────────────────────────────────────────────
     GoRoute(path: AppRoutes.splash,

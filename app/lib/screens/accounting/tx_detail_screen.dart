@@ -9,6 +9,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/accounting_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
@@ -38,6 +40,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
   bool _loading = true;
   bool _deleting = false;
   bool _confirmDelete = false;
+  String? _error;
 
   @override
   void initState() {
@@ -46,20 +49,39 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final tx = await AccountingService.getTransaction(widget.txId);
-    if (!mounted) return;
     setState(() {
-      _tx = tx;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final tx = await AccountingService.getTransaction(widget.txId);
+      if (mounted) setState(() => _tx = tx);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.userMessage);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _delete() async {
     setState(() => _deleting = true);
-    await AccountingService.deleteTransaction(widget.txId);
+    try {
+      await AccountingService.deleteTransaction(widget.txId);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _deleting = false;
+        _confirmDelete = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.userMessage),
+        backgroundColor: DS.expense,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
     if (!mounted) return;
-    context.go('/accounting');
+    context.go(AppRoutes.accounting);
   }
 
   @override
@@ -87,7 +109,11 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
         child: Row(
           children: [
             IconButton(
-              onPressed: () => context.pop(),
+              // Detail dibuka dengan context.go dari dashboard, jadi biasanya
+              // tidak ada halaman di bawahnya untuk di-pop.
+              onPressed: () => context.canPop()
+                  ? context.pop()
+                  : context.go(AppRoutes.accounting),
               icon: Icon(Icons.arrow_back_rounded, color: DS.body),
               tooltip: 'Kembali',
             ),
@@ -115,7 +141,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             children: [
               Icon(Icons.search_off_rounded, size: 34, color: DS.faint),
               const SizedBox(height: 16),
-              Text('Transaksi tidak ditemukan.',
+              Text(_error ?? 'Transaksi tidak ditemukan.',
                   textAlign: TextAlign.center,
                   style: Typo.sans(15, color: DS.body)),
               const SizedBox(height: 20),

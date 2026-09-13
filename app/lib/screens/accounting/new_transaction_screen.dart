@@ -9,6 +9,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/accounting_service.dart';
 import '../../core/services/storage_service.dart';
 import '../../core/theme/breakpoints.dart';
@@ -57,13 +59,29 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final cats = await AccountingService.getCategories();
-    if (!mounted) return;
-    setState(() {
-      _categories = cats;
-      _loadingCats = false;
-    });
+    try {
+      final cats = await AccountingService.getCategories();
+      if (mounted) setState(() => _categories = cats);
+    } on ApiException catch (e) {
+      if (mounted) _showError(e.userMessage);
+    } finally {
+      if (mounted) setState(() => _loadingCats = false);
+    }
   }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: DS.expense,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  /// Layar ini dibuka dengan `context.go` dari dashboard, jadi biasanya tidak
+  /// ada halaman di bawahnya — `pop` polos akan melempar galat.
+  void _leave() => context.canPop()
+      ? context.pop()
+      : context.go(AppRoutes.dashboard);
 
   List<TxCategoryData> get _filteredCats =>
       _categories.where((c) => c.isIncome == _isIncome).toList();
@@ -111,29 +129,35 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
 
     final raw = _amountCtrl.text.replaceAll('.', '').replaceAll(',', '');
     final amount = double.parse(raw);
+    // Backend Supabase mengambil usaha dari server; id lokal ini dipakai data
+    // contoh dan kontrak REST.
     final bizId = await StorageService.getBusinessId() ?? 'demo-biz';
 
-    final ok = await AccountingService.createTransaction(
-      businessId: bizId,
-      date: Tanggal.api(_date),
-      type: _isIncome ? 'INCOME' : 'EXPENSE',
-      amount: amount,
-      categoryId: _selectedCatId!,
-      description:
-          _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-      paymentMethod: _paymentMethod,
-      receiptNote:
-          _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-    );
+    final bool ok;
+    try {
+      ok = await AccountingService.createTransaction(
+        businessId: bizId,
+        date: Tanggal.api(_date),
+        type: _isIncome ? 'INCOME' : 'EXPENSE',
+        amount: amount,
+        categoryId: _selectedCatId!,
+        description:
+            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        paymentMethod: _paymentMethod,
+        receiptNote:
+            _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      _showError(e.userMessage);
+      return;
+    }
 
     if (!mounted) return;
     if (!ok) {
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Gagal menyimpan transaksi. Coba lagi.'),
-        backgroundColor: DS.expense,
-        behavior: SnackBarBehavior.floating,
-      ));
+      _showError('Gagal menyimpan transaksi. Coba lagi.');
       return;
     }
 
@@ -143,7 +167,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
     });
     await Future.delayed(const Duration(milliseconds: 1100));
     if (!mounted) return;
-    context.pop();
+    _leave();
   }
 
   @override
@@ -214,7 +238,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
                               children: [
                                 DsButton(
                                   label: 'Batal',
-                                  onPressed: () => context.pop(),
+                                  onPressed: _leave,
                                   kind: DsButtonKind.outlined,
                                   minHeight: 50,
                                 ),
@@ -256,7 +280,7 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => context.pop(),
+            onPressed: _leave,
             icon: Icon(Icons.arrow_back_rounded, color: DS.body),
             tooltip: 'Kembali',
           ),

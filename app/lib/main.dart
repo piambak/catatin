@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/config/app_config.dart';
 import 'core/network/app_router.dart';
+import 'core/network/supabase_client.dart';
+import 'core/services/auth_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/theme_notifier.dart';
 
@@ -26,6 +28,15 @@ void main() async {
   ]);
 
   await initializeDateFormatting('id_ID', null);
+
+  // Backend dan sesi siap sebelum frame pertama: klien Supabase wajib
+  // terinisialisasi sebelum repository pertama dibuat, dan penjaga rute
+  // langsung membaca status masuk yang sudah dibersihkan dari sisa sesi lama.
+  // Dijalankan sebelum tema karena pembersihan itu ikut menghapus preferensi.
+  if (AppConfig.dataSource == DataSource.supabase) {
+    await SupabaseBackend.init();
+  }
+  await AuthService.restoreSession();
 
   // Load saved theme preference before first frame
   await themeNotifier.init();

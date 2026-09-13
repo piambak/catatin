@@ -77,6 +77,7 @@ class StorageKeys {
   static const userEmail = 'user_email';
   static const businessId = 'business_id';
   static const onboarded = 'onboarded';
+  static const demoMode = 'demo_mode';
   static const bookmarks = 'bookmarks';
   static const themeMode = 'theme_mode';
 }

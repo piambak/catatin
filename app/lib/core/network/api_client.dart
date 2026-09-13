@@ -45,6 +45,8 @@ class ApiException implements Exception {
         return message;
       case 422:
         return 'Data yang dikirim tidak valid.';
+      case 429:
+        return 'Terlalu banyak percobaan. Tunggu sebentar, lalu coba lagi.';
       case 500:
         return 'Terjadi kesalahan server. Coba lagi nanti.';
       default:

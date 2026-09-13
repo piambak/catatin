@@ -32,6 +32,9 @@ class BusinessService {
     return profile;
   }
 
+  /// Ikut menandai onboarding selesai: pengguna lama yang membuka form
+  /// onboarding (profilnya sudah ada di server) menyimpan lewat jalur ini, dan
+  /// tanpa penanda itu penjaga rute memantulkannya kembali ke onboarding.
   static Future<BusinessProfile> update({
     required String id,
     required String businessName,
@@ -40,16 +43,20 @@ class BusinessService {
     required String businessType,
     required bool pkpStatus,
     required int employeeCount,
-  }) =>
-      Repos.business.update(
-        id,
-        BusinessDraft(
-          businessName: businessName,
-          ownerName: ownerName,
-          npwp: npwp,
-          businessType: businessType,
-          pkpStatus: pkpStatus,
-          employeeCount: employeeCount,
-        ),
-      );
+  }) async {
+    final profile = await Repos.business.update(
+      id,
+      BusinessDraft(
+        businessName: businessName,
+        ownerName: ownerName,
+        npwp: npwp,
+        businessType: businessType,
+        pkpStatus: pkpStatus,
+        employeeCount: employeeCount,
+      ),
+    );
+    await StorageService.setBusinessId(profile.id);
+    await StorageService.setOnboarded();
+    return profile;
+  }
 }

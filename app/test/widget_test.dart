@@ -52,6 +52,49 @@ void main() {
       final after = await repo.getTransactions();
       expect(after.length, before.length + 1);
     });
+
+    test('transaksi yang diubah menggantikan versi lama, tidak menggandakan',
+        () async {
+      final repo = MockTransactionRepository();
+      final before = await repo.getTransactions();
+      final target = before.first;
+
+      final ok = await repo.updateTransaction(
+        target.id,
+        TransactionDraft(
+          businessId: target.businessId,
+          date: target.date.toIso8601String().substring(0, 10),
+          type: target.type,
+          amount: 4321000,
+          categoryId: target.category.id,
+          paymentMethod: 'KARTU_DEBIT',
+        ),
+      );
+
+      final after = await repo.getTransactions();
+      final updated = after.where((t) => t.id == target.id);
+      expect(ok, isTrue);
+      expect(after.length, before.length);
+      expect(updated, hasLength(1));
+      expect(updated.single.amount, 4321000);
+      expect(updated.single.paymentMethod, 'KARTU_DEBIT');
+    });
+  });
+
+  group('Repos', () {
+    tearDown(() => Repos.useDemo(false));
+
+    test('sesi demo membuang implementasi yang tersimpan dan memakai mock',
+        () {
+      Repos.transaction = _FakeTransactionRepository();
+      expect(Repos.transaction, isA<_FakeTransactionRepository>());
+
+      Repos.useDemo(true);
+
+      expect(Repos.isDemo, isTrue);
+      expect(Repos.transaction, isA<MockTransactionRepository>());
+      expect(Repos.auth, isA<MockAuthRepository>());
+    });
   });
 
   testWidgets('tema terpasang tanpa exception', (tester) async {
@@ -63,3 +106,7 @@ void main() {
     expect(find.text('Catatin'), findsOneWidget);
   });
 }
+
+/// Pengganti implementasi mana pun — cukup untuk memastikan [Repos] benar-benar
+/// membuangnya.
+class _FakeTransactionRepository extends MockTransactionRepository {}

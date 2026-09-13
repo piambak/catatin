@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/business_service.dart';
 import '../../core/services/storage_service.dart';
 import '../../core/theme/breakpoints.dart';
@@ -77,7 +78,16 @@ class _BusinessScreenState extends State<BusinessScreen> {
 
   Future<void> _loadExisting() async {
     setState(() => _loading = true);
-    final profile = await BusinessService.getCurrent();
+    BusinessProfile? loaded;
+    try {
+      loaded = await BusinessService.getCurrent();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _showError(e.userMessage);
+      return;
+    }
+    final profile = loaded;
     if (!mounted) return;
 
     if (profile != null) {
@@ -150,10 +160,12 @@ class _BusinessScreenState extends State<BusinessScreen> {
       } else {
         context.pop();
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _showError('Gagal menyimpan. Coba lagi.');
+      _showError(e is ApiException
+          ? e.userMessage
+          : 'Gagal menyimpan. Coba lagi.');
     }
   }
 

@@ -2,6 +2,10 @@
 //
 // Token disimpan di secure storage (Keychain/Keystore, WebCrypto di web),
 // sisanya di SharedPreferences.
+//
+// Mode `supabase`: sesi aslinya dikelola klien Supabase sendiri (di
+// SharedPreferences — `localStorage` di web) dan diperbarui otomatis. Token
+// di sini hanya salinan penanda "sudah masuk" untuk penjaga rute.
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,10 +26,13 @@ class StorageService {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await Future.wait([
-      _secure.write(key: StorageKeys.accessToken, value: accessToken),
-      _secure.write(key: StorageKeys.refreshToken, value: refreshToken),
-    ]);
+    // Berurutan, BUKAN Future.wait. Di web, flutter_secure_storage membuat
+    // kunci enkripsinya saat penulisan pertama. Dua penulisan serentak di
+    // peramban yang masih bersih masing-masing membuat kunci sendiri, lalu
+    // token pertama tak bisa didekripsi lagi (OperationError) — penjaga rute
+    // melempar GoException dan login pertama macet di layar masuk.
+    await _secure.write(key: StorageKeys.accessToken, value: accessToken);
+    await _secure.write(key: StorageKeys.refreshToken, value: refreshToken);
   }
 
   static Future<String?> getAccessToken() =>
@@ -75,6 +82,17 @@ class StorageService {
     await prefs.setString(StorageKeys.businessId, id);
   }
 
+  /// Lupakan usaha dan status onboarding — dipakai saat akun yang baru masuk
+  /// ternyata belum punya profil usaha, supaya sisa akun lain di perangkat
+  /// yang sama tidak ikut terbawa.
+  static Future<void> clearBusiness() async {
+    final prefs = await SharedPreferences.getInstance();
+    await Future.wait([
+      prefs.remove(StorageKeys.businessId),
+      prefs.remove(StorageKeys.onboarded),
+    ]);
+  }
+
   // ── Onboarding & sesi ─────────────────────────────────────
 
   static Future<bool> isOnboarded() async =>
@@ -86,9 +104,28 @@ class StorageService {
     await prefs.setBool(StorageKeys.onboarded, true);
   }
 
+  /// True kalau sesi yang tersimpan adalah sesi demo (data contoh).
+  static Future<bool> isDemo() async =>
+      (await SharedPreferences.getInstance()).getBool(StorageKeys.demoMode) ??
+      false;
+
+  static Future<void> setDemo(bool on) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(StorageKeys.demoMode, on);
+  }
+
   static Future<bool> isLoggedIn() async {
-    final token = await getAccessToken();
-    return token != null && token.isNotEmpty;
+    try {
+      final token = await getAccessToken();
+      return token != null && token.isNotEmpty;
+    } catch (_) {
+      // Token yang tidak bisa didekripsi — mis. tersimpan build lama yang
+      // masih menulis serentak (lihat saveTokens) — sama saja dengan tidak
+      // punya sesi. Lebih baik diminta masuk lagi daripada penjaga rute
+      // melempar galat dan aplikasi macet.
+      await clearTokens();
+      return false;
+    }
   }
 
   static Future<void> clearAll() async {

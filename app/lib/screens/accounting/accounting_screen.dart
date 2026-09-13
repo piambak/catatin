@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/accounting_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
@@ -38,15 +39,32 @@ class _AccountingScreenState extends State<AccountingScreen>
     _calCursor   = DateTime(now.year, now.month);
     _monthlyYear = now.year;
     _loadAll();
+    // Layar ini tetap hidup di IndexedStack; muat ulang setiap transaksi
+    // dibuat, diubah, atau dihapus di mana pun.
+    AccountingService.changes.addListener(_loadAll);
   }
 
   @override
-  void dispose() { _tabCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    AccountingService.changes.removeListener(_loadAll);
+    _tabCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadAll() async {
     setState(() => _loading = true);
-    final txs = await AccountingService.getTransactions();
-    if (mounted) setState(() { _allTx = txs; _loading = false; });
+    try {
+      final txs = await AccountingService.getTransactions();
+      if (mounted) setState(() => _allTx = txs);
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.userMessage),
+          behavior: SnackBarBehavior.floating));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _showAddSheet() {
@@ -62,9 +80,10 @@ class _AccountingScreenState extends State<AccountingScreen>
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: TxAddSheet(
-            onSaved: (tx) {
-              setState(() => _allTx = [tx, ..._allTx]);
-            },
+            // Daftar dimuat ulang lewat AccountingService.changes. Transaksi
+            // yang dikirim balik lembar ini ber-id sementara — kalau disisipkan
+            // langsung, detailnya tidak bisa dibuka dari backend.
+            onSaved: (_) {},
           ),
         ),
       ),

@@ -5,11 +5,13 @@
 //
 // Aturan mainnya:
 //
-//   screens/  →  core/services/  →  core/data/  →  mock | api
+//   screens/  →  core/services/  →  core/data/  →  mock | api | hybrid | supabase
 //                (fasad tipis)     (kontrak ini)
 //
-// Screen tidak pernah menyentuh Dio. Menambah backend = mengisi
-// `api_repositories.dart`, bukan menyunting puluhan file layar.
+// Screen tidak pernah menyentuh Dio maupun Supabase. Menambah backend =
+// mengisi satu berkas implementasi (`api_repositories.dart` untuk REST,
+// `supabase_repositories.dart` untuk Supabase), bukan menyunting puluhan file
+// layar.
 //
 // Semua method boleh melempar [ApiException] (lihat `core/network/api_client.dart`).
 
@@ -18,6 +20,7 @@ import '../../models/models.dart';
 import 'api_repositories.dart';
 import 'hybrid_repositories.dart';
 import 'mock_repositories.dart';
+import 'supabase_repositories.dart';
 
 // ── Kontrak ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +39,10 @@ abstract class AuthRepository {
 
   /// Profil pengguna yang sedang login.
   Future<UserModel> me();
+
+  /// Mengakhiri sesi di sisi backend. Penyimpanan lokal dibersihkan
+  /// `AuthService`, bukan di sini.
+  Future<void> logout();
 }
 
 abstract class BusinessRepository {
@@ -60,6 +67,9 @@ abstract class TransactionRepository {
 
   Future<bool> createTransaction(TransactionDraft draft);
 
+  /// Mengganti isi transaksi [id]. Usaha pemilik transaksi tidak ikut pindah.
+  Future<bool> updateTransaction(String id, TransactionDraft draft);
+
   Future<bool> deleteTransaction(String id);
 }
 
@@ -82,9 +92,12 @@ abstract class DashboardRepository {
 ///
 /// Mode ditentukan [AppConfig.dataSource], yang berasal dari `--dart-define`:
 ///
-/// * `mock`   — seluruhnya data lokal, nol request jaringan
-/// * `api`    — seluruhnya backend, error naik ke UI
-/// * `hybrid` — coba backend, jatuh ke mock kalau endpoint belum ada
+/// * `mock`     — seluruhnya data lokal, nol request jaringan
+/// * `api`      — seluruhnya backend REST, error naik ke UI
+/// * `hybrid`   — coba backend REST, jatuh ke mock kalau endpoint belum ada
+/// * `supabase` — seluruhnya Supabase, error naik ke UI
+///
+/// Selama sesi demo ([useDemo]) keempatnya selalu mock, apa pun modenya.
 ///
 /// Tes boleh menyuntik implementasi palsu lewat setter, lalu memanggil
 /// [reset] di `tearDown`.
@@ -96,35 +109,56 @@ class Repos {
   static TransactionRepository? _transaction;
   static DashboardRepository? _dashboard;
 
-  static AuthRepository get auth => _auth ??= switch (AppConfig.dataSource) {
+  static bool _demo = false;
+
+  /// True selama pengguna masuk lewat "Masuk sebagai pengguna demo".
+  static bool get isDemo => _demo;
+
+  /// Menyalakan atau mematikan sesi demo.
+  ///
+  /// Sesi demo selalu memakai data contoh, supaya tombol demo tetap berfungsi
+  /// di build yang tersambung backend — termasuk situs publik. Instance lama
+  /// dibuang karena getter di bawah menyimpannya dengan `??=`.
+  static void useDemo(bool on) {
+    _demo = on;
+    reset();
+  }
+
+  static DataSource get _source => _demo ? DataSource.mock : AppConfig.dataSource;
+
+  static AuthRepository get auth => _auth ??= switch (_source) {
         DataSource.mock => MockAuthRepository(),
         DataSource.api => ApiAuthRepository(),
         DataSource.hybrid =>
           HybridAuthRepository(ApiAuthRepository(), MockAuthRepository()),
+        DataSource.supabase => SupabaseAuthRepository(),
       };
 
   static BusinessRepository get business =>
-      _business ??= switch (AppConfig.dataSource) {
+      _business ??= switch (_source) {
         DataSource.mock => MockBusinessRepository(),
         DataSource.api => ApiBusinessRepository(),
         DataSource.hybrid => HybridBusinessRepository(
             ApiBusinessRepository(), MockBusinessRepository()),
+        DataSource.supabase => SupabaseBusinessRepository(),
       };
 
   static TransactionRepository get transaction =>
-      _transaction ??= switch (AppConfig.dataSource) {
+      _transaction ??= switch (_source) {
         DataSource.mock => MockTransactionRepository(),
         DataSource.api => ApiTransactionRepository(),
         DataSource.hybrid => HybridTransactionRepository(
             ApiTransactionRepository(), MockTransactionRepository()),
+        DataSource.supabase => SupabaseTransactionRepository(),
       };
 
   static DashboardRepository get dashboard =>
-      _dashboard ??= switch (AppConfig.dataSource) {
+      _dashboard ??= switch (_source) {
         DataSource.mock => MockDashboardRepository(),
         DataSource.api => ApiDashboardRepository(),
         DataSource.hybrid => HybridDashboardRepository(
             ApiDashboardRepository(), MockDashboardRepository()),
+        DataSource.supabase => SupabaseDashboardRepository(),
       };
 
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────

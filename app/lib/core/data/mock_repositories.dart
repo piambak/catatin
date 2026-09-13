@@ -63,6 +63,10 @@ class MockAuthRepository implements AuthRepository {
     await Future.delayed(MockData.latency);
     return MockData.demoUser;
   }
+
+  /// Tidak ada sesi di mana pun selain penyimpanan lokal.
+  @override
+  Future<void> logout() async {}
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -192,6 +196,36 @@ class MockTransactionRepository implements TransactionRepository {
         createdAt: DateTime.now(),
       ),
     );
+    return true;
+  }
+
+  /// Versi baru menggantikan yang lama di [_added]; kalau yang lama berasal
+  /// dari seed, id-nya ikut masuk [_deleted] supaya tidak muncul dua kali.
+  @override
+  Future<bool> updateTransaction(String id, TransactionDraft draft) async {
+    await Future.delayed(MockData.latency);
+    final old = _all.where((t) => t.id == id).firstOrNull;
+    if (old == null) return false;
+    final category = MockData.txCategories
+            .where((c) => c.id == draft.categoryId)
+            .firstOrNull ??
+        old.category;
+    _added
+      ..removeWhere((t) => t.id == id)
+      ..add(TxData(
+        id: id,
+        businessId: old.businessId,
+        date: DateTime.tryParse(draft.date) ?? old.date,
+        type: draft.type,
+        amount: draft.amount,
+        category: category,
+        description: draft.description,
+        paymentMethod: draft.paymentMethod,
+        receiptNote: draft.receiptNote,
+        createdAt: old.createdAt,
+        isFavorite: old.isFavorite,
+      ));
+    _deleted.add(id);
     return true;
   }
 

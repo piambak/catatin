@@ -50,7 +50,8 @@ jobs:
         run: flutter test
 
       - name: Build web (memastikan rilis tetap bisa dibangun)
-        run: flutter build web --release --base-href "/catatin/"
+        # Konfigurasi yang sama persis dengan publish-web.yml.
+        run: flutter build web --release --base-href "/catatin/" --dart-define-from-file=dart_define.pages.json
 
       - name: Simpan hasil build untuk ditinjau
         uses: actions/upload-artifact@v4

@@ -1,0 +1,9 @@
+# Status lokal Supabase CLI (ref proyek hasil `supabase link`, cache versi).
+# Bukan rahasia, tapi milik mesin masing-masing.
+.branches
+.temp
+
+# Variabel lingkungan lokal CLI. Password database dan secret key tidak
+# pernah boleh masuk repo — lihat wiki/panduan/kontribusi.md.
+.env
+.env.*

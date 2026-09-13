@@ -27,6 +27,7 @@ KEEP=(
   .nojekyll
   .okignore
   app
+  supabase
   tool
   wiki
   README.md

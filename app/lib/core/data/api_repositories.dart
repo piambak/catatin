@@ -1,6 +1,7 @@
 // lib/core/data/api_repositories.dart
 //
-// ► FILE INI YANG KAMU SUNTING SAAT MENYAMBUNGKAN BACKEND. ◄
+// ► FILE INI YANG KAMU SUNTING SAAT MENYAMBUNGKAN BACKEND REST. ◄
+// (Backend Supabase punya berkasnya sendiri: `supabase_repositories.dart`.)
 //
 // Semua panggilan HTTP aplikasi ada di sini — tidak ada satu pun `Dio` di
 // folder `screens/` atau `widgets/`. Path endpoint-nya terkumpul di
@@ -64,6 +65,10 @@ class ApiAuthRepository implements AuthRepository {
       throw apiException(e);
     }
   }
+
+  /// Kontrak REST belum punya endpoint logout — token cukup dibuang di klien.
+  @override
+  Future<void> logout() async {}
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -158,6 +163,19 @@ class ApiTransactionRepository implements TransactionRepository {
   Future<bool> createTransaction(TransactionDraft draft) async {
     try {
       await ApiClient.post(ApiEndpoints.transactions, data: draft.toJson());
+      return true;
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<bool> updateTransaction(String id, TransactionDraft draft) async {
+    try {
+      await ApiClient.patch(
+        ApiEndpoints.transactionById(id),
+        data: draft.toJson(),
+      );
       return true;
     } on DioException catch (e) {
       throw apiException(e);

@@ -111,7 +111,7 @@ class TaxDeadline {
         id: j['id'] as String,
         label: j['label'] as String,
         taxType: j['tax_type'] as String,
-        deadline: DateTime.parse(j['deadline'] as String),
+        deadline: DateTime.parse(j['deadline'] as String).toLocal(),
         status: j['status'] as String,
       );
 }

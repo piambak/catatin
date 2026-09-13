@@ -100,7 +100,9 @@ class TxData {
         description: j['description'] as String?,
         paymentMethod: j['payment_method'] as String? ?? 'CASH',
         receiptNote: j['receipt_note'] as String?,
-        createdAt: DateTime.parse(j['created_at'] as String),
+        // Server mengirim UTC; tanpa toLocal transaksi yang dibuat sebelum
+        // 07.00 WIB tampil di tanggal kemarin.
+        createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
       );
 }
 

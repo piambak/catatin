@@ -56,6 +56,9 @@ class HybridAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel> me() => _orFallback(api.me, mock.me);
+
+  @override
+  Future<void> logout() => _orFallback(api.logout, mock.logout);
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -128,6 +131,13 @@ class HybridTransactionRepository implements TransactionRepository {
   Future<bool> createTransaction(TransactionDraft draft) => _orFallback(
         () => api.createTransaction(draft),
         () => mock.createTransaction(draft),
+      );
+
+  @override
+  Future<bool> updateTransaction(String id, TransactionDraft draft) =>
+      _orFallback(
+        () => api.updateTransaction(id, draft),
+        () => mock.updateTransaction(id, draft),
       );
 
   @override

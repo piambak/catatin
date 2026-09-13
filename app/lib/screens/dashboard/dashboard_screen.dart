@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/services/accounting_service.dart';
 import '../../core/services/dashboard_service.dart';
 import '../../core/services/simulator_service.dart';
 import '../../core/services/storage_service.dart';
@@ -43,6 +44,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _load();
+    // Dashboard tetap hidup di IndexedStack; tanpa ini angkanya basi setelah
+    // transaksi dicatat dari tab Pencatatan.
+    AccountingService.changes.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    AccountingService.changes.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {

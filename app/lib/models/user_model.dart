@@ -20,7 +20,7 @@ class UserModel {
         name: json['name'] as String,
         email: json['email'] as String,
         image: json['image'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
       );
 
   Map<String, dynamic> toJson() => {

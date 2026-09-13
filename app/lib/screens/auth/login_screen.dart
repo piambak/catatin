@@ -15,7 +15,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/storage_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../widgets/common/ds_widgets.dart';
@@ -65,16 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _enterDemo() async {
-    await StorageService.saveTokens(
-      accessToken: 'demo-token',
-      refreshToken: 'demo-refresh',
-    );
-    await StorageService.saveUserInfo(
-      id: 'demo-user-001',
-      name: 'Budi Santoso',
-      email: 'budi@tokoanda.com',
-    );
-    await StorageService.setOnboarded();
+    // Sesi demo selalu memakai data contoh, juga di build yang tersambung
+    // backend — lihat AuthService.enterDemo.
+    await AuthService.enterDemo();
     if (!mounted) return;
     context.go(AppRoutes.dashboard);
   }

@@ -1,0 +1,6 @@
+{
+  "_comment": "Konfigurasi build situs publik (GitHub Pages) dan cara tercepat menjalankan aplikasi dengan Supabase proyek ini: flutter run -d chrome --dart-define-from-file=dart_define.pages.json. SENGAJA di-commit: SUPABASE_URL dan publishable key memang publik, data dijaga Row Level Security. Selama salah satunya kosong, aplikasi otomatis jalan dengan data contoh. JANGAN PERNAH taruh secret key (sb_secret_...) atau password database di sini.",
+  "SUPABASE_URL": "",
+  "SUPABASE_PUBLISHABLE_KEY": "",
+  "DATA_SOURCE": "supabase"
+}

@@ -36,7 +36,7 @@ class BusinessProfile {
         employeeCount: json['employee_count'] as int? ?? 0,
         isActive: json['is_active'] as bool? ?? true,
         createdAt: json['created_at'] != null
-            ? DateTime.parse(json['created_at'] as String)
+            ? DateTime.parse(json['created_at'] as String).toLocal()
             : DateTime.now(),
       );
 
