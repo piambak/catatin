@@ -31,7 +31,9 @@ untuk peran itu ([sumber](../sumber/supabase-api-keys.md)).
 | `app/lib/core/data/supabase_repositories.dart` | Empat repository + helper murni yang dites |
 | `supabase/migrations/` | Skema, RLS, data kategori, fungsi agregasi |
 | `app/dart_define.pages.json` | URL proyek + publishable key untuk situs publik dan uji lokal |
-| `app/test/supabase_mapping_test.dart` | Tes pemetaan galat, agregasi bulanan, dan tenggat |
+| `app/test/supabase_mapping_test.dart` | Tes pemetaan galat, agregasi bulanan, tenggat, dan helper login Google |
+| `app/lib/widgets/auth/google_sign_in_button.dart` | Tombol masuk/daftar dengan Google |
+| `app/lib/screens/settings/password_dialog.dart` | Pasang/ganti kata sandi dari Pengaturan → Cara masuk |
 
 Mode ini aktif lewat `DATA_SOURCE=supabase` (atau otomatis kalau
 `SUPABASE_URL` terisi). Selama URL atau publishable key kosong, aplikasi jalan
@@ -45,7 +47,7 @@ dengan data contoh — jadi berkas Pages yang belum diisi tidak merusak situs.
 | Organisasi | `catatin`, paket Free |
 | Region | `ap-southeast-1` (Singapore), Postgres 17 |
 | Project URL | `https://mhoadvaiarjbbzlltqxy.supabase.co` |
-| Migrasi terpasang | `20260913101045_catatin_skema_awal` |
+| Migrasi terpasang | `20260913101045_catatin_skema_awal`, `20260913135347_fungsi_has_password` |
 
 Proyek paket Free dijeda setelah seminggu tidak aktif — lihat T-19 di
 [backlog teknis](../proyek/backlog-teknis.md).
@@ -126,6 +128,12 @@ pemetaan tambahan.
   habis), dan hapus/ubah yang tidak menyentuh baris apa pun jadi 404.
 - **Kategori diisi di migrasi**, bukan `supabase/seed.sql`, supaya ikut
   `db push` ke proyek remote.
+- **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
+  Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
+  tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
+  `auth.uid()`, hanya mengembalikan boolean, dan tidak bisa dipanggil `anon`.
+  Security Advisor karena itu sengaja dibiarkan melaporkan lint
+  `authenticated_security_definer_function_executable` untuk fungsi ini.
 
 Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 `db push`. Migrasi yang sudah di-push jangan disunting — buat migrasi baru.
@@ -138,7 +146,7 @@ Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 | `AuthRepository.login` / `me` / `logout` | `signInWithPassword` / `currentUser` / `signOut` |
 | `AuthRepository.signInWithGoogle` | `signInWithOAuth(google)` — web: halaman yang sama pindah ke Google lalu kembali dengan `?code=` (PKCE); Android: browser eksternal kembali lewat deep link `com.catatin.catatin://login-callback` |
 | `AuthRepository.currentSession` | `currentSession` — dipakai `AuthService` untuk mengadopsi sesi hasil login Google |
-| `AuthRepository.signInProviders` | provider dari `currentUser.identities`, mis. `{google, email}` |
+| `AuthRepository.signInProviders` | provider dari `currentUser.identities`, ditambah `email` bila `rpc('has_password')` bernilai `true` |
 | `AuthRepository.setPassword` | `updateUser(password:, currentPassword:)` |
 | `BusinessRepository.getCurrent` | select `business_profiles` (paling banyak satu baris) |
 | `BusinessRepository.create` / `update` | upsert pada `user_id` / update per id |
@@ -233,10 +241,17 @@ Akun yang daftar lewat Google bisa memasang kata sandi di **Pengaturan → Cara
 masuk**, lalu masuk ke akun yang sama dengan email Google itu + kata sandi.
 Tidak ada akun kedua dan tidak ada email konfirmasi.
 
-- Kata sandi pertama dipasang lewat `updateUser` tanpa kata sandi lama, dan
-  Supabase Auth membuat identitas `email` untuk akun itu. Login kata sandi hanya
-  mensyaratkan akun punya kata sandi dan emailnya terkonfirmasi — akun Google
-  sudah terkonfirmasi ([sumber](../sumber/supabase-auth-update-password.md)).
+- Kata sandi pertama dipasang lewat `updateUser` tanpa kata sandi lama. Login
+  kata sandi hanya mensyaratkan akun punya kata sandi dan emailnya
+  terkonfirmasi — akun Google sudah terkonfirmasi
+  ([sumber](../sumber/supabase-auth-update-password.md)). Terbukti di situs
+  publik 13 Sep 2026: pasang kata sandi → keluar → masuk dengan email + kata
+  sandi, tetap satu akun.
+- **Identitas `email` tidak ikut dibuat.** Supabase Auth hanya membuatnya bila
+  flag eksperimental `CreateEmailIdentityOnPasswordSetEnabled` menyala
+  ([sumber](../sumber/supabase-auth-update-password.md)), dan di proyek ini
+  tidak — akun tetap hanya punya identitas `google`. Karena itu status "Aktif"
+  di Pengaturan dibaca dari fungsi `has_password()`, bukan dari identitas.
 - Kalau *Secure password change* dinyalakan di dashboard, sesi yang dibuat
   lebih dari 24 jam lalu ditolak dengan `reauthentication_needed`
   ([sumber](../sumber/supabase-auth-update-password.md)). Verifikasi ulangnya
@@ -278,6 +293,9 @@ ganti isi berkas Pages, lalu nonaktifkan yang lama.
 - **Sesi** dikelola klien Supabase dan diperbarui otomatis. Token di secure
   storage hanya salinan penanda "sudah masuk" untuk penjaga rute (komentar di
   `storage_service.dart`).
+- **Keluar** memanggil `signOut`, yang mencabut sesi di server
+  (`POST /auth/v1/logout?scope=local`) — terbukti di log proyek 13 Sep 2026 —
+  lalu `AuthService` membersihkan penyimpanan lokal.
 - **Sesi berakhir dari sisi server** (refresh token dicabut atau kedaluwarsa)
   memicu `signedOut`; `AuthService` membersihkan penyimpanan lokal dan router
   langsung pindah ke layar masuk lewat `refreshListenable`.

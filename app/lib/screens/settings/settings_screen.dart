@@ -35,7 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _name;
   String? _email;
   BusinessProfile? _business;
-  Set<String> _providers = const {};
+  /// Cara masuk akun ini; `null` kalau gagal dimuat.
+  Set<String>? _providers = const {};
   bool _loading = true;
 
   /// Bagian yang sedang dipilih di panel kiri (hanya dipakai di layar lebar).
@@ -66,9 +67,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ));
       }
     }
-    final providers = AuthService.signInMethodsEditable
-        ? await AuthService.signInProviders()
-        : const <String>{};
+    Set<String>? providers = const {};
+    if (AuthService.signInMethodsEditable) {
+      try {
+        providers = await AuthService.signInProviders();
+      } on ApiException {
+        // Status cara masuk tidak ikut menahan layar; ditampilkan "—".
+        providers = null;
+      }
+    }
     if (!mounted) return;
     setState(() {
       _name = name;
@@ -85,14 +92,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _editPassword() async {
-    final hadPassword = _providers.contains('email');
+    final hadPassword = _providers?.contains('email') ?? false;
     final saved = await showPasswordDialog(
       context,
       hasPassword: hadPassword,
       email: _email,
     );
     if (!saved || !mounted) return;
-    final providers = await AuthService.signInProviders();
+    Set<String> providers;
+    try {
+      providers = await AuthService.signInProviders();
+    } on ApiException {
+      // Kata sandi baru saja tersimpan, jadi statusnya sudah pasti.
+      providers = {...?_providers, 'email'};
+    }
     if (!mounted) return;
     setState(() => _providers = providers);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -382,8 +395,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// supaya juga bisa dibuka dengan email + kata sandi — lihat
   /// `password_dialog.dart`.
   Widget _signInSection({bool topBorder = true}) {
-    final hasGoogle = _providers.contains('google');
-    final hasPassword = _providers.contains('email');
+    final providers = _providers;
+    final hasGoogle = providers?.contains('google') ?? false;
+    final hasPassword = providers?.contains('email') ?? false;
     final email = _email ?? 'email Anda';
     return DsSection(
       label: 'Cara masuk',
@@ -394,7 +408,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (hasGoogle) const DsListRow(title: 'Google', trailing: 'Terhubung'),
           DsListRow(
             title: 'Email & kata sandi',
-            trailing: hasPassword ? 'Aktif' : 'Belum dipasang',
+            trailing: providers == null
+                ? '—'
+                : (hasPassword ? 'Aktif' : 'Belum dipasang'),
             trailingStyle: hasPassword
                 ? Typo.sans(14, weight: FontWeight.w600, color: DS.income)
                 : null,

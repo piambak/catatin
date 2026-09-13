@@ -12,6 +12,28 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-13** — Backend + Frontend — **Status kata sandi dari `has_password()`.**
+  Uji pemilik di situs publik: pasang kata sandi (`PUT /user` 200) → keluar
+  (`POST /logout` 204) → masuk dengan email + kata sandi (`grant_type=password`
+  200), tetap satu akun. Tapi Pengaturan tetap menulis "Belum dipasang":
+  Supabase Auth hanya membuat identitas `email` bila flag eksperimental
+  `CreateEmailIdentityOnPasswordSetEnabled` menyala, dan klaim sebaliknya di wiki
+  keliru. **Perbaikan:** migrasi `20260913135347_fungsi_has_password` — fungsi
+  `security definer` tanpa parameter yang hanya menjawab true/false untuk
+  `auth.uid()`; `signInProviders()` memakainya. Diuji dalam transaksi yang
+  dibatalkan: akun pemilik `true`, akun lain `false`, `authenticated` tetap
+  ditolak membaca `auth.users`, `anon` ditolak memanggil fungsi. Security
+  Advisor kini melaporkan lint 0029 untuk fungsi ini — disengaja. Catatan: akun
+  pemilik sengaja dihapus pemiliknya sendiri lewat dashboard pukul 13:49 untuk
+  menguji pendaftaran dari awal (dikonfirmasi), jadi profil usaha dan transaksi
+  uji sebelumnya ikut terhapus lewat `on delete cascade`.
+  **Keadaan akhir hari ini:** situs publik tersambung ke proyek `catatin`;
+  pendaftaran lewat Google (Confirm email tetap menyala, form daftar email
+  disembunyikan); akun Google bisa memasang kata sandi dan masuk dengan email +
+  kata sandi; tombol Keluar mencabut sesi di server. Semua alur itu sudah diuji
+  pemilik di situs publik dan dicek di database. Sisa: T-18 (custom SMTP),
+  T-19 (proyek Free dijeda), T-20 (uji Android).
+
 - **2026-09-13** — Frontend — **Satu akun, dua cara masuk.** Akun yang daftar
   lewat Google bisa memasang kata sandi di Pengaturan → Cara masuk, lalu masuk
   ke akun yang sama dengan email Google + kata sandi — tanpa akun kedua dan

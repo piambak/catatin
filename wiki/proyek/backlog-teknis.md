@@ -38,7 +38,7 @@ mengikutinya.
 | T-15 | Kelas tipografi bernama `T` bentrok dengan parameter generic | ✅ **Selesai** | Frontend | 8 Sep 2026 |
 | T-16 | Tenggat PPN Masa meluap ke bulan berikutnya | 🟡 | Pakar pajak → Frontend | Perlu keputusan |
 | T-17 | Login pertama di peramban bersih macet karena token ditulis serentak | ✅ **Selesai** | Frontend | 13 Sep 2026 |
-| T-18 | Daftar dengan email menunggu custom SMTP; "Lupa kata sandi?" belum ada | 🟡 | Backend + Frontend | Fase berikutnya |
+| T-18 | Daftar dengan email dan pemulihan kata sandi lewat email menunggu custom SMTP | 🟡 | Backend + Frontend | Fase berikutnya |
 | T-19 | Proyek Supabase paket Free dijeda setelah seminggu tidak aktif | 🟡 | Backend | Perlu keputusan |
 | T-20 | Login Google di Android belum pernah diuji di perangkat | 🟡 | Frontend | Minggu berikutnya |
 

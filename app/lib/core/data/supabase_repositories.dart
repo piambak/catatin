@@ -123,15 +123,25 @@ class SupabaseAuthRepository implements AuthRepository {
     return session == null ? null : _authResponse(session);
   }
 
-  /// Dari identitas akun yang dibawa sesi. Supabase membuat identitas `email`
-  /// saat kata sandi pertama dipasang, jadi daftarnya ikut berubah sesudah
-  /// [setPassword] tanpa perlu memuat ulang.
+  /// Provider dari identitas akun, ditambah `email` kalau akun punya kata sandi.
+  ///
+  /// Kata sandi dicek lewat `rpc('has_password')`, bukan dari identitas:
+  /// Supabase Auth hanya membuat identitas `email` saat kata sandi pertama
+  /// dipasang bila flag eksperimentalnya menyala, dan di proyek ini tidak —
+  /// akun Google yang sudah memasang kata sandi tetap hanya punya identitas
+  /// `google`.
   @override
-  Future<Set<String>> signInProviders() async => {
-        for (final identity
-            in _db.auth.currentUser?.identities ?? const <sb.UserIdentity>[])
-          identity.provider,
-      };
+  Future<Set<String>> signInProviders() => runSupabase(() async {
+        final providers = {
+          for (final identity
+              in _db.auth.currentUser?.identities ?? const <sb.UserIdentity>[])
+            identity.provider,
+        };
+        if (await _db.rpc<dynamic>('has_password') == true) {
+          providers.add('email');
+        }
+        return providers;
+      });
 
   /// Akun Google boleh memasang kata sandi pertamanya tanpa kata sandi lama.
   /// Kalau "Secure password change" menyala di proyek, sesi yang umurnya lebih

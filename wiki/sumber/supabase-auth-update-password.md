@@ -45,13 +45,24 @@ if user.HasPassword() {
             return apierrors.NewBadRequestError(apierrors.ErrorCodeCurrentPasswordRequired, "Current password required when setting new password.")
 ```
 
-Kata sandi pertama membuat identitas email:
+Saat kata sandi pertama dipasang, `ensureEmailIdentityForPassword` dipanggil (isinya di bagian `identity.go` di bawah):
 
 ```go
 // this is the first time a user sets a password on their account
 // TODO(fm): we may want to relax it to also create identities for existing passwords
 if addingFirstPassword {
     if terr := a.ensureEmailIdentityForPassword(tx, user); terr != nil {
+```
+
+## `internal/api/identity.go` — `ensureEmailIdentityForPassword`
+
+Sumber: <https://github.com/supabase/auth/blob/4eee58f296d9/internal/api/identity.go>
+
+```go
+func (a *API) ensureEmailIdentityForPassword(tx *storage.Connection, user *models.User) error {
+    if !a.config.Experimental.CreateEmailIdentityOnPasswordSetEnabled {
+        return nil
+    }
 ```
 
 ## `internal/api/token.go` — login kata sandi

@@ -18,6 +18,7 @@ pelanggaran gaya markdown.
 | Tahu berkas mana yang boleh disunting | [Kontribusi](panduan/kontribusi.md) |
 | Paham bentuk repo dan lapisan aplikasi | [Arsitektur](arsitektur/gambaran-umum.md) |
 | Menyiapkan atau memakai Supabase | [Supabase](arsitektur/supabase.md) |
+| Mengatur login Google atau kata sandi akun | [Supabase §5](arsitektur/supabase.md#5-pengaturan-auth) |
 | Paham mode sumber data dan kontrak REST | [Backend & API](arsitektur/backend-dan-api.md) |
 | Tahu dari mana angka pajaknya datang | [Aturan pajak](domain/aturan-pajak.md) |
 | Paham arti PKP, PTKP, TER, HPP | [Glosarium](domain/glosarium.md) |
@@ -33,7 +34,7 @@ pelanggaran gaya markdown.
 ### Panduan
 
 - **[Mulai cepat](panduan/mulai-cepat.md)** — prasyarat, menjalankan aplikasi,
-  memilih sumber data (`mock` / `hybrid` / `api`).
+  memilih sumber data (`mock` / `hybrid` / `api` / `supabase`).
 - **[Kontribusi](panduan/kontribusi.md)** — berkas mana yang boleh disunting dan
   mana yang digenerate, alur branch dan PR, gaya kode, penanganan rahasia.
 - **[Rilis & deploy](panduan/rilis-dan-deploy.md)** — alur publikasi otomatis,
@@ -43,9 +44,10 @@ pelanggaran gaya markdown.
 
 - **[Gambaran umum](arsitektur/gambaran-umum.md)** — bentuk repo, lapisan
   aplikasi, isi `app/lib/`, tema, aset.
-- **[Supabase](arsitektur/supabase.md)** — backend yang dipakai: menyiapkan
-  proyek dari nol, skema & RLS, pemetaan kontrak, pengaturan Auth, kunci mana
-  yang boleh di-commit.
+- **[Supabase](arsitektur/supabase.md)** — backend situs publik (proyek
+  `catatin`): menyiapkan proyek, skema & RLS, pemetaan kontrak, pengaturan Auth
+  (login Google, Confirm email, satu akun dua cara masuk), kunci mana yang boleh
+  di-commit.
 - **[Backend & API](arsitektur/backend-dan-api.md)** — empat mode sumber data,
   kontrak REST tiap endpoint dengan contoh JSON, CORS, cara menyalakan backend
   di situs publik.
@@ -73,19 +75,29 @@ pelanggaran gaya markdown.
 
 - **[Linimasa](proyek/linimasa.md)** — jadwal Fase Dua, Minggu 1–9, milestone
   M1–M5.
-- **[Backlog teknis](proyek/backlog-teknis.md)** — temuan audit kode T-1..T-17
-  beserta statusnya, dan risiko yang sudah diketahui.
+- **[Backlog teknis](proyek/backlog-teknis.md)** — temuan T-1..T-20 beserta
+  statusnya, dan risiko yang sudah diketahui.
 - **[Log progres](proyek/log-progres.md)** — catatan kemajuan harian.
 
 ### Sumber
 
-Salinan mentah dokumen eksternal yang dikutip halaman lain. Tidak diringkas dan
-tidak disunting — kalau sumbernya berubah, simpan salinan baru.
+Salinan mentah atau kutipan pendek (`preservation: excerpt`) dokumen eksternal
+yang dikutip halaman lain. Tidak diringkas dan tidak ditafsirkan — kalau
+sumbernya berubah, simpan salinan baru.
 
 - **[Supabase: API keys](sumber/supabase-api-keys.md)** — publishable key,
   secret key, dan Row Level Security.
 - **[Supabase: custom SMTP](sumber/supabase-auth-smtp.md)** — batas SMTP bawaan
   dan risiko mematikan konfirmasi email.
+- **[Supabase: harga & pausing](sumber/supabase-pricing-pausing.md)** — proyek
+  Free dijeda setelah seminggu tidak aktif, batas paket Free.
+- **[Supabase: login Google](sumber/supabase-auth-google.md)** — menyiapkan
+  OAuth client, domain `supabase.co` di layar izin.
+- **[Supabase: identity linking](sumber/supabase-identity-linking.md)** —
+  penggabungan akun berdasarkan email dan kaitannya dengan Confirm email.
+- **[Supabase Auth: pasang kata sandi](sumber/supabase-auth-update-password.md)**
+  — verifikasi ulang 24 jam, kata sandi saat ini, identitas email eksperimental,
+  syarat login kata sandi.
 
 ---
 
