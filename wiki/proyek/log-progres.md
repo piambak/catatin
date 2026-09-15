@@ -1,4 +1,10 @@
-# Log Progres
+---
+title: Log Progres
+description: Catatan kemajuan harian Catatin Fase Dua — entri terbaru di atas dan tidak pernah dikoreksi ke belakang.
+tags:
+  - proyek
+  - log
+---
 
 Catatan kemajuan harian Catatin Fase Dua. Dipisah dari
 [linimasa](linimasa.md) supaya jadwalnya tetap enak dibaca sementara log ini
@@ -14,8 +20,8 @@ tumbuh terus.
 
 - **2026-09-15** — Backend + PO — **D-7: backend tetap Supabase (BaaS), bukan
   server buatan sendiri.** Diputuskan bersama PO untuk issue #16; rationale
-  lima barisnya dicatat di
-  [komentar issue #149](https://github.com/piambak/catatin/issues/149#issuecomment-5682205925).
+  lima barisnya dicatat di komentar issue #149
+  ([sumber](../sumber/github-issue-149-d7-stack-backend.md)).
   **Alasan:** Supabase sudah tayang dan teruji sejak 13 Sep — Auth dengan login
   Google, tiga tabel ber-RLS, `monthly_totals` ([Supabase](../arsitektur/supabase.md)).
   Tim hanya satu backend untuk sembilan minggu ([linimasa](linimasa.md)), jadi

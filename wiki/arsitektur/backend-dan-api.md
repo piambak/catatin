@@ -1,4 +1,11 @@
-# Menyambungkan Backend
+---
+title: Menyambungkan Backend
+description: Empat mode sumber data (mock, hybrid, api, supabase), kontrak API REST tiap endpoint, CORS, dan cara menyalakan backend di situs publik.
+tags:
+  - arsitektur
+  - backend
+  - api
+---
 
 Aplikasi ini sudah dirancang untuk hidup **dengan atau tanpa** backend. Halaman
 ini menjelaskan mode sumber data dan kontrak API REST yang diharapkan klien.

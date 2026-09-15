@@ -1,4 +1,9 @@
-# Wiki Catatin
+---
+title: Wiki Catatin
+description: "Pintu masuk basis pengetahuan Catatin: daftar seluruh halaman per bagian dan cara kerja folder wiki."
+tags:
+  - indeks
+---
 
 Seluruh pengetahuan proyek Catatin ada di folder ini — satu tempat, bukan
 tersebar antara README, komentar kode, dan ingatan orang.
@@ -98,6 +103,9 @@ sumbernya berubah, simpan salinan baru.
 - **[Supabase Auth: pasang kata sandi](sumber/supabase-auth-update-password.md)**
   — verifikasi ulang 24 jam, kata sandi saat ini, identitas email eksperimental,
   syarat login kata sandi.
+- **[GitHub: issue #149 & #16 (D-7)](sumber/github-issue-149-d7-stack-backend.md)**
+  — keputusan stack backend BaaS (Supabase) bersama PO dan rationale lima
+  barisnya.
 
 ---
 
