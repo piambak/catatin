@@ -1,4 +1,10 @@
-# Glosarium
+---
+title: Glosarium
+description: Istilah pajak (PKP, PTKP, TER, HPP, …) dan istilah teknis khas repo Catatin (mode data, RLS, staging, pgTAP, daftar KEEP, …).
+tags:
+  - domain
+  - glosarium
+---
 
 Istilah yang muncul di kode, antarmuka, dan dokumen Catatin. Disusun supaya
 kontributor yang paham Flutter tapi bukan orang pajak — atau sebaliknya — bisa
@@ -38,6 +44,9 @@ Rincian cara tiap aturan dipakai ada di [Aturan pajak](aturan-pajak.md).
 | **Mode data** | Pemilihan sumber data saat build: `mock`, `hybrid`, `api`, atau `supabase`. Lihat [Mulai cepat](../panduan/mulai-cepat.md). |
 | **RLS** | Row Level Security — kebijakan di Postgres yang menentukan baris mana boleh dibaca dan diubah tiap pengguna. Di backend Supabase, inilah yang menjaga data, bukan kode aplikasi. Lihat [Supabase](../arsitektur/supabase.md). |
 | **Publishable key** | Kunci API Supabase untuk klien publik (`sb_publishable_…`). Boleh ada di repo dan bundel web; berbeda dari secret key yang tidak pernah boleh keluar dari server. |
+| **Staging** | Proyek Supabase kedua, `catatin-staging`, berskema sama dengan produksi dan berisi data contoh kontrak — tempat FE dan BE menguji sebelum sesuatu menyentuh situs publik. Lihat [Supabase §8](../arsitektur/supabase.md#8-staging-dan-data-contoh). |
+| **pgTAP** | Kerangka tes unit untuk Postgres. Dipakai CI database untuk memastikan RLS, hak akses, dan data contoh tetap benar setiap skema berubah ([sumber](../sumber/supabase-testing-pgtap.md)). Lihat [Supabase §9](../arsitektur/supabase.md#9-ci-database). |
+| **Versi konfigurasi pajak** | Satu paket angka tarif, PTKP, dan parameter yang disetujui pakar pajak bersama-sama, lalu dikunci. Masih draf — lihat [Backend & API §7](../arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax). |
 | **`--dart-define`** | Cara Flutter menyuntikkan konfigurasi saat build tanpa mengubah kode. Dipakai memilih mode data dan URL backend. |
 | **Repository / fasad** | Lapisan yang memisahkan layar dari sumber data. Seluruh kode HTTP terkumpul di `app/lib/core/data/api_repositories.dart`; layar tidak pernah memanggil jaringan langsung. |
 | **Hasil build di root** | `index.html`, `main.dart.js`, `assets/`, `canvaskit/`, `icons/` di root repo. Digenerate `flutter build web` dan **di-commit sengaja** — itulah yang disajikan GitHub Pages. |

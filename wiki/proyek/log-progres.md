@@ -18,6 +18,58 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-15** — Backend — **Issue #17–#20: staging Supabase, CI database,
+  kontrak transaksi, dan draf skema mesin tarif.** Keempat issue ditulis PO
+  sebelum D-7 ([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)); #17
+  dan #18 dikerjakan sebagai padanan Supabase sesuai poin 5 D-7
+  ([sumber](../sumber/github-issue-149-d7-stack-backend.md)) — tanpa repo
+  `catatin-api` dan tanpa mock server Prism.
+  **#17 — lingkungan & CI.** Proyek `catatin-staging` (ref
+  `herafvadqziftszhxqeq`, paket Free, $0/bulan) dibuat lewat konektor Supabase;
+  migrasi diterapkan lalu versinya disamakan dengan berkas lokal. URL kedua
+  proyek dicatat di [Backend & API §1](../arsitektur/backend-dan-api.md).
+  `supabase/config.toml` diturunkan dari template CLI 2.117.0. Workflow
+  `supabase.yml` membangun migrasi dari nol, menjalankan `db lint --fail-on
+  warning`, lalu pgTAP — uji isolasi RLS 13 Sep yang dulu manual kini otomatis
+  ([Supabase §9](../arsitektur/supabase.md#9-ci-database)).
+  **#18 — staging mengembalikan contoh kontrak.** `supabase/staging/data_contoh.sql`
+  mengisi satu akun dengan angka persis contoh JSON di wiki. Login staging lewat
+  daftar email: `EMAIL_SIGNUP=true` hanya di `dart_define.staging.json`, dan
+  Google tidak dinyalakan di staging sehingga celah penggabungan akun tidak
+  berlaku ([Supabase §8](../arsitektur/supabase.md#8-staging-dan-data-contoh)).
+  Karena bukan server REST, FE menguji di mode `supabase`, bukan `hybrid`.
+  **#19 — kontrak.** `getTransactions` menerima `from`/`to` inklusif dan
+  `getAggregate(year)` mengembalikan `YearAggregate`, di keempat mode — Supabase
+  memakai `monthly_totals`, tanpa migrasi. Galat REST `{error, code, details}`
+  diurai `apiExceptionFromResponse`. Kontrak PATCH dilengkapi; implementasinya
+  sudah ada sejak 13 Sep. **Bug yang ikut dibereskan:** mode `api` memaksa filter
+  bulan berjalan saat tanpa filter, jadi layar Pencatatan mode api/hybrid hanya
+  menampilkan satu bulan sementara mock dan Supabase menampilkan semuanya.
+  `monthAggregates()` kini satu-satunya tempat omzet YTD dihitung di klien
+  (pelajaran T-13).
+  **#20 — draf skema** di
+  [Backend & API §7](../arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax):
+  versi konfigurasi yang dikunci setelah disetujui, lapisan `(tier_min, tier_max]`
+  yang dijaga exclusion constraint, `ptkp`, usulan `tax_parameters`, dan hak tulis
+  hanya untuk `app_metadata.role = 'tax_admin'`. Tanpa satu pun angka tarif;
+  menunggu review pakar pajak (#45).
+  **Catatan penomoran:** T-20 dan T-21 di judul #19 memakai penomoran PO
+  (bandingkan #36 "T-20b"), bukan T-20 di [backlog teknis](backlog-teknis.md)
+  yang berarti uji login Google di Android.
+  **Terverifikasi:** `flutter analyze` 0 warning/error, 40 info (turun dari 41);
+  `flutter test` 105 lulus, 1 di-skip. Workflow Supabase hijau: kedua migrasi
+  dari nol, lint "No schema errors found", 43 tes pgTAP dan 10 tes data contoh.
+  Run sebelumnya sempat merah karena `supabase test db` hanya me-mount
+  `supabase/tests`, lalu tes data contoh dipindah ke sebelah skripnya. Staging:
+  sidik jari katalog identik dengan produksi, Security Advisor hanya lint 0029
+  yang disengaja, `auth/v1/settings` menunjukkan Google mati dan autoconfirm mati,
+  REST tanpa sesi ditolak 401. Skrip data contoh dan DDL §7 (24 pemeriksaan
+  constraint, trigger, dan RLS) dijalankan di staging dalam transaksi yang
+  dibatalkan; sesudahnya 0 akun, 0 profil, 0 transaksi, dan tabel pajak tidak ada.
+  **Belum:** uji FE login → dashboard → transaksi di staging dengan akun
+  sungguhan (FE perlu diundang ke organisasi Supabase dulu), review TAX atas §7,
+  dan keputusan T-19 yang kini berlaku untuk dua proyek.
+
 - **2026-09-15** — Backend + PO — **D-7: backend tetap Supabase (BaaS), bukan
   server buatan sendiri.** Diputuskan bersama PO untuk issue #16; rationale
   lima barisnya dicatat di komentar issue #149

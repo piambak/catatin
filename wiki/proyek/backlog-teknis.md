@@ -1,4 +1,10 @@
-# Backlog Teknis — Temuan Audit Kode
+---
+title: Backlog Teknis — Temuan Audit Kode
+description: Temuan audit kode T-1..T-20 beserta status, pemilik, dan usul minggu masuknya, plus risiko jadwal yang sudah diketahui.
+tags:
+  - proyek
+  - backlog
+---
 
 Temuan audit `app/lib` dan risiko yang sudah diketahui. Dipisah dari
 [linimasa](linimasa.md) karena isinya bukan jadwal: ini daftar utang teknis yang
@@ -53,6 +59,12 @@ setelah satu minggu tidak aktif; di paket Pro tidak pernah
 Selama proyek terjeda, daftar dan masuk di situs publik gagal dengan pesan
 koneksi. Tombol demo tetap jalan karena tidak menyentuh Supabase. Apa persisnya
 yang dihitung sebagai "aktivitas" belum dipastikan (TODO: needs source).
+
+**Sejak 15 Sep 2026 berlaku untuk dua proyek.** Proyek staging
+`catatin-staging` juga paket Free ([Supabase §8](../arsitektur/supabase.md#8-staging-dan-data-contoh)).
+Staging lebih mungkin terjeda karena hanya dipakai saat uji; CI database tidak
+menjaganya tetap aktif, karena workflow `supabase.yml` memakai Postgres lokal
+runner, bukan proyek remote ([Supabase §9](../arsitektur/supabase.md#9-ci-database)).
 
 - [ ] **Backend** — pilih: terima risikonya selama masa uji, pasang pemantau
       yang memberi tahu tim saat proyek terjeda, atau naik ke paket berbayar

@@ -1,4 +1,10 @@
-# Linimasa Proyek — Catatin Fase Dua
+---
+title: Linimasa Proyek — Catatin Fase Dua
+description: "Tracker hidup jadwal Fase Dua: Minggu 1–9 per peran (Backend, Frontend, Pakar pajak), status mingguan, dan milestone M1–M5."
+tags:
+  - proyek
+  - linimasa
+---
 
 > **Cara pakai dokumen ini:** ini bukan dokumen sekali baca — ini *tracker* hidup.
 > Setiap kali menyelesaikan tugas, centang kotaknya (`- [ ]` → `- [x]`) dan ubah
@@ -47,10 +53,15 @@ dan formula pajak yang benar, sebelum satu baris kode fitur baru ditulis.
       sumber data (contoh/hybrid/API)
 - [ ] Audit kontrak di `wiki/arsitektur/backend-dan-api.md`, tandai endpoint mana yang sudah
       terpakai nyata vs baru rencana
-- [ ] Rancang skema data mesin tarif pajak berbasis konfigurasi (tarif PPh
+- [x] Rancang skema data mesin tarif pajak berbasis konfigurasi (tarif PPh
       Final, lapisan PTKP, TER, ambang PKP Rp4,8 M) — supaya pakar pajak bisa
-      memperbarui angka tanpa rilis aplikasi baru
-- [ ] Siapkan lingkungan dev backend (repo, DB lokal/staging, CI dasar)
+      memperbarui angka tanpa rilis aplikasi baru *(15 Sep: draf di
+      [Backend & API §7](../arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax),
+      menunggu review pakar pajak)*
+- [x] Siapkan lingkungan dev backend (repo, DB lokal/staging, CI dasar)
+      *(15 Sep: padanan Supabase sesuai D-7 — proyek staging, `supabase/config.toml`
+      untuk stack lokal, CI database; lihat
+      [Supabase §8–§9](../arsitektur/supabase.md#8-staging-dan-data-contoh))*
 
 ### Frontend
 

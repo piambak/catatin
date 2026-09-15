@@ -1,14 +1,16 @@
 ---
 title: Menyambungkan Backend
-description: Empat mode sumber data (mock, hybrid, api, supabase), kontrak API REST tiap endpoint, CORS, dan cara menyalakan backend di situs publik.
+description: Empat mode sumber data, lingkungan backend (produksi, staging, lokal), kontrak API REST tiap endpoint termasuk rentang tanggal, agregat tahunan, dan bentuk galat, CORS, cara menyalakan backend di situs publik, serta draf skema mesin tarif pajak.
 tags:
   - arsitektur
   - backend
   - api
+  - pajak
 ---
 
 Aplikasi ini sudah dirancang untuk hidup **dengan atau tanpa** backend. Halaman
-ini menjelaskan mode sumber data dan kontrak API REST yang diharapkan klien.
+ini menjelaskan mode sumber data, lingkungan backend, kontrak API REST yang
+diharapkan klien, dan draf skema mesin tarif pajak (§7).
 
 Backend yang dipakai sekarang adalah **Supabase** — keputusan D-7 (15 Sep 2026)
 memilih BaaS, bukan server buatan sendiri; alasannya di
@@ -52,8 +54,30 @@ Kalau capek mengetik, salin `app/dart_define.example.json` menjadi
 flutter run --dart-define-from-file=dart_define.json
 ```
 
-Untuk Supabase proyek ini tidak perlu berkas pribadi — pakai berkas yang sama
-dengan situs publik: `--dart-define-from-file=dart_define.pages.json`.
+Untuk Supabase proyek ini tidak perlu berkas pribadi: setiap lingkungan punya
+berkas define yang sudah di-commit (tabel di bawah).
+
+### Lingkungan backend
+
+| Lingkungan | Proyek Supabase | URL | Berkas define | Dipakai untuk |
+| --- | --- | --- | --- | --- |
+| Produksi | `catatin` | `https://mhoadvaiarjbbzlltqxy.supabase.co` | `app/dart_define.pages.json` | Situs publik <https://piambak.github.io/catatin/> |
+| Staging | `catatin-staging` | `https://herafvadqziftszhxqeq.supabase.co` | `app/dart_define.staging.json` | Uji FE/BE sebelum produksi, berisi data contoh kontrak |
+| Lokal | stack `supabase start` | `http://127.0.0.1:54321` | buat sendiri, tidak di-commit | Mengembangkan skema dan menjalankan tes pgTAP |
+
+```bash
+cd app
+flutter run -d chrome --dart-define-from-file=dart_define.staging.json
+```
+
+Staging dibuat 15 Sep 2026 sebagai padanan Supabase untuk issue #17 dan #18
+([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)), mengikuti
+keputusan D-7 ([sumber](../sumber/github-issue-149-d7-stack-backend.md)).
+Skema dan riwayat migrasinya identik dengan produksi; login di staging lewat
+daftar email, bukan Google. Cara menyiapkan, mengisi data contoh, dan alur uji
+FE ada di [Supabase §8](supabase.md#8-staging-dan-data-contoh). Port lokal
+`54321` berasal dari `supabase/config.toml`, dan publishable key lokal dicetak
+`supabase start` ([sumber](../sumber/supabase-api-keys.md)).
 
 | Define | Default | Arti |
 | --- | --- | --- |
@@ -212,7 +236,34 @@ Balas `{ "profile": { …seperti di atas… } }`.
 
 #### `GET /transactions`
 
-Query: `month`, `year`, `business_id`, `limit`.
+Query, semuanya opsional:
+
+| Parameter | Arti |
+| --- | --- |
+| `from`, `to` | Rentang tanggal `YYYY-MM-DD`, **inklusif** di kedua ujung. Boleh salah satu saja; ujung yang kosong terbuka. |
+| `month`, `year` | Satu bulan atau satu tahun. `month` tanpa `year` berarti bulan itu di tahun berjalan. |
+| `business_id` | Hanya transaksi usaha itu |
+| `limit` | Paling banyak N transaksi terbaru (kartu transaksi terakhir di dashboard) |
+
+Tanpa filter tanggal, seluruh transaksi dikembalikan — layar Pencatatan
+menggulir bulan dan tahun sendiri. Urutannya `date`, lalu `created_at`,
+terbaru lebih dulu.
+
+Balas `400 validation_failed` kalau `from`/`to` dicampur dengan `month`/`year`,
+`to` sebelum `from`, atau tanggal bukan `YYYY-MM-DD`:
+
+```json
+{
+  "error": "Filter tanggal tidak valid",
+  "code": "validation_failed",
+  "details": { "to": "harus sama dengan atau setelah from" }
+}
+```
+
+Di klien, campuran yang sama ditolak `checkTransactionFilter` di
+`repositories.dart` dengan `ArgumentError` sebelum request dikirim — di keempat
+mode, jadi kesalahan pemanggil sudah ketahuan saat memakai data contoh. Mode
+`api` hanya mengirim parameter yang diisi.
 
 ```json
 {
@@ -269,10 +320,64 @@ Balas `201`. Isi respons tidak dibaca klien.
 
 #### `PATCH /transactions/{id}`
 
-Body sama dengan `POST /transactions`. `business_id` diabaikan server —
-transaksi tidak pindah usaha. Balas `200`; isi respons tidak dibaca klien.
+Mengganti isi transaksi. Body **lengkap**, sama dengan `POST /transactions` —
+bukan patch per field: klien selalu mengirim seluruh isi lembar edit.
+`business_id` diabaikan server, jadi transaksi tidak pindah usaha.
+
+Balas `200` dengan `{ "transaction": { … } }` berbentuk item `GET /transactions`;
+klien tidak membaca isinya.
+
+| Status | Kapan |
+| --- | --- |
+| `400 validation_failed` | Nominal ≤ 0, tanggal tidak valid, `type` atau `payment_method` di luar daftar, atau kategori tidak ada |
+| `401 unauthorized` | Sesi habis |
+| `404 not_found` | Transaksi tidak ada **atau milik akun lain** — sengaja tidak dibedakan |
+
+Dipakai lembar "Edit transaksi" lewat `AccountingService.updateTransaction`.
+Keempat mode mengimplementasikannya sejak 13 Sep 2026
+([log progres](../proyek/log-progres.md)); di Supabase, update yang tidak
+mengenai baris apa pun — termasuk karena disaring RLS — menjadi 404
+([Supabase §3](supabase.md#3-skema)).
 
 #### `DELETE /transactions/{id}` → `204`
+
+#### `GET /transactions/aggregate?year=2026`
+
+Pemasukan, pengeluaran, HPP, jumlah transaksi, dan omzet berjalan per bulan
+untuk satu tahun — bahan Simulator dan ringkasan tutup bulan. `year` wajib.
+
+```json
+{
+  "year": 2026,
+  "months": [
+    { "month": 1, "income": 19200000, "expense": 16300000, "cogs": 5800000, "tx_count": 6, "ytd_omzet": 19200000 },
+    { "month": 2, "income": 21500000, "expense": 17000000, "cogs": 6500000, "tx_count": 6, "ytd_omzet": 40700000 },
+    { "month": 3, "income": 38000000, "expense": 21900000, "cogs": 11400000, "tx_count": 6, "ytd_omzet": 78700000 },
+    …
+    { "month": 8, "income": 28500000, "expense": 18200000, "cogs": 6200000, "tx_count": 12, "ytd_omzet": 285000000 },
+    …
+    { "month": 12, "income": 0, "expense": 0, "cogs": 0, "tx_count": 0, "ytd_omzet": 300400000 }
+  ]
+}
+```
+
+* `months` selalu 12 item, Januari lebih dulu; bulan tanpa transaksi bernilai nol.
+* `cogs` adalah bagian `expense` dari kategori ber-`is_cogs`.
+* `ytd_omzet` adalah jumlah `income` Januari sampai bulan itu. Angka Agustus di
+  atas sama dengan `ytd_omzet` contoh `GET /dashboard/summary` bulan yang sama.
+* Laba tidak dikirim; klien menghitung `income − expense` (`MonthAggregate.profit`).
+* Balas `400 validation_failed` kalau `year` kosong atau bukan angka.
+* **Urutan rute:** server harus mencocokkan `/transactions/aggregate` sebelum
+  `/transactions/{id}`, kalau tidak `aggregate` terbaca sebagai id.
+
+Di klien: `TransactionRepository.getAggregate(year:)` → `YearAggregate`, lewat
+`AccountingService.getAggregate`. Omzet YTD dijumlahkan di satu fungsi,
+`monthAggregates()` di `models/dashboard_model.dart`, yang juga dipakai
+ringkasan dashboard dan grafik KPI mode Supabase — supaya aturannya tidak
+bercabang seperti T-13 ([backlog teknis](../proyek/backlog-teknis.md)). Di
+Supabase angkanya dari fungsi `monthly_totals` yang sama dengan ringkasan
+dashboard, tanpa migrasi baru ([Supabase §4](supabase.md#4-pemetaan-kontrak)).
+Contoh di atas adalah data contoh staging ([Supabase §8](supabase.md#8-staging-dan-data-contoh)).
 
 #### `GET /tx-categories`
 
@@ -332,28 +437,47 @@ label sumbu X.
 
 ### Bentuk error
 
-Semua status non-2xx memakai bentuk yang sama:
+Semua status non-2xx dari semua endpoint — termasuk yang baru — memakai bentuk
+yang sama:
 
 ```json
 {
   "error": "Email sudah terdaftar",
+  "code": "conflict",
   "details": { "email": "sudah dipakai akun lain" }
 }
 ```
 
-`message` diterima sebagai alias `error`. Klien memetakan status ke pesan
-Bahasa Indonesia di `ApiException.userMessage`:
+| Field | Wajib | Isi |
+| --- | --- | --- |
+| `error` | Ya | Pesan Bahasa Indonesia yang aman ditampilkan. `message` masih diterima klien sebagai alias, tapi server mengirim `error`. |
+| `code` | Ya | Kode mesin `snake_case` yang stabil. Klien bercabang berdasarkan `code` atau status, tidak pernah berdasarkan teks `error`. |
+| `details` | Tidak | Objek `field → pesan`. Kirim hanya kalau ada isinya; objek kosong atau yang bukan objek dibuang klien. |
 
-| Status | Ditampilkan ke pengguna |
-| --- | --- |
-| 400 | isi `details` pertama, atau "Data tidak valid." |
-| 401 | "Sesi Anda telah berakhir. Silakan masuk kembali." |
-| 403 | "Anda tidak memiliki akses ke fitur ini." |
-| 404 | "Data tidak ditemukan." |
-| 409 | isi `error` apa adanya |
-| 422 | "Data yang dikirim tidak valid." |
-| 500 | "Terjadi kesalahan server. Coba lagi nanti." |
-| gagal jaringan | "Terjadi kesalahan. Periksa koneksi internet Anda." |
+Kode dasar per status, dan pesan yang ditampilkan `ApiException.userMessage`:
+
+| Status | `code` | Ditampilkan ke pengguna |
+| --- | --- | --- |
+| 400 | `validation_failed` | isi `details` pertama, atau "Data tidak valid." |
+| 401 | `unauthorized` | "Sesi Anda telah berakhir. Silakan masuk kembali." |
+| 403 | `forbidden` | "Anda tidak memiliki akses ke fitur ini." |
+| 404 | `not_found` | "Data tidak ditemukan." |
+| 409 | `conflict` | isi `error` apa adanya |
+| 422 | `unprocessable` | "Data yang dikirim tidak valid." |
+| 429 | `rate_limited` | "Terlalu banyak percobaan. Tunggu sebentar, lalu coba lagi." |
+| 500 | `internal` | "Terjadi kesalahan server. Coba lagi nanti." |
+| gagal jaringan | — | "Terjadi kesalahan. Periksa koneksi internet Anda." |
+
+Endpoint boleh memakai kode yang lebih spesifik untuk status yang sama bila klien
+perlu membedakannya — mis. `409 business_profile_required` saat mencatat
+transaksi sebelum profil usaha ada. Kode baru dicatat di tabel ini lebih dulu.
+
+Body galat diurai `apiExceptionFromResponse()` di
+`app/lib/core/network/api_client.dart`, jadi `ApiException.code` terisi di mode
+`api` dan `hybrid`. Mode `supabase` tidak punya body REST: galat Supabase
+diterjemahkan ke status yang sama di `supabase_client.dart` dengan `code`
+kosong — bercabanglah pada `statusCode` kalau kodenya harus jalan di semua mode.
+Bentuk ini dijaga tes `app/test/kontrak_transaksi_test.dart`.
 
 ---
 
@@ -400,3 +524,392 @@ tanpa argumen, dan di-commit — bukan disimpan di repo Variables.
 Jangan pernah menaruh kunci yang memberi akses melebihi klien publik — secret
 key, token admin, password database — di `--dart-define` atau berkas define:
 apa pun yang masuk build web bisa dibaca siapa saja.
+
+---
+
+## 7. Skema mesin tarif pajak (draf untuk review TAX)
+
+> **Status: draf, belum menjadi migrasi.** Ditulis untuk issue #20 dan menunggu
+> review pakar pajak di #45 — apakah semua isi spesifikasi bisa
+> direpresentasikan; setelah itu tabelnya menjadi migrasi di #42
+> ([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)). **Halaman ini
+> tidak memuat satu pun angka tarif.** Angka resmi datang dari spesifikasi
+> pajak milik TAX, bukan dari backend — aturan yang sama dengan
+> [Aturan pajak](../domain/aturan-pajak.md).
+
+### 7.1 Kenapa berbasis konfigurasi
+
+Tarif PPh Final, lapisan TER, PTKP, dan ambang PKP sekarang berupa konstanta di
+`app/lib/core/constants/app_constants.dart`
+([Aturan pajak](../domain/aturan-pajak.md)), jadi mengubah satu angka berarti
+merilis aplikasi baru. Linimasa Minggu 1 meminta skema yang membuat pakar pajak
+bisa memperbarui angka tanpa rilis ([linimasa](../proyek/linimasa.md)), dan D-7
+memetakan kebutuhan itu ke tabel Postgres berversi dengan peran admin di RLS
+([sumber](../sumber/github-issue-149-d7-stack-backend.md)).
+
+### 7.2 Model
+
+```mermaid
+erDiagram
+  tax_config_versions ||--o{ tax_rates : "version"
+  tax_config_versions ||--o{ ptkp : "version"
+  tax_config_versions ||--o{ tax_parameters : "version"
+  tax_config_versions {
+    integer version PK
+    text status "draft | review | approved | retired"
+    uuid approved_by
+    timestamptz approved_at
+  }
+  tax_rates {
+    bigint id PK
+    integer version FK
+    text kind
+    text category "A | B | C, hanya TER"
+    numeric tier_min
+    numeric tier_max "null = tanpa batas"
+    numeric rate "0..1"
+    date effective_from
+    text legal_basis
+  }
+  ptkp {
+    integer version PK
+    text status PK "TK/0 .. K/3"
+    numeric amount
+    text ter_category "diisi TAX"
+    date effective_from PK
+    text legal_basis
+  }
+  tax_parameters {
+    integer version PK
+    text key PK
+    numeric value
+    date effective_from PK
+    text legal_basis
+  }
+```
+
+| Tabel | Satu baris adalah | Dari issue #20 |
+| --- | --- | --- |
+| `tax_config_versions` | Satu paket angka yang direview dan disetujui TAX bersama-sama | Tambahan: pemilik status dan persetujuan versi |
+| `tax_rates` | Satu lapisan tarif satu jenis pajak | `version, effective_from, kind, tier_min, tier_max, rate, category` + `legal_basis` |
+| `ptkp` | PTKP satu status | `status, amount, version` + `effective_from`, `ter_category`, `legal_basis` |
+| `tax_parameters` | Satu angka tunggal: ambang, batas, persentase | **Usulan tambahan** — lihat pertanyaan TAX |
+
+`tax_parameters` diusulkan karena beberapa angka konfigurasi bukan tarif
+berlapis, mis. ambang PKP yang sekarang `AppConstants.pkpThreshold`, pengecualian
+omzet PPh Final (T-3), atau biaya jabatan dengan batas atas (T-4)
+([backlog teknis](../proyek/backlog-teknis.md)). Nama kunci seperti
+`AMBANG_PKP_OMZET` hanya contoh bentuk; daftar kuncinya diputuskan bersama TAX.
+
+### 7.3 Aturan
+
+**Versi.** Status berjalan `draft → review → approved → retired`. Paling banyak
+satu versi `approved` pada satu waktu (unique index parsial). Baris milik versi
+`approved` atau `retired` tidak bisa ditambah, diubah, atau dihapus — trigger
+menolaknya dengan galat `55000` — jadi perubahan angka selalu berarti versi
+baru. Versi `approved` hanya boleh berpindah ke `retired`. Mengganti versi yang
+berlaku: `retired`-kan yang lama, lalu `approved`-kan yang baru dalam satu
+transaksi. Hasil hitung dan skenario tersimpan mencatat nomor versinya.
+
+**`effective_from`.** Tanggal aturan mulai berlaku. Satu versi boleh memuat
+aturan lama dan baru sekaligus, mis. tarif yang berganti di tengah tahun. Untuk
+tanggal hitung D, mesin memakai baris dengan `effective_from` terbesar yang
+≤ D untuk `kind` dan `category` yang sama (§7.5).
+
+**Lapisan `(tier_min, tier_max]`.** Batas bawah eksklusif, batas atas
+inklusif, `tier_max` kosong berarti tanpa batas atas — notasi range PostgreSQL
+([sumber](../sumber/postgres-range-exclusion.md)). Arah inklusifnya sama dengan
+cara hitung sekarang: `calculatePPh21()` mengambil lapisan pertama yang
+`gaji kotor ≤ max` ([Aturan pajak](../domain/aturan-pajak.md)). Jumlah ≤ 0 tidak
+masuk lapisan mana pun; mesin mengembalikan pajak nol.
+
+**Lapisan tidak boleh tumpang tindih** untuk versi, `kind`, `category`, dan
+`effective_from` yang sama. Dijaga exclusion constraint GiST: `btree_gist`
+membuat kolom biasa bisa dibandingkan `=` di samping `&&` untuk range
+([sumber](../sumber/postgres-range-exclusion.md)). Kategori TER yang berbeda
+boleh memakai rentang yang sama.
+
+| `kind` | Cara dipakai mesin | `category` | Status |
+| --- | --- | --- | --- |
+| `PPH_FINAL_UMKM` | Tarif × omzet, satu lapisan | Kosong | Dipakai sekarang — PP 23/2018 |
+| `PPH21_TER` | Gaji kotor × tarif lapisan yang cocok | `A`, `B`, atau `C`, wajib | Dipakai sekarang — PMK 168/2023; tabel B dan C belum ada (T-1) |
+| `PPH_PASAL_17` | Progresif per lapisan | Kosong | Kandidat — menunggu keputusan rekalkulasi Desember (T-4) |
+| `PPN` | Tarif × dasar pengenaan | Kosong | Kandidat — menunggu keputusan lingkup PPN (D-8) |
+
+**`legal_basis`** wajib di setiap baris, karena hasil mesin tarif kelak memuat
+`legal_basis` dan `config_version` (#88), dan sign-off pajak dicatat per versi
+konfigurasi (#131) ([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)).
+
+**Hak akses.**
+
+* `authenticated` membaca versi `approved` dan `retired` beserta barisnya. Versi
+  `draft` dan `review` hanya terlihat TAX.
+* Menulis ke keempat tabel hanya untuk akun ber-`app_metadata.role = 'tax_admin'`,
+  dibaca lewat `auth.jwt()`. Dipilih `app_metadata` karena pengguna tidak bisa
+  mengubahnya sendiri, sedangkan `user_metadata` bisa
+  ([sumber](../sumber/supabase-rls-auth-jwt.md)). Peran dipasang BE di kolom
+  `raw_app_meta_data` lewat SQL editor, dan baru terbaca setelah token pengguna
+  itu diperbarui ([sumber](../sumber/supabase-rls-auth-jwt.md)).
+* `anon` tidak mendapat hak apa pun, sama dengan tabel lain
+  ([Supabase §3](supabase.md#3-skema)). Trigger tetap berjalan untuk TAX:
+  pembuat versi pun tidak bisa mengubah versi yang sudah dikunci.
+
+### 7.4 DDL
+
+```sql
+create extension if not exists btree_gist with schema extensions;
+
+-- ── Versi konfigurasi ──
+
+create table public.tax_config_versions (
+  version     integer primary key,
+  status      text not null default 'draft'
+              check (status in ('draft', 'review', 'approved', 'retired')),
+  notes       text,
+  approved_by uuid references auth.users (id),
+  approved_at timestamptz,
+  created_at  timestamptz not null default now(),
+  constraint tax_config_versions_approval_check
+    check ((status in ('approved', 'retired')) = (approved_at is not null))
+);
+
+create unique index tax_config_versions_one_approved
+  on public.tax_config_versions ((true))
+  where status = 'approved';
+
+-- ── Tarif berlapis: (tier_min, tier_max], tier_max null = tanpa batas ──
+
+create table public.tax_rates (
+  id             bigint generated always as identity primary key,
+  version        integer not null references public.tax_config_versions (version),
+  kind           text not null
+                 check (kind in ('PPH_FINAL_UMKM', 'PPH21_TER', 'PPH_PASAL_17', 'PPN')),
+  category       text check (category in ('A', 'B', 'C')),
+  tier_min       numeric(18, 2) not null default 0 check (tier_min >= 0),
+  tier_max       numeric(18, 2),
+  rate           numeric(7, 6) not null check (rate between 0 and 1),
+  effective_from date not null,
+  legal_basis    text not null check (length(trim(legal_basis)) > 0),
+  constraint tax_rates_tier_check
+    check (tier_max is null or tier_max > tier_min),
+  constraint tax_rates_category_kind_check
+    check ((kind = 'PPH21_TER') = (category is not null)),
+  constraint tax_rates_no_overlap exclude using gist (
+    version with =,
+    kind with =,
+    (coalesce(category, '-')) with =,
+    effective_from with =,
+    numrange(tier_min, tier_max, '(]') with &&
+  )
+);
+
+-- ── PTKP ──
+
+create table public.ptkp (
+  version        integer not null references public.tax_config_versions (version),
+  status         text not null
+                 check (status in ('TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3')),
+  amount         numeric(18, 2) not null check (amount >= 0),
+  ter_category   text check (ter_category in ('A', 'B', 'C')),
+  effective_from date not null,
+  legal_basis    text not null check (length(trim(legal_basis)) > 0),
+  primary key (version, status, effective_from)
+);
+
+-- ── Parameter tunggal (usulan tambahan) ──
+
+create table public.tax_parameters (
+  version        integer not null references public.tax_config_versions (version),
+  key            text not null check (key ~ '^[A-Z][A-Z0-9_]*$'),
+  value          numeric(18, 6) not null,
+  effective_from date not null,
+  legal_basis    text not null check (length(trim(legal_basis)) > 0),
+  notes          text,
+  primary key (version, key, effective_from)
+);
+
+-- ── Versi approved/retired terkunci ──
+
+create function public.tax_config_row_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then
+    if exists (select 1 from public.tax_config_versions v
+                where v.version = old.version and v.status in ('approved', 'retired')) then
+      raise exception 'Konfigurasi pajak versi % sudah dikunci; buat versi baru.', old.version
+        using errcode = '55000';
+    end if;
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    if exists (select 1 from public.tax_config_versions v
+                where v.version = new.version and v.status in ('approved', 'retired')) then
+      raise exception 'Konfigurasi pajak versi % sudah dikunci; buat versi baru.', new.version
+        using errcode = '55000';
+    end if;
+    return new;
+  end if;
+  return old;
+end;
+$$;
+
+create trigger tax_rates_guard before insert or update or delete on public.tax_rates
+  for each row execute function public.tax_config_row_guard();
+create trigger ptkp_guard before insert or update or delete on public.ptkp
+  for each row execute function public.tax_config_row_guard();
+create trigger tax_parameters_guard before insert or update or delete on public.tax_parameters
+  for each row execute function public.tax_config_row_guard();
+
+-- approved hanya boleh ke retired; retired final.
+create function public.tax_config_version_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if old.status in ('approved', 'retired') then
+    if tg_op = 'DELETE'
+       or old.status = 'retired'
+       or new.status <> 'retired'
+       or new.version <> old.version then
+      raise exception 'Versi % berstatus %: hanya approved -> retired yang diizinkan.',
+        old.version, old.status
+        using errcode = '55000';
+    end if;
+  end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger tax_config_versions_guard before update or delete on public.tax_config_versions
+  for each row execute function public.tax_config_version_guard();
+
+-- ── Hak akses & RLS ──
+
+alter table public.tax_config_versions enable row level security;
+alter table public.tax_rates           enable row level security;
+alter table public.ptkp                enable row level security;
+alter table public.tax_parameters      enable row level security;
+
+revoke all on table
+  public.tax_config_versions, public.tax_rates, public.ptkp, public.tax_parameters
+  from anon, authenticated;
+grant select, insert, update, delete on table
+  public.tax_config_versions, public.tax_rates, public.ptkp, public.tax_parameters
+  to authenticated;
+revoke execute on function
+  public.tax_config_row_guard(), public.tax_config_version_guard()
+  from public, anon, authenticated;
+
+create policy "Versi pajak terbit bisa dibaca"
+  on public.tax_config_versions for select to authenticated
+  using (status in ('approved', 'retired'));
+create policy "TAX mengelola versi pajak"
+  on public.tax_config_versions for all to authenticated
+  using (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin')
+  with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin');
+
+create policy "Tarif versi terbit bisa dibaca"
+  on public.tax_rates for select to authenticated
+  using (exists (select 1 from public.tax_config_versions v
+                  where v.version = tax_rates.version
+                    and v.status in ('approved', 'retired')));
+create policy "TAX mengelola tarif"
+  on public.tax_rates for all to authenticated
+  using (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin')
+  with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin');
+
+create policy "PTKP versi terbit bisa dibaca"
+  on public.ptkp for select to authenticated
+  using (exists (select 1 from public.tax_config_versions v
+                  where v.version = ptkp.version
+                    and v.status in ('approved', 'retired')));
+create policy "TAX mengelola PTKP"
+  on public.ptkp for all to authenticated
+  using (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin')
+  with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin');
+
+create policy "Parameter versi terbit bisa dibaca"
+  on public.tax_parameters for select to authenticated
+  using (exists (select 1 from public.tax_config_versions v
+                  where v.version = tax_parameters.version
+                    and v.status in ('approved', 'retired')));
+create policy "TAX mengelola parameter"
+  on public.tax_parameters for all to authenticated
+  using (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin')
+  with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'tax_admin');
+```
+
+### 7.5 Memilih tarif (sketsa untuk #88)
+
+Tarif TER kategori `A` untuk gaji `:gaji` pada tanggal `:tanggal`, dari versi
+yang berlaku:
+
+```sql
+select r.rate, r.legal_basis, r.version as config_version
+from public.tax_rates r
+join public.tax_config_versions v
+  on v.version = r.version and v.status = 'approved'
+where r.kind = 'PPH21_TER'
+  and r.category = 'A'
+  and r.effective_from = (
+    select max(r2.effective_from)
+    from public.tax_rates r2
+    where r2.version = r.version
+      and r2.kind = r.kind
+      and r2.category is not distinct from r.category
+      and r2.effective_from <= :tanggal
+  )
+  and :gaji > r.tier_min
+  and (r.tier_max is null or :gaji <= r.tier_max);
+```
+
+### 7.6 Hasil validasi
+
+DDL di atas dijalankan di proyek staging pada 15 Sep 2026, dalam satu transaksi
+yang digagalkan di akhir sehingga tidak ada tabel, fungsi, maupun ekstensi yang
+tersisa (dicek sesudahnya). Semua data uji **sintetis**, bukan tarif resmi.
+24 pemeriksaan, semuanya sesuai harapan:
+
+| Kelompok | Yang dibuktikan |
+| --- | --- |
+| Lapisan | Lapisan bersambung diterima; lapisan tumpang tindih ditolak `23P01`; kategori dan `effective_from` berbeda boleh memakai rentang yang sama |
+| Batas | Jumlah tepat di batas atas masuk lapisan bawah; sedikit di atasnya masuk lapisan berikut; lapisan tanpa batas menangkap jumlah besar |
+| `effective_from` | Tanggal hitung 2015 memilih baris berlaku 2010, bukan 2000 |
+| Check constraint | TER tanpa kategori, PPh Final berkategori, tarif > 1, status PTKP asing, kunci parameter bukan huruf kapital, dan `approved` tanpa `approved_at` semuanya ditolak `23514` |
+| Penguncian versi | Setelah `approved`: ubah tarif, hapus PTKP, dan tambah parameter ditolak `55000`; `approved → draft` ditolak; versi `approved` kedua ditolak `23505` |
+| RLS | Pengguna biasa hanya melihat versi `approved` beserta barisnya dan ditolak menulis `42501`; `tax_admin` melihat draf, bisa menulis ke draf, tapi tetap ditolak mengubah versi terkunci; `anon` ditolak `42501` |
+
+### 7.7 Pertanyaan untuk TAX (#45)
+
+1. **Batas lapisan** — apakah semua tabel resmi cocok dengan `(tier_min, tier_max]`,
+   atau ada lapisan yang batas bawahnya inklusif?
+2. **Status PTKP → kategori TER** — kolom `ter_category` disiapkan kosong; isinya
+   dari spesifikasi TER (#21).
+3. **Pengecualian omzet dan batas jangka waktu PPh Final (T-3)** — cukup sebagai
+   parameter tunggal, atau berbeda per jenis wajib pajak sehingga butuh kolom
+   tambahan?
+4. **Biaya jabatan (T-4)** — cukup dua parameter (persentase dan batas atas)?
+5. **Pembulatan** — aturan pembulatan hasil belum punya tempat di skema.
+6. **Kandidat `kind`** — `PPH_PASAL_17` dan `PPN` dihapus kalau T-4 dan D-8
+   memutuskan di luar lingkup fase ini.
+7. **Persetujuan** — siapa pemegang `tax_admin`, dan apakah pembuat versi boleh
+   sekaligus menyetujuinya?
+
+### 7.8 Issue berikutnya yang memakai skema ini
+
+| Issue | Memakai skema untuk |
+| --- | --- |
+| #45 | Review TAX atas draf ini |
+| #42 | Migrasi tabel, diisi dari spesifikasi pajak; `GET /tax/config?version=` |
+| #88 | `POST /tax/calculate` membaca versi berlaku; hasil memuat `legal_basis` dan `config_version` |
+| #91 | `PATCH /tax/config` untuk TAX beserta riwayat versi |
+| #131 | Sign-off per topik menyebut versi konfigurasi |
+
+Judul issue-issue itu ada di
+[sumber](../sumber/github-issue-17-20-backend-minggu-1.md).

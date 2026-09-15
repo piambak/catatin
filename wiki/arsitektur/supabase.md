@@ -1,9 +1,16 @@
-# Supabase
+---
+title: Supabase
+description: "Backend Catatin di Supabase: proyek produksi dan staging, menyiapkan dari nol, skema & RLS, pemetaan kontrak, pengaturan Auth, kunci yang boleh di-commit, data contoh staging, dan CI database."
+tags:
+  - arsitektur
+  - backend
+  - supabase
+---
 
-Backend Catatin untuk pengembangan lokal dan situs publik. Halaman ini
+Backend Catatin untuk pengembangan lokal, staging, dan situs publik. Halaman ini
 menjelaskan cara menyiapkannya dari nol, isi skemanya, bagaimana kontrak
-`repositories.dart` dipetakan ke Supabase, dan nilai mana yang boleh masuk
-repo.
+`repositories.dart` dipetakan ke Supabase, nilai mana yang boleh masuk repo,
+serta staging dan CI database-nya.
 
 Mode sumber data lain dan kontrak REST ada di [Backend & API](backend-dan-api.md).
 
@@ -34,23 +41,31 @@ untuk peran itu ([sumber](../sumber/supabase-api-keys.md)).
 | `app/test/supabase_mapping_test.dart` | Tes pemetaan galat, agregasi bulanan, tenggat, dan helper login Google |
 | `app/lib/widgets/auth/google_sign_in_button.dart` | Tombol masuk/daftar dengan Google |
 | `app/lib/screens/settings/password_dialog.dart` | Pasang/ganti kata sandi dari Pengaturan → Cara masuk |
+| `app/dart_define.staging.json` | URL + publishable key proyek staging, daftar email menyala ([§8](#8-staging-dan-data-contoh)) |
+| `supabase/config.toml` | Konfigurasi stack lokal dan CI, dari template `supabase init` CLI 2.117.0 |
+| `supabase/tests/database/` | Tes pgTAP skema, hak akses, dan isolasi RLS ([§9](#9-ci-database)) |
+| `supabase/staging/` | Skrip data contoh staging beserta tesnya ([§8](#8-staging-dan-data-contoh)) |
+| `.github/workflows/supabase.yml` | CI database: build migrasi, lint, tes ([§9](#9-ci-database)) |
 
 Mode ini aktif lewat `DATA_SOURCE=supabase` (atau otomatis kalau
 `SUPABASE_URL` terisi). Selama URL atau publishable key kosong, aplikasi jalan
 dengan data contoh — jadi berkas Pages yang belum diisi tidak merusak situs.
 
-**Proyek yang dipakai situs publik** (dibuat 13 Sep 2026):
+**Proyek remote.** Keduanya di organisasi `catatin`, paket Free:
 
-| | |
-| --- | --- |
-| Nama / ref | `catatin` / `mhoadvaiarjbbzlltqxy` |
-| Organisasi | `catatin`, paket Free |
-| Region | `ap-southeast-1` (Singapore), Postgres 17 |
-| Project URL | `https://mhoadvaiarjbbzlltqxy.supabase.co` |
-| Migrasi terpasang | `20260913101045_catatin_skema_awal`, `20260913135347_fungsi_has_password` |
+| | Produksi | Staging |
+| --- | --- | --- |
+| Nama / ref | `catatin` / `mhoadvaiarjbbzlltqxy` | `catatin-staging` / `herafvadqziftszhxqeq` |
+| Dipakai | Situs publik | Uji FE/BE sebelum produksi ([§8](#8-staging-dan-data-contoh)) |
+| Dibuat | 13 Sep 2026 | 15 Sep 2026 |
+| Region | `ap-southeast-1` (Singapore), Postgres 17 | `ap-southeast-1` (Singapore), Postgres 17 |
+| Project URL | `https://mhoadvaiarjbbzlltqxy.supabase.co` | `https://herafvadqziftszhxqeq.supabase.co` |
+| Berkas define | `app/dart_define.pages.json` | `app/dart_define.staging.json` |
+| Login | Google (daftar email disembunyikan) | Daftar dan masuk dengan email |
+| Migrasi terpasang | `20260913101045_catatin_skema_awal`, `20260913135347_fungsi_has_password` | Sama persis |
 
-Proyek paket Free dijeda setelah seminggu tidak aktif — lihat T-19 di
-[backlog teknis](../proyek/backlog-teknis.md).
+Proyek paket Free dijeda setelah seminggu tidak aktif — berlaku untuk keduanya,
+lihat T-19 di [backlog teknis](../proyek/backlog-teknis.md).
 
 ## 2. Menyiapkan dari nol
 
@@ -58,11 +73,11 @@ Sekali per proyek. Butuh Node.js (untuk `npx`) dan akun Supabase.
 
 1. **Buat proyek** di dashboard Supabase. Simpan password database di password
    manager — tidak pernah di repo.
-2. **Hubungkan CLI** dari root repo. `link` meminta password database:
+2. **Hubungkan CLI** dari root repo. `supabase/config.toml` sudah di-commit, jadi
+   `init` tidak perlu dijalankan lagi. `link` meminta password database:
 
    ```bash
    npx supabase login
-   npx supabase init
    npx supabase link --project-ref <ref>
    ```
 
@@ -99,10 +114,15 @@ dengan `apply_migration`. Dua akibatnya:
   supaya `supabase db push` kelak tidak mencoba menjalankannya ulang. Kalau
   migrasi berikutnya juga diterapkan lewat konektor, samakan lagi nama
   berkasnya dengan versi di *Database → Migrations*.
-- **`supabase init` belum pernah dijalankan** — `supabase/config.toml` belum
-  ada. Jalankan `init` sebelum `link` saat pertama kali memakai CLI di repo ini.
-  Password database acak itu tidak pernah ditampilkan; kalau `link` memintanya,
-  buat password baru dari dashboard (TODO: needs source untuk letak menunya).
+- **`supabase/config.toml` baru ada sejak 15 Sep 2026.** Berkas itu diturunkan
+  dari template `supabase init` CLI 2.117.0 — versi yang di-pin CI (§9) —
+  dengan setelan Auth lokal disamakan dengan keputusan §5. Isinya hanya untuk
+  stack lokal dan CI; setelan proyek remote tetap diatur di dashboard, jadi
+  jangan pernah menjalankan `supabase config push`. Password database acak itu
+  tidak pernah ditampilkan; kalau `link` memintanya, buat password baru dari
+  dashboard (TODO: needs source untuk letak menunya).
+- **Staging disiapkan dengan cara yang sama** (15 Sep 2026), termasuk
+  penyamaan versi migrasi — lihat [§8](#8-staging-dan-data-contoh).
 
 ## 3. Skema
 
@@ -138,6 +158,11 @@ pemetaan tambahan.
 Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 `db push`. Migrasi yang sudah di-push jangan disunting — buat migrasi baru.
 
+Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak,
+`has_password()` satu-satunya security definer, dan isolasi data antar-akun —
+dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
+migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
+
 ## 4. Pemetaan kontrak
 
 | Method kontrak | Di Supabase |
@@ -151,7 +176,8 @@ Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 | `BusinessRepository.getCurrent` | select `business_profiles` (paling banyak satu baris) |
 | `BusinessRepository.create` / `update` | upsert pada `user_id` / update per id |
 | `TransactionRepository.getCategories` | select `tx_categories` urut `sort_order` |
-| `TransactionRepository.getTransactions` | select + `category:tx_categories(*)`, diambil per halaman 1000 baris |
+| `TransactionRepository.getTransactions` | select + `category:tx_categories(*)`, diambil per halaman 1000 baris. Filter `month`/`year` atau `from`/`to` diubah `dateRangeFor` menjadi `date >= from` dan `date < until`; ujung yang kosong tidak difilter |
+| `TransactionRepository.getAggregate` | `rpc('monthly_totals')` → `YearAggregate`; kolom `hpp` menjadi `cogs`, omzet YTD dijumlahkan `monthAggregates()` |
 | `TransactionRepository.getTransaction` | per id; id non-UUID (sisa data contoh) → `null` |
 | `TransactionRepository.createTransaction` | insert; `business_id` diambil dari server, bukan dari perangkat |
 | `TransactionRepository.updateTransaction` / `deleteTransaction` | per id; tidak ada baris tersentuh → 404 |
@@ -320,9 +346,150 @@ ganti isi berkas Pages, lalu nonaktifkan yang lama.
   di mode debug pesan aslinya dicetak ke konsol — biasanya tanda migrasi belum
   di-push.
 
+## 8. Staging dan data contoh
+
+Proyek `catatin-staging` (§1) adalah salinan skema produksi untuk uji FE/BE.
+Ia padanan Supabase untuk "staging environment" di issue #17 dan "contract mock
+server ... running on staging" di issue #18
+([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)), sesuai poin 5
+keputusan D-7 ([sumber](../sumber/github-issue-149-d7-stack-backend.md)).
+
+### Cara disiapkan (15 Sep 2026)
+
+- Dibuat lewat konektor Supabase (MCP) di organisasi `catatin`, paket Free
+  dengan biaya proyek $0/bulan, region `ap-southeast-1`, Postgres 17 — sama
+  dengan produksi.
+- Kedua migrasi diterapkan dengan `apply_migration`, lalu versinya di
+  `supabase_migrations.schema_migrations` disamakan dengan nama berkas lokal.
+  Riwayat migrasi staging kini identik dengan produksi.
+- Sidik jari katalog kedua proyek dibandingkan dan identik: kolom, constraint,
+  kebijakan RLS, fungsi beserta hak eksekusinya, hak tabel, indeks, isi 15
+  kategori, dan status RLS.
+- Security Advisor staging hanya melaporkan lint 0029 untuk `has_password()` —
+  sama dengan produksi dan disengaja (§3). REST tanpa sesi ditolak `401`.
+
+### Auth staging
+
+`GET /auth/v1/settings` staging mengembalikan `external.google: false` dan
+`mailer_autoconfirm: false`: login Google tidak dinyalakan dan *Confirm email*
+menyala. Tanpa identitas Google, celah penggabungan akun di §5 tidak berlaku,
+jadi daftar dengan email dibuka lewat `EMAIL_SIGNUP=true` di
+`app/dart_define.staging.json`.
+
+Tautan konfirmasinya dikirim SMTP bawaan, yang hanya sampai ke alamat anggota
+tim organisasi ([sumber](../sumber/supabase-auth-smtp.md)). **Jangan nyalakan
+login Google di staging tanpa mematikan lagi daftar email dan meninjau ulang
+§5.** Site URL dan Redirect URLs staging belum diatur; kalau halaman setelah
+membuka tautan konfirmasi tidak terbuka, kembali ke aplikasi dan coba masuk.
+
+### Data contoh
+
+`supabase/staging/data_contoh.sql` mengisi satu akun dengan data yang angkanya
+persis contoh kontrak di [Backend & API §3](backend-dan-api.md#3-kontrak-api):
+
+| Method kontrak | Hasil untuk akun itu |
+| --- | --- |
+| `BusinessRepository.getCurrent` | Batik Kencana, pemilik Rizal, `DAGANG`, non-PKP, 3 karyawan |
+| `TransactionRepository.getTransactions` | 60 transaksi Januari–September 2026, termasuk transaksi contoh 5 Agustus 2026 |
+| `DashboardRepository.getSummary(month: 8, year: 2026)` | Pemasukan 28.500.000, pengeluaran 18.200.000, YTD 285.000.000, 12 transaksi |
+| `DashboardRepository.getKpiHistory(KpiMetric.income)` | Januari 19.200.000, Februari 21.500.000, dan seterusnya |
+| `TransactionRepository.getAggregate(year: 2026)` | 12 bulan dari data yang sama |
+| `DashboardRepository.getDeadlines` | Dihitung aplikasi dari status PKP dan jumlah karyawan |
+
+Skrip itu hanya mendefinisikan fungsi sementara
+`pg_temp.isi_data_contoh(p_email, p_timpa)`, yang hilang saat sesi ditutup.
+Fungsinya menolak email yang belum terdaftar, dan menolak akun yang sudah punya
+profil usaha kecuali dipanggil dengan `p_timpa => true` — yang menghapus profil
+beserta seluruh transaksinya lalu mengisi ulang. Kesesuaiannya dengan contoh
+kontrak dijaga tes pgTAP (§9), dan sudah dicoba di staging dalam transaksi
+yang dibatalkan: 1 profil, 60 transaksi, angka per bulan sesuai, tanpa akun
+atau data yang tertinggal.
+
+### Alur uji FE: login → dashboard → transaksi
+
+1. Pemilik organisasi Supabase mengundang akun email FE ke organisasi `catatin`,
+   supaya email konfirmasi sampai.
+2. FE menjalankan aplikasi dengan berkas staging, mendaftar dengan email, lalu
+   membuka tautan konfirmasi:
+
+   ```bash
+   cd app
+   flutter run -d chrome --dart-define-from-file=dart_define.staging.json
+   ```
+
+3. BE membuka SQL Editor proyek staging, menempel seluruh isi
+   `supabase/staging/data_contoh.sql`, menambahkan baris berikut di eksekusi
+   yang sama, lalu menjalankannya:
+
+   ```sql
+   select pg_temp.isi_data_contoh('email-fe@contoh.id');
+   ```
+
+4. FE masuk, onboarding terlewati karena profil usaha sudah ada, lalu mencatat,
+   mengubah, dan menghapus satu transaksi dan memastikan dashboard ikut berubah.
+
+Staging juga dijeda setelah seminggu tidak aktif (T-19 di
+[backlog teknis](../proyek/backlog-teknis.md)). Migrasi baru diterapkan ke
+staging lebih dulu, baru ke produksi
+([Rilis & deploy](../panduan/rilis-dan-deploy.md)).
+
+## 9. CI database
+
+Workflow `.github/workflows/supabase.yml` berjalan pada setiap push dan PR yang
+menyentuh `supabase/**` atau workflow itu sendiri. Ia tidak menyentuh proyek
+remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
+
+| Langkah | Perintah | Menangkap |
+| --- | --- | --- |
+| Build | `supabase db start` | Migrasi yang tidak bisa dijalankan berurutan di database kosong ([sumber](../sumber/supabase-setup-cli-action.md)) |
+| Lint | `supabase db lint --level warning --fail-on warning` | Galat fungsi yang baru muncul saat dijalankan, lewat `plpgsql_check`. Tanpa `--fail-on`, perintah ini selalu keluar dengan status 0 ([sumber](../sumber/supabase-testing-pgtap.md)) |
+| Tes | `supabase test db` | `supabase/tests/database/*.test.sql` |
+| Tes data contoh | `supabase test db supabase/staging/data_contoh.test.sql` | Skrip data contoh menyimpang dari contoh kontrak |
+
+CLI di-pin ke versi 2.117.0 lewat `supabase/setup-cli@v3`
+([sumber](../sumber/supabase-setup-cli-action.md)); `supabase/config.toml`
+diturunkan dari template versi yang sama.
+
+**Isi tes pgTAP:**
+
+- `01_skema.test.sql` (26 tes) — tabel ada, RLS menyala, kebijakan persis
+  sesuai migrasi, `anon` tanpa hak tabel maupun fungsi, hak `authenticated`,
+  dan `has_password()` satu-satunya security definer dengan `search_path`
+  kosong.
+- `02_rls_isolasi.test.sql` (17 tes) — uji isolasi 13 Sep 2026 yang dulu manual
+  ([log progres](../proyek/log-progres.md)): B tidak melihat, mengubah, atau
+  menghapus data A, dan tidak bisa mencatat ke usaha A maupun menyamar sebagai
+  A; A tidak bisa memindahkan transaksi ke usaha B; `monthly_totals` dan
+  `has_password()` benar; `anon` ditolak.
+- `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
+  menghasilkan angka contoh kontrak.
+
+Pengguna fiktif dibuat langsung di `auth.users` dan sesi dipasang dengan
+`set local role authenticated` plus klaim JWT, di dalam transaksi yang
+di-rollback ([sumber](../sumber/supabase-testing-pgtap.md)).
+
+**Kenapa tes data contoh terpisah.** Tanpa argumen, `supabase test db` hanya
+me-mount `supabase/tests` ke container `pg_prove`, sehingga `\ir` ke berkas di
+luar folder itu gagal — run CI pertama membuktikannya. Kalau diberi path berkas,
+CLI me-mount folder induknya, jadi tes bisa meng-include skrip di sebelahnya
+([sumber](../sumber/supabase-cli-test-db-mount.md)). Jangan beri path folder
+`supabase/staging`: `pg_prove` menjalankan semua berkas `.sql` di sana sebagai
+tes, termasuk `data_contoh.sql` ([sumber](../sumber/supabase-cli-test-db-mount.md)).
+
+Run hijau pertama pada 15 Sep 2026: build menjalankan kedua migrasi, lint
+"No schema errors found", 43 tes pgTAP dan 10 tes data contoh lulus. Menjalankan
+secara lokal butuh Docker dan Supabase CLI:
+
+```bash
+npx supabase db start
+npx supabase db lint --level warning --fail-on warning
+npx supabase test db
+npx supabase test db supabase/staging/data_contoh.test.sql
+```
+
 ## Halaman terkait
 
-- [Backend & API](backend-dan-api.md) — mode sumber data dan kontrak REST.
+- [Backend & API](backend-dan-api.md) — mode sumber data, lingkungan, kontrak REST, dan draf skema mesin tarif (§7).
 - [Rilis & deploy](../panduan/rilis-dan-deploy.md) — urutan push skema dan rilis.
 - [Kontribusi](../panduan/kontribusi.md) — aturan rahasia di repo.
 - [Backlog teknis](../proyek/backlog-teknis.md) — T-11 (sesi di web), T-16, T-17, T-18 (daftar email menunggu SMTP), T-19 (proyek Free dijeda), T-20 (uji login Google di Android).

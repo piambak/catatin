@@ -25,6 +25,9 @@ pelanggaran gaya markdown.
 | Menyiapkan atau memakai Supabase | [Supabase](arsitektur/supabase.md) |
 | Mengatur login Google atau kata sandi akun | [Supabase §5](arsitektur/supabase.md#5-pengaturan-auth) |
 | Paham mode sumber data dan kontrak REST | [Backend & API](arsitektur/backend-dan-api.md) |
+| Menguji aplikasi di staging dengan data contoh | [Supabase §8](arsitektur/supabase.md#8-staging-dan-data-contoh) |
+| Mengubah skema database dan menjalankan tesnya | [Supabase §9](arsitektur/supabase.md#9-ci-database) |
+| Melihat rancangan tabel konfigurasi tarif pajak | [Backend & API §7](arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax) |
 | Tahu dari mana angka pajaknya datang | [Aturan pajak](domain/aturan-pajak.md) |
 | Paham arti PKP, PTKP, TER, HPP | [Glosarium](domain/glosarium.md) |
 | Merilis atau melakukan rollback | [Rilis & deploy](panduan/rilis-dan-deploy.md) |
@@ -50,12 +53,13 @@ pelanggaran gaya markdown.
 - **[Gambaran umum](arsitektur/gambaran-umum.md)** — bentuk repo, lapisan
   aplikasi, isi `app/lib/`, tema, aset.
 - **[Supabase](arsitektur/supabase.md)** — backend situs publik (proyek
-  `catatin`): menyiapkan proyek, skema & RLS, pemetaan kontrak, pengaturan Auth
-  (login Google, Confirm email, satu akun dua cara masuk), kunci mana yang boleh
-  di-commit.
+  `catatin`) dan staging (`catatin-staging`): menyiapkan proyek, skema & RLS,
+  pemetaan kontrak, pengaturan Auth (login Google, Confirm email, satu akun dua
+  cara masuk), kunci mana yang boleh di-commit, data contoh staging, CI database.
 - **[Backend & API](arsitektur/backend-dan-api.md)** — empat mode sumber data,
-  kontrak REST tiap endpoint dengan contoh JSON, CORS, cara menyalakan backend
-  di situs publik.
+  lingkungan backend, kontrak REST tiap endpoint dengan contoh JSON (termasuk
+  rentang tanggal, agregat tahunan, bentuk galat), CORS, cara menyalakan backend
+  di situs publik, draf skema mesin tarif pajak.
 - **[Aset](arsitektur/aset.md)** — font, gambar, ikon PWA, pertimbangan ukuran
   bundel web.
 
@@ -106,6 +110,20 @@ sumbernya berubah, simpan salinan baru.
 - **[GitHub: issue #149 & #16 (D-7)](sumber/github-issue-149-d7-stack-backend.md)**
   — keputusan stack backend BaaS (Supabase) bersama PO dan rationale lima
   barisnya.
+- **[GitHub: issue #17–#20 (Backend Minggu 1)](sumber/github-issue-17-20-backend-minggu-1.md)**
+  — repo/CI/staging, mock server kontrak, PR kontrak transaksi, skema mesin
+  tarif, plus judul issue lanjutan yang merujuknya.
+- **[Supabase: pgTAP, lint, CI](sumber/supabase-testing-pgtap.md)** —
+  `supabase test db`, `supabase db lint --fail-on`, contoh workflow CI.
+- **[supabase/setup-cli](sumber/supabase-setup-cli-action.md)** — pin versi CLI
+  di GitHub Actions, `supabase db start` menjalankan semua migrasi dari nol.
+- **[Supabase CLI: mount `test db`](sumber/supabase-cli-test-db-mount.md)** —
+  folder yang di-mount ke `pg_prove` dan ekstensi berkas yang dijalankan.
+- **[Supabase: RLS `auth.jwt()`](sumber/supabase-rls-auth-jwt.md)** —
+  `app_metadata` untuk otorisasi, `user_metadata` bisa diubah pengguna.
+- **[PostgreSQL 17: range types](sumber/postgres-range-exclusion.md)** — batas
+  inklusif/eksklusif, range tanpa batas, exclusion constraint dengan
+  `btree_gist`.
 
 ---
 

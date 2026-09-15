@@ -1,4 +1,11 @@
-# Rilis & Deploy
+---
+title: Rilis & Deploy
+description: Alur publikasi web otomatis dan manual, urutan rilis yang mengubah skema database (CI, staging, produksi), menguji hasil build lokal, rollback, pindah domain, dan menaikkan versi.
+tags:
+  - panduan
+  - rilis
+  - deploy
+---
 
 ## Ringkas
 
@@ -9,6 +16,8 @@
 | **Base href** | `/catatin/` |
 | **Pemicu** | push ke `main` yang menyentuh `app/**` |
 | **Backend** | Supabase, dikonfigurasi di `app/dart_define.pages.json` — lihat [Supabase](../arsitektur/supabase.md) |
+| **Staging** | Proyek Supabase `catatin-staging`, `app/dart_define.staging.json` — tidak pernah dipakai build situs publik |
+| **CI database** | `.github/workflows/supabase.yml`, pemicu: perubahan `supabase/**` |
 | **Cadangan** | branch `backup(stable-version)` |
 
 ## Alur otomatis
@@ -96,11 +105,27 @@ git push origin main
 
 ## Rilis yang mengubah skema database
 
-Migrasi di `supabase/migrations/` **tidak** diterapkan workflow mana pun.
-Terapkan dulu ke proyek Supabase, baru gabungkan perubahan aplikasi yang
-membutuhkannya:
+Setiap perubahan di `supabase/**` dicek workflow `supabase.yml`: semua migrasi
+dijalankan dari nol di Postgres lokal runner, di-lint, lalu dites pgTAP
+(skema, hak akses, isolasi RLS, dan data contoh staging). Workflow itu **tidak**
+menerapkan migrasi ke proyek remote mana pun — rincian dan cara menjalankannya
+lokal di [Supabase §9](../arsitektur/supabase.md#9-ci-database).
+
+Urutan untuk migrasi baru:
+
+1. Workflow `Supabase` hijau untuk commit yang membawa migrasinya.
+2. Terapkan ke **staging** (`catatin-staging`), lalu uji alur yang terdampak
+   dengan `app/dart_define.staging.json`
+   ([Supabase §8](../arsitektur/supabase.md#8-staging-dan-data-contoh)).
+3. Terapkan ke **produksi** (`catatin`).
+4. Baru gabungkan perubahan aplikasi yang membutuhkannya ke `main`.
+
+Menerapkan ke satu proyek — `link` menentukan proyek mana yang dituju, jadi
+pastikan ref-nya benar sebelum `push` (staging `herafvadqziftszhxqeq`, produksi
+`mhoadvaiarjbbzlltqxy`):
 
 ```bash
+npx supabase link --project-ref <ref>
 npx supabase db push --dry-run
 npx supabase db push
 ```

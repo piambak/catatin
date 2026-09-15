@@ -1,4 +1,10 @@
-# Aturan Pajak yang Dipakai Catatin
+---
+title: Aturan Pajak yang Dipakai Catatin
+description: Aturan dan batasan PPh Final 0,5% (PP 23/2018), PPh 21 TER (PMK 168/2023), PTKP, PPN, simulasi skenario, kalender jatuh tempo, bug tarif yang diketahui, dan rencana konfigurasi tarif berversi.
+tags:
+  - domain
+  - pajak
+---
 
 Seluruh perhitungan pajak Catatin hidup di satu berkas:
 `app/lib/core/services/simulator_service.dart` (415 baris), dengan konstantanya
@@ -172,6 +178,20 @@ sementara rupiah di layar yang sama dihitung dengan tarif lain.
 Menyalin 32 baris itu ke wiki akan mengulang persis kesalahan yang sama, hanya
 di tempat yang lebih sulit diuji. Satu daftar, di `app_constants.dart`, dijaga
 tes.
+
+---
+
+## Rencana: angka pindah ke konfigurasi berversi
+
+Konstanta di `app_constants.dart` direncanakan pindah ke tabel konfigurasi pajak
+berversi di database, supaya pakar pajak bisa memperbarui angka tanpa rilis
+aplikasi. Drafnya — tabel `tax_rates`, `ptkp`, versi yang dikunci setelah
+disetujui, dan hanya peran TAX yang boleh menulis — ada di
+[Backend & API §7](../arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax)
+dan menunggu review pakar pajak. Draf itu juga tidak memuat angka: aturan "satu
+daftar, dijaga tes" di atas tetap berlaku, hanya tempat daftarnya yang berpindah.
+Sampai migrasinya diterapkan, kode di `simulator_service.dart` tetap sumber
+kebenaran.
 
 ---
 
