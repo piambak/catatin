@@ -1,0 +1,48 @@
+name: Supabase
+
+# Menjaga skema database: setiap perubahan di supabase/ dibangun dari nol di
+# Postgres lokal runner, di-lint, lalu dites pgTAP (RLS & hak akses).
+#
+# Tidak menyentuh proyek remote mana pun (produksi `catatin` maupun staging
+# `catatin-staging`) dan tidak butuh secret. Menerapkan migrasi ke proyek remote
+# tetap langkah manual — lihat wiki/panduan/rilis-dan-deploy.md.
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase.yml'
+  push:
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    name: Build, lint, test database
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v3
+        with:
+          # Versi yang dipakai memverifikasi repo ini (template config.toml
+          # berasal dari versi yang sama). Naikkan dengan sadar, bukan `latest`.
+          version: 2.117.0
+
+      - name: Build — jalankan semua migrasi di database kosong
+        # Gagal kalau ada migrasi yang tidak bisa dijalankan berurutan dari nol,
+        # mis. berkas yang disunting setelah diterapkan ke proyek remote.
+        run: supabase db start
+
+      - name: Lint (plpgsql_check)
+        run: supabase db lint --level warning --fail-on warning
+
+      - name: Tes pgTAP
+        run: supabase test db
+
