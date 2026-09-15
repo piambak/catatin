@@ -12,6 +12,26 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-15** — Backend + PO — **D-7: backend tetap Supabase (BaaS), bukan
+  server buatan sendiri.** Diputuskan bersama PO untuk issue #16; rationale
+  lima barisnya dicatat di
+  [komentar issue #149](https://github.com/piambak/catatin/issues/149#issuecomment-5682205925).
+  **Alasan:** Supabase sudah tayang dan teruji sejak 13 Sep — Auth dengan login
+  Google, tiga tabel ber-RLS, `monthly_totals` ([Supabase](../arsitektur/supabase.md)).
+  Tim hanya satu backend untuk sembilan minggu ([linimasa](linimasa.md)), jadi
+  tidak ada server, TLS, CORS, rotasi token, atau hosting yang perlu dirawat.
+  Kebutuhan roadmap direncanakan memakai padanan di platform: konfigurasi tarif
+  berversi di tabel Postgres + RLS peran admin, lampiran struk di Storage,
+  transaksi berulang lewat `pg_cron`, mesin tarif dan CSV lewat fungsi SQL atau
+  Edge Functions yang dites dengan pgTAP terhadap `kasus-*.csv`.
+  **Risiko yang diterima:** paket Free dijeda setelah seminggu tidak aktif,
+  tanpa backup otomatis, dan maksimal dua proyek aktif
+  ([sumber](../sumber/supabase-pricing-pausing.md)) — T-19 di
+  [backlog teknis](backlog-teknis.md) wajib diputuskan sebelum M5.
+  **Konsekuensi:** issue yang ditulis untuk backend REST kustom (#17, #18, #39,
+  #43, #129) perlu disesuaikan PO ke padanan Supabase; mode `api` (Dio) tetap
+  ada sebagai cadangan, bukan target.
+
 - **2026-09-15** — Backend — **Rujukan `docs/` di issue GitHub diarahkan ke
   `wiki/`.** 33 issue terbuka masih menyebut `docs/…` atau nama berkas lama di
   judul, catatan, dan komentar penugasannya; semuanya kini menunjuk path wiki.

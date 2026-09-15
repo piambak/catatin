@@ -3,8 +3,10 @@
 Aplikasi ini sudah dirancang untuk hidup **dengan atau tanpa** backend. Halaman
 ini menjelaskan mode sumber data dan kontrak API REST yang diharapkan klien.
 
-Backend yang dipakai sekarang adalah **Supabase**. Cara menyiapkannya, skema,
-dan pemetaan kontraknya ada di halaman tersendiri: [Supabase](supabase.md).
+Backend yang dipakai sekarang adalah **Supabase** — keputusan D-7 (15 Sep 2026)
+memilih BaaS, bukan server buatan sendiri; alasannya di
+[log progres](../proyek/log-progres.md). Cara menyiapkannya, skema, dan pemetaan
+kontraknya ada di halaman tersendiri: [Supabase](supabase.md).
 
 ---
 
