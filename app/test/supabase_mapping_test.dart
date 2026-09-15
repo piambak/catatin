@@ -318,6 +318,34 @@ void main() {
       expect(dateRangeFor(year: 2025, now: now)!.until, '2026-01-01');
       expect(dateRangeFor(month: 5, now: now)!.from, '2026-05-01');
     });
+
+    test('from/to inklusif: until sehari setelah to, jam diabaikan', () {
+      final r = dateRangeFor(
+        from: DateTime(2026, 8, 1, 23, 59),
+        to: DateTime(2026, 8, 31, 8),
+        now: now,
+      )!;
+      expect(r.from, '2026-08-01');
+      expect(r.until, '2026-09-01');
+    });
+
+    test('from atau to saja → ujung lainnya terbuka', () {
+      expect(dateRangeFor(from: DateTime(2026, 3, 5), now: now)!.until, isNull);
+      final r = dateRangeFor(to: DateTime(2026, 12, 31), now: now)!;
+      expect(r.from, isNull);
+      expect(r.until, '2027-01-01');
+    });
+  });
+
+  group('monthTotalsFromRows', () {
+    test('kolom hpp database jadi cogs kontrak', () {
+      final totals = monthTotalsFromRows([
+        {'month': 8, 'income': 28500000, 'expense': 18200000.0, 'hpp': 9100000, 'tx_count': 12},
+      ]);
+      expect(totals.single.month, 8);
+      expect(totals.single.cogs, 9100000);
+      expect(totals.single.txCount, 12);
+    });
   });
 
   group('oauthRedirectUrl', () {

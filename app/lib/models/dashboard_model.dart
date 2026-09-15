@@ -34,6 +34,110 @@ class MonthlySummary {
   }
 }
 
+// ── Agregat tahunan (`GET /transactions/aggregate`) ───────────────────────────
+
+/// Angka mentah satu bulan sebelum diolah [monthAggregates]: pemasukan,
+/// pengeluaran, bagian pengeluaran yang HPP, dan jumlah transaksi.
+typedef MonthTotals = ({
+  int month,
+  double income,
+  double expense,
+  double cogs,
+  int txCount,
+});
+
+/// Angka satu bulan di [YearAggregate].
+class MonthAggregate {
+  /// 1 (Januari) sampai 12 (Desember).
+  final int month;
+  final double income;
+  final double expense;
+
+  /// Bagian [expense] dari kategori HPP (`is_cogs`).
+  final double cogs;
+  final int txCount;
+
+  /// Pemasukan Januari sampai bulan ini — omzet berjalan untuk ambang PKP.
+  final double ytdOmzet;
+
+  const MonthAggregate({
+    required this.month,
+    required this.income,
+    required this.expense,
+    required this.cogs,
+    required this.txCount,
+    required this.ytdOmzet,
+  });
+
+  double get profit => income - expense;
+
+  factory MonthAggregate.fromJson(Map<String, dynamic> j) => MonthAggregate(
+        month: (j['month'] as num).toInt(),
+        income: (j['income'] as num?)?.toDouble() ?? 0,
+        expense: (j['expense'] as num?)?.toDouble() ?? 0,
+        cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
+        txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
+        ytdOmzet: (j['ytd_omzet'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Dua belas bulan [MonthAggregate], Januari di indeks 0. Bulan yang tidak ada
+/// di [totals] bernilai nol.
+///
+/// Omzet YTD dijumlahkan di sini dan hanya di sini — ringkasan dashboard,
+/// grafik KPI, dan agregat tahunan semuanya lewat fungsi ini supaya aturannya
+/// tidak bercabang (pelajaran T-13).
+List<MonthAggregate> monthAggregates(Iterable<MonthTotals> totals) {
+  final byMonth = {for (final t in totals) t.month: t};
+  final result = <MonthAggregate>[];
+  var ytd = 0.0;
+  for (var m = 1; m <= 12; m++) {
+    final t = byMonth[m];
+    ytd += t?.income ?? 0;
+    result.add(MonthAggregate(
+      month: m,
+      income: t?.income ?? 0,
+      expense: t?.expense ?? 0,
+      cogs: t?.cogs ?? 0,
+      txCount: t?.txCount ?? 0,
+      ytdOmzet: ytd,
+    ));
+  }
+  return result;
+}
+
+/// Pemasukan, pengeluaran, dan HPP per bulan dalam satu tahun — bahan Simulator
+/// dan ringkasan tutup bulan.
+class YearAggregate {
+  final int year;
+
+  /// Selalu 12 bulan, Januari di indeks 0.
+  final List<MonthAggregate> months;
+
+  const YearAggregate({required this.year, required this.months});
+
+  factory YearAggregate.fromMonthlyTotals(
+    int year,
+    Iterable<MonthTotals> totals,
+  ) =>
+      YearAggregate(year: year, months: monthAggregates(totals));
+
+  factory YearAggregate.fromJson(Map<String, dynamic> j) => YearAggregate(
+        year: (j['year'] as num).toInt(),
+        months: (j['months'] as List)
+            .map((e) => MonthAggregate.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+
+  /// Angka bulan [month] (1–12).
+  MonthAggregate operator [](int month) => months[month - 1];
+
+  double get totalIncome => months.fold(0, (sum, m) => sum + m.income);
+  double get totalExpense => months.fold(0, (sum, m) => sum + m.expense);
+  double get totalCogs => months.fold(0, (sum, m) => sum + m.cogs);
+  int get totalTxCount => months.fold(0, (sum, m) => sum + m.txCount);
+}
+
 /// Satu titik pada grafik riwayat KPI (`{month, value}`).
 class KpiPoint {
   final String month;

@@ -174,14 +174,21 @@ class MockTransactionRepository implements TransactionRepository {
   Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
   }) async {
+    checkTransactionFilter(month: month, year: year, from: from, to: to);
     await Future.delayed(MockData.latency);
-    return _all
-        .where((t) =>
-            (month == null || t.date.month == month) &&
-            (year == null || t.date.year == year))
-        .toList();
+    final start = from == null ? null : dateOnly(from);
+    final end = to == null ? null : dateOnly(to);
+    return _all.where((t) {
+      final day = dateOnly(t.date);
+      return (month == null || t.date.month == month) &&
+          (year == null || t.date.year == year) &&
+          (start == null || !day.isBefore(start)) &&
+          (end == null || !day.isAfter(end));
+    }).toList();
   }
 
   @override
@@ -253,6 +260,27 @@ class MockTransactionRepository implements TransactionRepository {
     _added.removeWhere((t) => t.id == id);
     _deleted.add(id);
     return true;
+  }
+
+  /// Dihitung dari daftar transaksi contoh, jadi transaksi yang ditambah atau
+  /// dihapus selama sesi ikut terhitung.
+  @override
+  Future<YearAggregate> getAggregate({required int year}) async {
+    await Future.delayed(MockData.latency);
+    final totals = <int, MonthTotals>{};
+    for (final t in _all.where((t) => t.date.year == year)) {
+      final m = t.date.month;
+      final prev = totals[m] ??
+          (month: m, income: 0.0, expense: 0.0, cogs: 0.0, txCount: 0);
+      totals[m] = (
+        month: m,
+        income: prev.income + (t.isIncome ? t.amount : 0),
+        expense: prev.expense + (t.isIncome ? 0 : t.amount),
+        cogs: prev.cogs + (!t.isIncome && t.category.isCogs ? t.amount : 0),
+        txCount: prev.txCount + 1,
+      );
+    }
+    return YearAggregate.fromMonthlyTotals(year, totals.values);
   }
 }
 

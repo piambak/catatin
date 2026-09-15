@@ -86,9 +86,18 @@ abstract class BusinessRepository {
 abstract class TransactionRepository {
   Future<List<TxCategoryData>> getCategories();
 
+  /// Transaksi terbaru lebih dulu. Tanpa filter apa pun, seluruh transaksi
+  /// dikembalikan.
+  ///
+  /// Filternya dua pasang yang tidak boleh dicampur (lihat
+  /// [checkTransactionFilter]): [month]/[year] — [month] tanpa [year] berarti
+  /// tahun berjalan — atau rentang [from]/[to] yang inklusif di kedua ujung,
+  /// boleh salah satunya saja. Jam pada [from]/[to] diabaikan.
   Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
   });
 
@@ -100,7 +109,34 @@ abstract class TransactionRepository {
   Future<bool> updateTransaction(String id, TransactionDraft draft);
 
   Future<bool> deleteTransaction(String id);
+
+  /// Pemasukan, pengeluaran, HPP, jumlah transaksi, dan omzet YTD per bulan
+  /// sepanjang [year] — selalu 12 bulan.
+  Future<YearAggregate> getAggregate({required int year});
 }
+
+/// Menolak filter [TransactionRepository.getTransactions] yang saling
+/// bertentangan, sama dengan balasan 400 `validation_failed` di kontrak REST.
+///
+/// Dipanggil setiap implementasi sebelum menyentuh data, jadi campuran yang
+/// salah gagal di semua mode — bukan hanya saat tersambung backend.
+void checkTransactionFilter({
+  int? month,
+  int? year,
+  DateTime? from,
+  DateTime? to,
+}) {
+  if ((from != null || to != null) && (month != null || year != null)) {
+    throw ArgumentError('Filter from/to tidak boleh dicampur dengan month/year.');
+  }
+  if (from != null && to != null && dateOnly(to).isBefore(dateOnly(from))) {
+    throw ArgumentError.value(to, 'to', 'harus sama dengan atau setelah from');
+  }
+}
+
+/// [value] tanpa jam, menit, dan detik.
+DateTime dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 
 /// Metrik yang bisa ditarik riwayat bulanannya untuk grafik KPI.
 enum KpiMetric { income, expense, profit, ytd }

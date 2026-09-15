@@ -131,13 +131,23 @@ class HybridTransactionRepository implements TransactionRepository {
   Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
   }) =>
       _orFallback(
         () => api.getTransactions(
-            month: month, year: year, businessId: businessId),
+            month: month,
+            year: year,
+            from: from,
+            to: to,
+            businessId: businessId),
         () => mock.getTransactions(
-            month: month, year: year, businessId: businessId),
+            month: month,
+            year: year,
+            from: from,
+            to: to,
+            businessId: businessId),
       );
 
   @override
@@ -163,6 +173,12 @@ class HybridTransactionRepository implements TransactionRepository {
   Future<bool> deleteTransaction(String id) => _orFallback(
         () => api.deleteTransaction(id),
         () => mock.deleteTransaction(id),
+      );
+
+  @override
+  Future<YearAggregate> getAggregate({required int year}) => _orFallback(
+        () => api.getAggregate(year: year),
+        () => mock.getAggregate(year: year),
       );
 }
 

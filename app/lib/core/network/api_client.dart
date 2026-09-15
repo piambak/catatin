@@ -19,12 +19,20 @@ import '../services/storage_service.dart';
 class ApiException implements Exception {
   final int statusCode;
   final String message;
+
+  /// Pesan per field dari `details` galat REST, mis. `{'amount': 'harus > 0'}`.
   final Map<String, dynamic>? errors;
+
+  /// Kode mesin dari galat REST, mis. `validation_failed` — lihat bagian
+  /// "Bentuk error" di `wiki/arsitektur/backend-dan-api.md`. `null` untuk galat
+  /// jaringan dan mode Supabase.
+  final String? code;
 
   const ApiException({
     required this.statusCode,
     required this.message,
     this.errors,
+    this.code,
   });
 
   @override
@@ -133,12 +141,6 @@ class _AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response != null) {
       final statusCode = err.response!.statusCode ?? 0;
-      final data = err.response!.data;
-      final message = data is Map
-          ? (data['error'] ?? data['message'] ?? 'Error').toString()
-          : 'Error';
-      final errors =
-          data is Map ? data['details'] as Map<String, dynamic>? : null;
 
       // Coba perpanjang sesi sekali saat 401.
       if (statusCode == 401 && !_isRefreshing) {
@@ -172,8 +174,7 @@ class _AuthInterceptor extends Interceptor {
         DioException(
           requestOptions: err.requestOptions,
           response: err.response,
-          error: ApiException(
-              statusCode: statusCode, message: message, errors: errors),
+          error: apiExceptionFromResponse(statusCode, err.response!.data),
         ),
       );
       return;
@@ -193,6 +194,28 @@ class _AuthInterceptor extends Interceptor {
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────────
+
+/// Body galat REST → [ApiException], mengikuti bentuk
+/// `{ "error": …, "code": …, "details": { field: pesan } }`.
+///
+/// `message` diterima sebagai alias `error`. `details` yang bukan objek atau
+/// kosong dibuang, supaya [ApiException.errors] hanya pernah berisi pesan per
+/// field yang benar-benar ada.
+ApiException apiExceptionFromResponse(int statusCode, Object? data) {
+  if (data is! Map) {
+    return ApiException(statusCode: statusCode, message: 'Error');
+  }
+  final details = data['details'];
+  final code = data['code'];
+  return ApiException(
+    statusCode: statusCode,
+    message: (data['error'] ?? data['message'] ?? 'Error').toString(),
+    errors: details is Map<String, dynamic> && details.isNotEmpty
+        ? details
+        : null,
+    code: code is String ? code : null,
+  );
+}
 
 /// Mengambil [ApiException] dari error apa pun yang keluar dari Dio.
 ApiException apiException(Object error) {

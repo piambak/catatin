@@ -277,36 +277,44 @@ class SupabaseTransactionRepository implements TransactionRepository {
         return rows.map(TxCategoryData.fromJson).toList();
       });
 
-  /// Tanpa [month] dan [year], seluruh transaksi dikembalikan — layar
-  /// Pencatatan menggulir bulan dan tahun sendiri. [month] tanpa [year] berarti
-  /// bulan itu di tahun berjalan.
+  /// Tanpa filter, seluruh transaksi dikembalikan — layar Pencatatan menggulir
+  /// bulan dan tahun sendiri.
   @override
   Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
-  }) =>
-      runSupabase(() async {
-        final range = dateRangeFor(month: month, year: year, now: DateTime.now());
-        final result = <TxData>[];
-        for (var from = 0;; from += _pageSize) {
-          var query = _db.from(_txTable).select(_txWithCategory);
-          if (range != null) {
-            query = query.gte('date', range.from).lt('date', range.until);
-          }
-          if (businessId != null && isUuid(businessId)) {
-            query = query.eq('business_id', businessId);
-          }
-          final page = await query
-              .order('date', ascending: false)
-              .order('created_at', ascending: false)
-              .order('id', ascending: false)
-              .range(from, from + _pageSize - 1);
-          result.addAll(page.map(TxData.fromJson));
-          if (page.length < _pageSize) break;
+  }) {
+    checkTransactionFilter(month: month, year: year, from: from, to: to);
+    return runSupabase(() async {
+      final range = dateRangeFor(
+        month: month,
+        year: year,
+        from: from,
+        to: to,
+        now: DateTime.now(),
+      );
+      final result = <TxData>[];
+      for (var offset = 0;; offset += _pageSize) {
+        var query = _db.from(_txTable).select(_txWithCategory);
+        if (range?.from case final start?) query = query.gte('date', start);
+        if (range?.until case final end?) query = query.lt('date', end);
+        if (businessId != null && isUuid(businessId)) {
+          query = query.eq('business_id', businessId);
         }
-        return result;
-      });
+        final page = await query
+            .order('date', ascending: false)
+            .order('created_at', ascending: false)
+            .order('id', ascending: false)
+            .range(offset, offset + _pageSize - 1);
+        result.addAll(page.map(TxData.fromJson));
+        if (page.length < _pageSize) break;
+      }
+      return result;
+    });
+  }
 
   @override
   Future<TxData?> getTransaction(String id) async {
@@ -357,6 +365,15 @@ class SupabaseTransactionRepository implements TransactionRepository {
       return true;
     });
   }
+
+  /// Fungsi Postgres yang sama dengan ringkasan dashboard — tidak ada tabel
+  /// atau fungsi agregat kedua di database.
+  @override
+  Future<YearAggregate> getAggregate({required int year}) =>
+      runSupabase(() async {
+        final rows = await _monthlyTotals(year);
+        return YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(rows));
+      });
 
   Future<String> _currentBusinessId() async {
     final row = await _db.from(_businessTable).select('id').maybeSingle();
@@ -419,12 +436,12 @@ class SupabaseDashboardRepository implements DashboardRepository {
         final rows = await _monthlyTotals(now.year);
         return kpiFromMonthlyTotals(rows, metric, upToMonth: now.month);
       });
+}
 
-  /// Satu baris per bulan dari fungsi Postgres `monthly_totals`.
-  Future<List<Map<String, dynamic>>> _monthlyTotals(int year) async {
-    final data = await _db.rpc('monthly_totals', params: {'p_year': year});
-    return (data as List).cast<Map<String, dynamic>>();
-  }
+/// Satu baris per bulan dari fungsi Postgres `monthly_totals`.
+Future<List<Map<String, dynamic>>> _monthlyTotals(int year) async {
+  final data = await _db.rpc('monthly_totals', params: {'p_year': year});
+  return (data as List).cast<Map<String, dynamic>>();
 }
 
 // ── Helper murni (dites di test/supabase_mapping_test.dart) ───────────────────
@@ -453,11 +470,26 @@ double numValue(Object? value) => switch (value) {
 
 /// Rentang tanggal `[from, until)` berformat `YYYY-MM-DD`, atau `null` kalau
 /// tidak ada filter sama sekali.
-({String from, String until})? dateRangeFor({
+///
+/// [month]/[year] menghasilkan rentang tertutup satu bulan atau satu tahun.
+/// [from]/[to] inklusif, jadi `until` adalah sehari setelah [to]; ujung yang
+/// tidak diisi dibiarkan `null` (terbuka). Campuran keduanya ditolak lebih dulu
+/// oleh `checkTransactionFilter`.
+({String? from, String? until})? dateRangeFor({
   int? month,
   int? year,
+  DateTime? from,
+  DateTime? to,
   required DateTime now,
 }) {
+  if (from != null || to != null) {
+    return (
+      from: from == null ? null : Tanggal.api(dateOnly(from)),
+      until: to == null
+          ? null
+          : Tanggal.api(DateTime(to.year, to.month, to.day + 1)),
+    );
+  }
   if (month == null && year == null) return null;
   final y = year ?? now.year;
   return month == null
@@ -468,31 +500,33 @@ double numValue(Object? value) => switch (value) {
         );
 }
 
+/// Baris `monthly_totals` → angka mentah per bulan. Kolom `hpp` di database
+/// adalah `cogs` di kontrak.
+List<MonthTotals> monthTotalsFromRows(List<Map<String, dynamic>> rows) => [
+      for (final row in rows)
+        (
+          month: numValue(row['month']).toInt(),
+          income: numValue(row['income']),
+          expense: numValue(row['expense']),
+          cogs: numValue(row['hpp']),
+          txCount: numValue(row['tx_count']).toInt(),
+        ),
+    ];
+
 /// Baris `monthly_totals` → ringkasan satu bulan. Omzet YTD adalah pemasukan
 /// Januari sampai [month].
 MonthlySummary summaryFromMonthlyTotals(
   List<Map<String, dynamic>> rows, {
   required int month,
 }) {
-  var income = 0.0, expense = 0.0, ytd = 0.0;
-  var count = 0;
-  for (final row in rows) {
-    final m = numValue(row['month']).toInt();
-    final rowIncome = numValue(row['income']);
-    if (m <= month) ytd += rowIncome;
-    if (m == month) {
-      income = rowIncome;
-      expense = numValue(row['expense']);
-      count = numValue(row['tx_count']).toInt();
-    }
-  }
+  final m = monthAggregates(monthTotalsFromRows(rows))[month - 1];
   // Lewat fromJson supaya persentase ambang PKP tetap dihitung di satu tempat.
   return MonthlySummary.fromJson({
-    'monthly_income': income,
-    'monthly_expense': expense,
-    'monthly_profit': income - expense,
-    'ytd_omzet': ytd,
-    'tx_count': count,
+    'monthly_income': m.income,
+    'monthly_expense': m.expense,
+    'monthly_profit': m.profit,
+    'ytd_omzet': m.ytdOmzet,
+    'tx_count': m.txCount,
   });
 }
 
@@ -503,25 +537,19 @@ List<KpiPoint> kpiFromMonthlyTotals(
   KpiMetric metric, {
   required int upToMonth,
 }) {
-  final byMonth = {for (final r in rows) numValue(r['month']).toInt(): r};
   final label = DateFormat.MMM('id_ID');
-  final points = <KpiPoint>[];
-  var ytd = 0.0;
-  for (var m = 1; m <= upToMonth; m++) {
-    final income = numValue(byMonth[m]?['income']);
-    final expense = numValue(byMonth[m]?['expense']);
-    ytd += income;
-    points.add(KpiPoint(
-      month: label.format(DateTime(2000, m)),
-      value: switch (metric) {
-        KpiMetric.income => income,
-        KpiMetric.expense => expense,
-        KpiMetric.profit => income - expense,
-        KpiMetric.ytd => ytd,
-      },
-    ));
-  }
-  return points;
+  return [
+    for (final m in monthAggregates(monthTotalsFromRows(rows)).take(upToMonth))
+      KpiPoint(
+        month: label.format(DateTime(2000, m.month)),
+        value: switch (metric) {
+          KpiMetric.income => m.income,
+          KpiMetric.expense => m.expense,
+          KpiMetric.profit => m.profit,
+          KpiMetric.ytd => m.ytdOmzet,
+        },
+      ),
+  ];
 }
 
 /// Tenggat pajak mulai hari ini, paling banyak [limit].

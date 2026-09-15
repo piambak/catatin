@@ -17,6 +17,7 @@ import 'package:dio/dio.dart';
 import '../../models/models.dart';
 import '../constants/app_constants.dart';
 import '../network/api_client.dart';
+import '../utils/formatters.dart';
 import 'repositories.dart';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -151,18 +152,24 @@ class ApiTransactionRepository implements TransactionRepository {
     }
   }
 
+  /// Hanya filter yang diisi yang dikirim. Tanpa filter, server mengembalikan
+  /// seluruh transaksi — sama dengan mode mock dan Supabase.
   @override
   Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
   }) async {
+    checkTransactionFilter(month: month, year: year, from: from, to: to);
     try {
-      final now = DateTime.now();
       final res = await ApiClient.get(ApiEndpoints.transactions, params: {
-        'month': month ?? now.month,
-        'year': year ?? now.year,
-        if (businessId != null) 'business_id': businessId,
+        'month': ?month,
+        'year': ?year,
+        if (from != null) 'from': Tanggal.api(from),
+        if (to != null) 'to': Tanggal.api(to),
+        'business_id': ?businessId,
       });
       return (res.data['transactions'] as List)
           .map((e) => TxData.fromJson(e as Map<String, dynamic>))
@@ -210,6 +217,19 @@ class ApiTransactionRepository implements TransactionRepository {
     try {
       await ApiClient.delete(ApiEndpoints.transactionById(id));
       return true;
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<YearAggregate> getAggregate({required int year}) async {
+    try {
+      final res = await ApiClient.get(
+        ApiEndpoints.transactionsAggregate,
+        params: {'year': year},
+      );
+      return YearAggregate.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);
     }

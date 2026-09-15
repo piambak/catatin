@@ -23,13 +23,20 @@ class AccountingService {
   static Future<List<TxData>> getTransactions({
     int? month,
     int? year,
+    DateTime? from,
+    DateTime? to,
     String? businessId,
   }) =>
       Repos.transaction.getTransactions(
         month: month,
         year: year,
+        from: from,
+        to: to,
         businessId: businessId,
       );
+
+  static Future<YearAggregate> getAggregate({required int year}) =>
+      Repos.transaction.getAggregate(year: year);
 
   static Future<TxData?> getTransaction(String id) =>
       Repos.transaction.getTransaction(id);

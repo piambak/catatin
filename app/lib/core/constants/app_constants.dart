@@ -121,6 +121,8 @@ class ApiEndpoints {
 
   // Transaksi
   static const transactions = '/transactions';
+  // Server harus mencocokkan rute ini sebelum `/transactions/{id}`.
+  static const transactionsAggregate = '/transactions/aggregate';
   static String transactionById(String id) => '/transactions/$id';
   static const txCategories = '/tx-categories';
 
