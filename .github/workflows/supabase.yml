@@ -46,3 +46,7 @@ jobs:
       - name: Tes pgTAP
         run: supabase test db
 
+      - name: Tes data contoh staging
+        # Terpisah karena berkas tesnya bersebelahan dengan skrip yang
+        # di-include-nya; `supabase test db` hanya me-mount folder tes itu.
+        run: supabase test db supabase/staging/data_contoh.test.sql

@@ -1,0 +1,7 @@
+{
+  "_comment": "Konfigurasi proyek Supabase STAGING (catatin-staging) untuk uji FE/BE sebelum produksi: flutter run -d chrome --dart-define-from-file=dart_define.staging.json. Tidak dipakai build situs publik (itu dart_define.pages.json). SENGAJA di-commit: SUPABASE_URL dan publishable key memang publik, data dijaga Row Level Security. EMAIL_SIGNUP=true karena staging tidak memakai login Google; tautan konfirmasi dikirim SMTP bawaan Supabase, yang hanya sampai ke anggota tim organisasi. JANGAN PERNAH taruh secret key (sb_secret_...) atau password database di sini.",
+  "SUPABASE_URL": "https://herafvadqziftszhxqeq.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_WpyaYeCC2HBIJmphO677iQ_sbewwXP7",
+  "DATA_SOURCE": "supabase",
+  "EMAIL_SIGNUP": "true"
+}
