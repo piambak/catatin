@@ -8,7 +8,7 @@
 //
 // Mockup-nya hanya menggambar mode terang. Nilai gelap di bawah adalah
 // turunan yang menjaga peran dan urutan kontras yang sama — BELUM diukur
-// terhadap WCAG. Lihat DESIGN-TOKENS.md B.6.
+// terhadap WCAG. Lihat wiki/desain/design-tokens.md B.6.
 
 import 'package:flutter/material.dart';
 import '../services/theme_notifier.dart';

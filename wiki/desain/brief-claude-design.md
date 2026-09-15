@@ -240,7 +240,7 @@ Empat pertanyaan yang mengubah hasil kalau dijawab belakangan:
 | --- | --- |
 | Dashboard berpusat pada kewajiban pajak? | P-1 mengubah posisi produk, bukan cuma tata letak. Butuh persetujuan pemilik produk |
 | "Pembukuan" jadi "Pencatatan"? | PDF memakai nama berbeda; menyentuh nav, rute, dan dokumentasi |
-| Redesain masuk Fase Dua atau fase sendiri? | Belum ada di `PROJECT_TIMELINE.md` Minggu 1–9; kalau dipaksa masuk, tanggal rilis 13 Nov bergeser |
+| Redesain masuk Fase Dua atau fase sendiri? | Belum ada di [linimasa](../proyek/linimasa.md) Minggu 1–9; kalau dipaksa masuk, tanggal rilis 13 Nov bergeser |
 | Sumber angka "kewajiban berikutnya"? | Butuh endpoint agregasi Minggu 2 yang **belum jadi**. Kalau belum ada, desainnya siap tapi datanya belum |
 
 ### Fase 1 — Fondasi kode, tanpa perubahan tampilan

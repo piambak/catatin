@@ -12,6 +12,20 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-15** — Backend — **Rujukan `docs/` di issue GitHub diarahkan ke
+  `wiki/`.** 33 issue terbuka masih menyebut `docs/…` atau nama berkas lama di
+  judul, catatan, dan komentar penugasannya; semuanya kini menunjuk path wiki.
+  Berkas yang sudah ada dipetakan ke halamannya dengan nomor § tetap, mis.
+  `BACKEND.md` → [Backend & API](../arsitektur/backend-dan-api.md). Dokumen
+  rencana yang belum pernah dibuat diberi path mengikuti konvensi wiki:
+  spesifikasi, kasus uji, sign-off, dan catatan rilis pajak di
+  `wiki/domain/pajak/` (`spek-*.md`, `kasus-*.csv`, `sign-off.md`,
+  `catatan-rilis.md`), checklist regresi di
+  `wiki/panduan/checklist-regresi-ui.md`, alur kerja di
+  `wiki/proyek/alur-kerja.md`. Buat berkasnya di path itu supaya issue tetap
+  cocok. Dua sisa rujukan di repo ikut dibereskan: komentar
+  `design_tokens.dart` dan [brief Claude Design](../desain/brief-claude-design.md).
+
 - **2026-09-13** — Backend + Frontend — **Status kata sandi dari `has_password()`.**
   Uji pemilik di situs publik: pasang kata sandi (`PUT /user` 200) → keluar
   (`POST /logout` 204) → masuk dengan email + kata sandi (`grant_type=password`
