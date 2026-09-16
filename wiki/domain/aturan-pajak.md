@@ -67,7 +67,7 @@ Cara Catatin menghitungnya (`calculatePPh21()`):
 - `gaji bersih = gaji kotor − pajak bulanan`
 - `pajak tahunan (estimasi) = pajak bulanan × 12`
 
-### PTKP 2024
+### PTKP 2026
 
 Penghasilan Tidak Kena Pajak, delapan status. Nilai di bawah adalah **salinan
 untuk dibaca manusia** — sumber kebenarannya `AppConstants.ptkp`. Kalau keduanya
