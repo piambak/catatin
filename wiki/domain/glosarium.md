@@ -20,13 +20,16 @@ membaca repo ini tanpa menebak.
 | **Omzet** | Peredaran bruto — total penjualan sebelum dikurangi biaya apa pun. Dasar pengenaan PPh Final. |
 | **PKP** | Punya dua arti, dan keduanya dipakai di repo ini: <br>1. **Pengusaha Kena Pajak** — status usaha yang wajib memungut PPN, dipicu omzet melewati Rp 4,8 M/tahun. Ini arti yang dipakai di profil usaha dan `isPkp`. <br>2. **Penghasilan Kena Pajak** — dasar pengenaan PPh setelah dikurangi PTKP. Ini arti `PPh21Result.pkp`. |
 | **PP 23/2018** | Peraturan Pemerintah yang mengatur PPh Final 0,5% untuk UMKM. |
-| **PMK 168/2023** | Peraturan Menteri Keuangan yang memperkenalkan metode TER untuk PPh 21. |
+| **PMK 55/2022** | Peraturan Menteri Keuangan sebagai update dari PP 23/2018 yang mengatur PPh Final 0,5% serta Batas Omset Bebas Pajak untuk UMKM. |
+| **PMK 168/2023** | Peraturan Menteri Keuangan yang memperkenalkan metode Tarif Efektif Rata-Rata (TER) untuk PPh 21. |
 | **PPh Badan** | PPh untuk wajib pajak badan (PT, CV). Tarifnya ada sebagai konstanta di repo, tapi belum dipakai. |
 | **PPh Final** | PPh yang selesai saat dibayar — tidak diperhitungkan lagi di SPT Tahunan. Tarif UMKM-nya 0,5% dari omzet. |
 | **PPh 21** | PPh atas penghasilan karyawan, dipotong pemberi kerja. |
 | **PPN** | Pajak Pertambahan Nilai, 11%. Hanya dipungut oleh PKP. |
 | **PTKP** | Penghasilan Tidak Kena Pajak. Batas penghasilan yang bebas PPh, besarnya tergantung status kawin dan jumlah tanggungan. |
-| **SPT Tahunan** | Surat Pemberitahuan Tahunan. Laporan pajak setahun, jatuh tempo 30 April tahun berikutnya. |
+| **SPT Tahunan** | Surat Pemberitahuan Tahunan. Laporan pajak setahun. |
+| **SPT Tahunan Orang Pribadi** | SPT Tahunan Orang Pribadi. Laporan pajak setahun, jatuh tempo 31 Maret tahun berikutnya. |
+| **SPT Tahunan Badan** | SPT Tahunan Badan. Laporan pajak setahun, jatuh tempo 30 April tahun berikutnya. |
 | **TER** | Tarif Efektif Rata-rata. Satu tarif yang langsung dikalikan gaji kotor, tanpa hitung PKP bulanan. Terbagi kategori A/B/C menurut status PTKP. |
 | **TK/0, K/2, …** | Kode status PTKP. `TK` = tidak kawin, `K` = kawin; angkanya jumlah tanggungan. `K/2` = kawin dengan 2 tanggungan. |
 | **UMKM** | Usaha Mikro, Kecil, dan Menengah. Pengguna sasaran Catatin. |
