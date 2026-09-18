@@ -33,6 +33,7 @@ pelanggaran gaya markdown.
 | Merilis atau melakukan rollback | [Rilis & deploy](panduan/rilis-dan-deploy.md) |
 | Mengubah warna, tipografi, atau jarak | [Design tokens](desain/design-tokens.md) |
 | Tahu apa yang sedang dikerjakan | [Linimasa](proyek/linimasa.md) |
+| Tahu apa yang sudah diputus dan apa yang masih menggantung | [Log keputusan](proyek/log-keputusan.md) |
 | Cari utang teknis untuk dikerjakan | [Backlog teknis](proyek/backlog-teknis.md) |
 
 ---
