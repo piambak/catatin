@@ -1,0 +1,16 @@
+no,kategori_ter,status_ptkp,bruto_sebulan,lapisan,tarif,pph21_ekspektasi,hasil_kalkulator_djp,status_verifikasi,catatan
+1,A,TK/0,5400000,1,0.0000,0,,[CEK],batas atas lapisan 1 — tarif nol
+2,A,TK/0,5400001,2,0.0025,13500,,[CEK],rupiah pertama di lapisan 2
+3,A,K/0,10000000,9,0.0200,200000,,[CEK],"status berbeda, kategori sama dengan TK/0"
+4,A,TK/1,20000000,19,0.0900,1800000,,[CEK],lapisan tengah; lapisan inilah yang salah di kode saat ini
+5,A,TK/0,62200000,30,0.2000,12440000,,[CEK],batas atas lapisan yang menjadi lapisan terakhir sebelum kode melompat
+6,A,TK/0,1400000001,44,0.3400,476000000,,[CEK],rupiah pertama di lapisan tertinggi
+7,B,TK/2,6200000,1,0.0000,0,,[CEK],batas atas lapisan 1 — tarif nol
+8,B,K/1,6200001,2,0.0025,15500,,[CEK],rupiah pertama di lapisan 2
+9,B,TK/3,12600000,9,0.0300,378000,,[CEK],batas atas lapisan; uji inklusivitas batas
+10,B,K/2,35000000,20,0.1400,4900000,,[CEK],lapisan tengah
+11,B,TK/2,1405000001,40,0.3400,477700000,,[CEK],rupiah pertama di lapisan tertinggi
+12,C,K/3,6600000,1,0.0000,0,,[CEK],batas atas lapisan 1 — tarif nol
+13,C,K/3,6600001,2,0.0025,16500,,[CEK],rupiah pertama di lapisan 2
+14,C,K/3,15000000,12,0.0500,750000,,[CEK],lapisan tengah
+15,C,K/3,1419000001,41,0.3400,482460000,,[CEK],rupiah pertama di lapisan tertinggi
