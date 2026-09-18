@@ -59,3 +59,9 @@ app.*.map.json
 .github/skills/open-knowledge/
 .opencode/skills/open-knowledge/
 .pi/skills/open-knowledge/
+
+# Manifes jejak build terakhir (tool/sync_build.sh)
+tool/.last_build_files
+
+# Konfigurasi editor lokal — jangan ikut ter-commit
+.obsidian/
