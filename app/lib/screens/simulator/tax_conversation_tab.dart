@@ -432,7 +432,12 @@ class _ResultPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const DsLabel('Perkiraan pajak Anda', color: DS.invMuted),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          // T-17: tarif TER kategori B & C belum benar dan persona usaha
+          // sendiri masih dihitung dengan rezim PPh 21. Sampai Pakar Regulasi
+          // menandatangani angkanya, panel ini menyatakan dirinya perkiraan.
+          const DsTrustChip(onDark: true),
+          const SizedBox(height: 12),
           Semantics(
             label: 'Perkiraan pajak Anda $_taxText, $_subText',
             child: ExcludeSemantics(

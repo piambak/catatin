@@ -10,6 +10,15 @@ class AppConstants {
   static const appName = 'Catatin';
   static const appVersion = '1.0.0';
 
+  // ── Status tinjauan pakar pajak ───────────────────────────
+  //
+  // Sampai Pakar Regulasi menandatangani `wiki/domain/pajak/sign-off.md`,
+  // setiap angka pajak yang tampil harus menyatakan dirinya perkiraan (T-17).
+  // Saat sign-off turun (Minggu 8), cukup ubah DUA baris di bawah ini:
+  // `taxReviewStatus` jadi 'verified' dan `taxReviewDate` diisi tanggalnya.
+  static const taxReviewStatus = 'draft'; // 'draft' | 'verified'
+  static const taxReviewDate = ''; // mis. '6 November 2026'
+
   // ── Konstanta pajak (PP 23/2018, PMK 168/2023) ────────────
   static const pphFinalRate = 0.005; // 0,5%
   static const pkpThreshold = 4800000000.0; // Rp 4,8 Miliar

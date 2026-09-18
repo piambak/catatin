@@ -390,6 +390,9 @@ class _NextObligation extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const DsLabel('Kewajiban berikutnya'),
+        const SizedBox(height: 10),
+        // T-17: nominal ini dihitung dari tarif yang belum ditinjau pakar.
+        const DsTrustChip(),
         SizedBox(height: compact ? 12 : 14),
         Semantics(
           label: 'Kewajiban berikutnya $amountText, $pillText',

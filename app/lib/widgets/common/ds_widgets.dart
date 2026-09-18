@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/services/theme_notifier.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
@@ -657,6 +658,88 @@ class DsProgressBar extends StatelessWidget {
               color: DS.brand,
               borderRadius: BorderRadius.circular(Radii.pill),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Tingkat kepercayaan angka pajak yang sedang ditampilkan.
+enum TrustLevel {
+  /// Dihitung aplikasi, belum ditinjau Pakar Regulasi.
+  draft,
+
+  /// Sudah ditandatangani Pakar Regulasi di `wiki/domain/pajak/sign-off.md`.
+  verified,
+}
+
+/// Chip yang menyatakan status tinjauan sebuah angka pajak (T-17).
+///
+/// Dipasang **di atas** angka, bukan di kaki panel: peringatan yang berada di
+/// bawah lipatan layar tidak dibaca siapa pun.
+///
+/// Level default dibaca dari [AppConstants.taxReviewStatus], jadi saat sign-off
+/// pakar turun (Minggu 8) tidak ada satu pun layar yang perlu disentuh.
+///
+/// [onDark] dipakai kalau chip berada di atas [DS.invSurface] — panel hasil
+/// simulator yang tetap gelap di kedua mode tema.
+class DsTrustChip extends StatelessWidget {
+  final TrustLevel? level;
+  final bool onDark;
+
+  const DsTrustChip({super.key, this.level, this.onDark = false});
+
+  TrustLevel get _level =>
+      level ??
+      (AppConstants.taxReviewStatus == 'verified'
+          ? TrustLevel.verified
+          : TrustLevel.draft);
+
+  String get _text {
+    if (_level == TrustLevel.draft) {
+      return 'Perkiraan · belum ditinjau pakar pajak';
+    }
+    final tanggal = AppConstants.taxReviewDate;
+    return tanggal.isEmpty
+        ? 'Tervalidasi pakar pajak'
+        : 'Tervalidasi pakar pajak · $tanggal';
+  }
+
+  IconData get _icon => _level == TrustLevel.draft
+      ? Icons.info_outline_rounded
+      : Icons.verified_outlined;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = onDark ? DS.warnBgOnDark : DS.warnBg;
+    final fg = onDark ? DS.warnFgOnDark : DS.warnFg;
+    final border = onDark ? DS.warnBorderOnDark : DS.warnBorder;
+
+    return Semantics(
+      label: _text,
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: Space.x3, vertical: Space.x1 + 2),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(Radii.pill),
+            border: Border.all(color: border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_icon, size: 14, color: fg),
+              const SizedBox(width: Space.x1 + 2),
+              Flexible(
+                child: Text(
+                  _text,
+                  style: Typo.sans(12, color: fg, height: 1.3),
+                ),
+              ),
+            ],
           ),
         ),
       ),
