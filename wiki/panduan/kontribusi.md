@@ -74,9 +74,14 @@ Cakupan (`dashboard`, `accounting`, `simulator`, `settings`, `auth`, `data`,
 ## 4. Gaya kode
 
 * Jalankan `flutter analyze` sebelum push — CI menggagalkan warning dan error.
-* Kode lama memakai perataan kolom manual (`title:      'Catatin',`). **Jangan**
-  menjalankan `dart format` pada berkas yang tidak kamu sentuh: hasilnya diff
-  ratusan baris yang menenggelamkan perubahan aslimu.
+* Kode lama memakai perataan kolom manual (`title:      'Catatin',`). Sampai PR
+  format menyeluruh digabung, **jangan** menjalankan `dart format` pada berkas
+  yang tidak kamu sentuh: hasilnya diff ratusan baris yang menenggelamkan
+  perubahan aslimu.
+* PR format itu dijadwalkan Minggu 2 (issue #33, temuan T-9): satu kali
+  `dart format .` di seluruh repo sebagai PR tersendiri, lalu
+  `dart format --set-exit-if-changed` ditegakkan di CI. Sesudah itu aturan di
+  atas terbalik — setiap PR wajib terformat.
 * Komentar dan teks yang dilihat pengguna dalam Bahasa Indonesia. Nama variabel,
   kelas, dan fungsi dalam Bahasa Inggris.
 * Widget baru yang dipakai lebih dari satu layar → taruh di

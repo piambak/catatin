@@ -2,9 +2,15 @@
 //
 // Satu-satunya tempat angka breakpoint boleh ditulis.
 //
-// Menggantikan lima ambang literal yang sebelumnya tersebar inline:
+// Dimaksudkan menggantikan ambang literal yang tersebar inline:
 // 480 (dashboard), 500 (accounting), 600 (kpi_card), 680 (accounting),
 // 700 (dashboard). Lihat wiki/desain/prd-redesain-ui.md R-4.
+//
+// BELUM SELESAI. Per 18 Sep 2026 masih ada pemakaian literal di
+// accounting_screen.dart, month_picker.dart, cal_deadline_card.dart, dan
+// kpi_card.dart. Penggantian tuntas dijadwalkan Minggu 4 (issue #67); sampai
+// itu selesai, jangan membaca komentar ini sebagai jaminan bahwa `Bp` adalah
+// satu-satunya sumber angka breakpoint.
 
 import 'package:flutter/widgets.dart';
 
