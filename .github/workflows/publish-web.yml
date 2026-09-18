@@ -11,13 +11,15 @@ name: Publikasi web
 # Kalau langkah "Commit" gagal dengan 403, minta pemilik repo menyetel
 # Settings → Actions → General → Workflow permissions ke "Read and write".
 
+# T-42: workflow ini dulu dipicu `push: main` — pemicu yang SAMA dengan ci.yml,
+# tanpa hubungan apa pun di antara keduanya. Akibatnya commit yang tesnya merah
+# tetap tayang ke publik. Sekarang ia menunggu CI selesai dan hanya jalan kalau
+# CI sukses.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"] # harus persis sama dengan `name:` di ci.yml
+    types: [completed]
     branches: [main]
-    paths:
-      - 'app/**'
-      - 'tool/sync_build.sh'
-      - '.github/workflows/publish-web.yml'
   workflow_dispatch:
 
 permissions:
@@ -31,9 +33,20 @@ jobs:
   publish:
     name: Build & commit ke root
     runs-on: ubuntu-latest
+    # Jalan kalau CI sukses, atau kalau dijalankan manual untuk rilis darurat.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run selalu checkout commit TERBARU di branch default, yang
+          # belum tentu commit yang barusan diuji CI. Tanpa baris ini kita bisa
+          # memublikasikan kode yang berbeda dari yang hijau — bug yang sangat
+          # sulit dilacak. Untuk dispatch manual, head_sha kosong dan checkout
+          # jatuh ke perilaku default (HEAD branch).
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -66,5 +79,14 @@ jobs:
             echo "Tidak ada perubahan output — lewati commit."
             exit 0
           fi
-          git commit -m "build: publikasi web dari ${GITHUB_SHA::7} [skip ci]"
-          git push
+          SUMBER="${{ github.event.workflow_run.head_sha || github.sha }}"
+          git commit -m "build: publikasi web dari ${SUMBER::7} [skip ci]"
+          # Dua PR yang digabung berurutan membuat push kedua gagal
+          # non-fast-forward, dan publikasi diam-diam tidak jalan. Rebase dulu,
+          # lalu coba sekali lagi kalau tetap gagal.
+          git pull --rebase origin main
+          git push || {
+            echo "Push ditolak, coba rebase sekali lagi…"
+            git pull --rebase origin main
+            git push
+          }
