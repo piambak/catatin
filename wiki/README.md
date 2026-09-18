@@ -34,6 +34,8 @@ pelanggaran gaya markdown.
 | Mengubah warna, tipografi, atau jarak | [Design tokens](desain/design-tokens.md) |
 | Tahu apa yang sedang dikerjakan | [Linimasa](proyek/linimasa.md) |
 | Cari utang teknis untuk dikerjakan | [Backlog teknis](proyek/backlog-teknis.md) |
+| Tahu rencana frontend sembilan minggu | [Rencana frontend](proyek/rencana-frontend.md) |
+| Mengerjakan tugas frontend Minggu 1 langkah demi langkah | [Runbook frontend Minggu 1](proyek/runbook-frontend-minggu-1.md) |
 
 ---
 
