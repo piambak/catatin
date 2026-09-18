@@ -91,6 +91,10 @@ dan formula pajak yang benar, sebelum satu baris kode fitur baru ditulis.
 **Sinkron akhir minggu (Jumat 18 Sep):** kunci spesifikasi bersama —
 setelah ini, ubah spesifikasi berarti ubah jadwal.
 
+> Keputusan yang menahan pekerjaan orang lain dicatat di
+> [Log keputusan](log-keputusan.md), bukan di sini. Tenggat D-1…D-13 sudah
+> lewat, jadi default-nya berlaku sampai PO menimpanya.
+
 ---
 
 ## Minggu 2 — 21–25 Sep — Cabut Pustaka peraturan + fondasi backend
