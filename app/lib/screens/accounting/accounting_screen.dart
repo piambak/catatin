@@ -24,6 +24,7 @@ class _AccountingScreenState extends State<AccountingScreen>
   // Shared data
   List<TxData> _allTx   = [];
   bool         _loading = true;
+  String?      _error;
 
   // Date cursors
   late DateTime _dailyCursor;
@@ -52,16 +53,18 @@ class _AccountingScreenState extends State<AccountingScreen>
   }
 
   Future<void> _loadAll() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final txs = await AccountingService.getTransactions();
       if (mounted) setState(() => _allTx = txs);
     } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.userMessage),
-          behavior: SnackBarBehavior.floating));
-      }
+      // T-22: dulu ini hanya SnackBar sekilas. Akibatnya layar menampilkan
+      // daftar KOSONG yang tidak bisa dibedakan dari "Anda memang belum punya
+      // transaksi" — dan tidak ada cara mencoba lagi selain menutup aplikasi.
+      if (mounted) setState(() => _error = e.userMessage);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -179,6 +182,11 @@ class _AccountingScreenState extends State<AccountingScreen>
         ),
 
         // ── Tab content ──────────────────────────────────────
+        // Galat diperiksa SEBELUM loading: kalau tidak, skeleton menutupi
+        // keadaan galat dan pengguna tidak pernah melihatnya.
+        if (_error != null)
+          Expanded(child: ErrorState(message: _error!, onRetry: _loadAll))
+        else
         Expanded(child: TabBarView(
           controller: _tabCtrl,
           children: [
