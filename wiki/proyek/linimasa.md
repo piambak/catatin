@@ -77,19 +77,32 @@ dan formula pajak yang benar, sebelum satu baris kode fitur baru ditulis.
 
 ### Pakar Regulasi DJP & Kemenkeu
 
-- [ ] Audit formula PPh Final 0,5% (`pph_final_tab.dart`) terhadap PP 23/2018
-      — cek masa berlaku, batas omzet Rp4,8 M/tahun
-- [ ] Audit formula PPh 21 TER (`pph21_tab.dart`) terhadap PMK 168/2023 —
-      cek kelengkapan kategori TER A/B/C
-- [ ] Tulis spesifikasi tertulis: apa saja yang berubah di kalkulator (modul
+- [x] Audit formula PPh Final 0,5% (`pph_final_tab.dart`) terhadap PP 23/2018
+      — cek masa berlaku, batas omzet Rp4,8 M/tahun *(18 Sep: kerangka di
+      [Spek PPh Final UMKM](../domain/pajak/spek-pph-final-umkm.md); angka dan
+      pasal masih `[CEK]` karena salinan PP 23/2018 dan PP 55/2022 belum
+      tersedia. Satu temuan pasti: tenggat SPT Tahunan OP 31 Maret, bukan
+      30 April seperti di `generateCalendar()`)*
+- [x] Audit formula PPh 21 TER (`pph21_tab.dart`) terhadap PMK 168/2023 —
+      cek kelengkapan kategori TER A/B/C *(18 Sep:
+      [Spek PPh 21 TER](../domain/pajak/spek-pph21-ter.md) memuat tabel A/B/C
+      lengkap. Temuan lebih berat dari T-1: `terTableA` sendiri salah — tabel
+      resmi 44 lapisan, kode 32, dan 28 di antaranya salah tarif atau batas)*
+- [x] Tulis spesifikasi tertulis: apa saja yang berubah di kalkulator (modul
       PPN? proyeksi SPT Tahunan? kategori apa saja?) — jadi acuan backend &
-      frontend minggu depan
-- [ ] Tentukan konten regulasi ringkas apa yang **wajib tetap tampil** di
+      frontend minggu depan *(18 Sep: dua spek di `wiki/domain/pajak/` plus
+      [Keputusan TAX](../domain/pajak/keputusan-tax.md) — D-8 tarif PPN 11%,
+      D-11 matriks profesi. Ratifikasi lingkup D-8 masih menunggu di #26)*
+- [x] Tentukan konten regulasi ringkas apa yang **wajib tetap tampil** di
       aplikasi setelah Pustaka peraturan dicabut (mis. teks bantuan singkat
-      di kartu tenggat pajak)
+      di kartu tenggat pajak) *(18 Sep: aturan tampilan D-10 di
+      [Spek PPh 21 TER §7](../domain/pajak/spek-pph21-ter.md#7-aturan-tampilan-d-10)
+      dan teks disclaimer E1 di §10)*
 
 **Sinkron akhir minggu (Jumat 18 Sep):** kunci spesifikasi bersama —
-setelah ini, ubah spesifikasi berarti ubah jadwal.
+setelah ini, ubah spesifikasi berarti ubah jadwal. *(18 Sep: spesifikasi TAX
+dikunci dan diajukan untuk M0 sign-off; dua tugas audit Backend masih terbuka,
+jadi status Minggu 1 belum ✅.)*
 
 ---
 
