@@ -290,6 +290,76 @@ Tidak ada akun kedua dan tidak ada email konfirmasi.
   Google, lalu ganti kata sandi di Pengaturan. Pemulihan lewat email masih
   menunggu custom SMTP (T-18).
 
+### Sesi dan token (D-14)
+
+D-14 menanyakan umur token dan apakah refresh token boleh disimpan di
+browser; tenggatnya 25 Sep 2026 dan default-nya "access 15 menit, refresh
+dirotasi" ([log keputusan](../proyek/log-keputusan.md)). Selama PO belum
+memutus lain, proyek ini mengikuti default itu (#39):
+
+| Setelan | Nilai | Tempat |
+| --- | --- | --- |
+| Umur access token (JWT) | **900 detik** (15 menit) | Dashboard, *Authentication → Sessions*; lokal `jwt_expiry` di `supabase/config.toml` |
+| Rotasi refresh token | Menyala | Bawaan Supabase; lokal `enable_refresh_token_rotation` |
+| Interval pakai-ulang refresh token | 10 detik | Bawaan Supabase; lokal `refresh_token_reuse_interval` |
+| Umur maksimum sesi, batas tidak aktif, satu sesi per pengguna | Tidak tersedia | Hanya paket Pro ke atas |
+
+Yang dijamin Supabase Auth ([sumber](../sumber/supabase-auth-sessions.md)):
+
+- **Rotasi.** Refresh token hanya bisa ditukar sekali, menghasilkan pasangan
+  access + refresh token baru; refresh token sendiri tidak kedaluwarsa.
+- **Deteksi pakai-ulang.** Refresh token lama yang dipakai lagi di luar
+  interval 10 detik — dan bukan induk langsung token aktif — membuat seluruh
+  sesi dianggap berakhir dan semua refresh token-nya dicabut. Ini melindungi
+  dari refresh token yang bocor lewat log, bukan dari perangkat yang dicuri.
+- **Tanpa umur maksimum.** Di paket Free sesi hidup sampai pengguna keluar,
+  mengganti kata sandi, atau tertangkap deteksi pakai-ulang — *time-box*,
+  *inactivity timeout*, dan *single session per user* hanya untuk paket Pro ke
+  atas.
+- **900 detik masih aman.** Dokumen Supabase menyarankan tidak di bawah
+  5 menit, karena klien Supabase memperbarui sesi sebelum kedaluwarsa dan
+  selisih jam perangkat bisa beberapa menit.
+
+**Refresh token di browser.** Di web, sesi — termasuk refresh token —
+disimpan klien Supabase di `localStorage` (T-11 di
+[backlog teknis](../proyek/backlog-teknis.md)). Cookie HTTP-only, yang
+disebut catatan #156, tidak bisa dipakai aplikasi yang logikanya di browser:
+browser tidak akan bisa membaca token untuk memperbaruinya
+([sumber](../sumber/supabase-auth-sessions.md)). Apakah `localStorage` bisa
+diterima tetap keputusan D-14.
+
+**`/auth/refresh` menolak Bearer.** Padanan Supabase-nya,
+`POST /auth/v1/token?grant_type=refresh_token`, hanya menerima refresh token
+di body: request yang hanya membawa `Authorization: Bearer` dibalas
+`400 validation_failed`, dan refresh token yang tidak pernah diterbitkan
+dibalas `400 refresh_token_not_found`
+([sumber](../sumber/staging-auth-cors-uji.md)). Klien memetakan
+`refresh_token_not_found` dan `refresh_token_already_used` ke sesi berakhir
+(401) di `supabase_client.dart`.
+
+**Setelan remote.** `config.toml` hanya berlaku untuk stack lokal dan CI
+([§2](#2-menyiapkan-dari-nol)), jadi 900 detik dipasang di dashboard
+masing-masing proyek: staging lebih dulu, produksi setelah D-14 diputus atau
+tenggatnya lewat tanpa keputusan lain.
+
+### CORS
+
+[Backend & API §5](backend-dan-api.md#5-cors-khusus-web) — daftar origin
+yang diizinkan — hanya berlaku untuk backend REST buatan sendiri. API Supabase
+yang di-host membalas `Access-Control-Allow-Origin: *` untuk origin mana pun,
+baik di Auth maupun REST, tanpa `Access-Control-Allow-Credentials`
+([sumber](../sumber/staging-auth-cors-uji.md)); tidak ada setelan untuk
+mempersempitnya.
+
+Itu bisa diterima karena kredensialnya bukan cookie: setiap request membawa
+access token di header `Authorization`, yang dipasang klien Supabase dari
+penyimpanan halaman Catatin sendiri — bukan sesuatu yang dilampirkan browser
+secara otomatis ke situs mana pun. Situs lain bisa memanggil API yang sama,
+tapi hanya dengan publishable key — yang memang publik (§6) — dan tanpa sesi
+pengguna, jadi diperlakukan sebagai peran `anon` yang tidak punya hak apa pun
+(§3). Pengaturan per origin yang memang ada di Supabase adalah **Redirect
+URLs** di URL Configuration (awal bagian ini).
+
 ## 6. Kunci dan rahasia
 
 | Nilai | Boleh di repo? |
