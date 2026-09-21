@@ -582,7 +582,7 @@ diturunkan dari template versi yang sama.
 
 **Isi tes pgTAP:**
 
-- `01_skema.test.sql` (59 tes) — tabel ada, RLS menyala, kebijakan persis
+- `01_skema.test.sql` (64 tes) — tabel ada, RLS menyala, kebijakan persis
   sesuai migrasi, `anon` tanpa hak tabel maupun fungsi, hak `authenticated`,
   dan `has_password()` satu-satunya security definer dengan `search_path`
   kosong.
