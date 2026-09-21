@@ -429,15 +429,20 @@ atau data yang tertinggal.
    mengubah, dan menghapus satu transaksi dan memastikan dashboard ikut berubah.
 
 Staging juga dijeda setelah seminggu tidak aktif (T-19 di
-[backlog teknis](../proyek/backlog-teknis.md)). Migrasi baru diterapkan ke
-staging lebih dulu, baru ke produksi
-([Rilis & deploy](../panduan/rilis-dan-deploy.md)).
+[backlog teknis](../proyek/backlog-teknis.md)); selama dijeda, job
+`deploy-staging` gagal di langkah dry run. Migrasi baru sampai ke staging
+lebih dulu — otomatis saat digabung ke `main` — baru diterapkan manual ke
+produksi ([Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging)).
 
 ## 9. CI database
 
 Workflow `.github/workflows/supabase.yml` berjalan pada setiap push dan PR yang
-menyentuh `supabase/**` atau workflow itu sendiri. Ia tidak menyentuh proyek
-remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
+menyentuh `supabase/**` atau workflow itu sendiri. Job `database` tidak
+menyentuh proyek remote mana pun dan tidak butuh secret: semuanya di Postgres
+lokal runner. Kalau job itu lulus pada push ke `main`, job `deploy-staging`
+menerapkan migrasi baru ke staging dengan `supabase db push` — produksi tidak
+pernah disentuh. Secret, cara memasangnya, dan cara membaca kegagalannya ada di
+[Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging).
 
 | Langkah | Perintah | Menangkap |
 | --- | --- | --- |
@@ -445,6 +450,7 @@ remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
 | Lint | `supabase db lint --level warning --fail-on warning` | Galat fungsi yang baru muncul saat dijalankan, lewat `plpgsql_check`. Tanpa `--fail-on`, perintah ini selalu keluar dengan status 0 ([sumber](../sumber/supabase-testing-pgtap.md)) |
 | Tes | `supabase test db` | `supabase/tests/database/*.test.sql` |
 | Tes data contoh | `supabase test db supabase/staging/data_contoh.test.sql` | Skrip data contoh menyimpang dari contoh kontrak |
+| Deploy staging (hanya `main`) | `supabase db push --db-url … --dry-run`, lalu `supabase db push --db-url …` | Migrasi baru belum sampai ke staging ([sumber](../sumber/supabase-cli-db-push.md)) |
 
 CLI di-pin ke versi 2.117.0 lewat `supabase/setup-cli@v3`
 ([sumber](../sumber/supabase-setup-cli-action.md)); `supabase/config.toml`
@@ -461,6 +467,9 @@ diturunkan dari template versi yang sama.
   menghapus data A, dan tidak bisa mencatat ke usaha A maupun menyamar sebagai
   A; A tidak bisa memindahkan transaksi ke usaha B; `monthly_totals` dan
   `has_password()` benar; `anon` ditolak.
+- `03_agregat_bulanan.test.sql` (3 tes) — `monthly_totals` selalu 12 bulan
+  termasuk bulan kosong, HPP hanya dari kategori ber-`is_cogs`, dan total
+  pemasukan setahun (#41).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 

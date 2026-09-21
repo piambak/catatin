@@ -14,19 +14,22 @@ tags:
 | **Live** | <https://piambak.github.io/catatin/> |
 | **Sumber Pages** | branch `main`, folder `/ (root)` |
 | **Base href** | `/catatin/` |
-| **Pemicu** | push ke `main` yang menyentuh `app/**` |
+| **Pemicu** | workflow `CI` sukses untuk push ke `main` yang menyentuh `app/**` atau `tool/**` |
 | **Backend** | Supabase, dikonfigurasi di `app/dart_define.pages.json` — lihat [Supabase](../arsitektur/supabase.md) |
 | **Staging** | Proyek Supabase `catatin-staging`, `app/dart_define.staging.json` — tidak pernah dipakai build situs publik |
-| **CI database** | `.github/workflows/supabase.yml`, pemicu: perubahan `supabase/**` |
+| **CI database** | `.github/workflows/supabase.yml`, pemicu: perubahan `supabase/**`; di `main` sekaligus menerapkan migrasi ke staging |
 | **Cadangan** | branch `backup(stable-version)` |
 
 ## Alur otomatis
 
 ```text
-push ke main (app/**)
+push ke main (app/** atau tool/**)
         │
         ▼
-.github/workflows/publish-web.yml
+.github/workflows/ci.yml          ← analyze, test, build uji
+        │  sukses
+        ▼
+.github/workflows/publish-web.yml (workflow_run, commit yang sama)
         │  flutter pub get
         │  flutter build web --release --base-href /catatin/
         │      --dart-define-from-file=dart_define.pages.json
@@ -38,8 +41,11 @@ commit "build: publikasi web dari <sha> [skip ci]" ke main
 GitHub Pages men-deploy root main (1–2 menit)
 ```
 
-Commit dari bot hanya menyentuh berkas di root, sedangkan workflow disaring
-`paths: app/**`, jadi tidak ada loop build.
+Publikasi hanya jalan kalau CI untuk commit yang sama sukses, jadi commit
+yang tesnya merah tidak pernah tayang (T-42, lihat komentar di
+`publish-web.yml`). Commit dari bot hanya menyentuh berkas di root dan membawa
+`[skip ci]`, sedangkan CI disaring `paths: app/**, tool/**`, jadi tidak ada
+loop build.
 
 ### Kalau push ke `main` tidak memicu workflow sama sekali
 
@@ -107,18 +113,83 @@ git push origin main
 
 Setiap perubahan di `supabase/**` dicek workflow `supabase.yml`: semua migrasi
 dijalankan dari nol di Postgres lokal runner, di-lint, lalu dites pgTAP
-(skema, hak akses, isolasi RLS, dan data contoh staging). Workflow itu **tidak**
-menerapkan migrasi ke proyek remote mana pun — rincian dan cara menjalankannya
-lokal di [Supabase §9](../arsitektur/supabase.md#9-ci-database).
+(skema, hak akses, isolasi RLS, validasi, dan data contoh staging). Push ke
+`main` yang lolos tes itu lalu menerapkan migrasi baru ke **staging** secara
+otomatis (job `deploy-staging`). **Produksi tidak pernah disentuh workflow** —
+menerapkan ke sana tetap langkah manual. Rincian job-nya di
+[Supabase §9](../arsitektur/supabase.md#9-ci-database).
 
 Urutan untuk migrasi baru:
 
-1. Workflow `Supabase` hijau untuk commit yang membawa migrasinya.
-2. Terapkan ke **staging** (`catatin-staging`), lalu uji alur yang terdampak
-   dengan `app/dart_define.staging.json`
+1. Workflow `Supabase` hijau di PR yang membawa migrasinya.
+2. Gabungkan PR itu ke `main` — `deploy-staging` menerapkannya ke
+   **staging** (`catatin-staging`). Uji alur yang terdampak dengan
+   `app/dart_define.staging.json`
    ([Supabase §8](../arsitektur/supabase.md#8-staging-dan-data-contoh)).
-3. Terapkan ke **produksi** (`catatin`).
+3. Terapkan ke **produksi** (`catatin`) secara manual (di bawah).
 4. Baru gabungkan perubahan aplikasi yang membutuhkannya ke `main`.
+
+Karena langkah 2 sudah menggabungkan ke `main`, dan setiap perubahan `app/**`
+di `main` langsung tayang ke publik, **jangan campur migrasi dengan kode
+aplikasi yang bergantung padanya dalam satu PR** — kecuali kode itu tetap
+berjalan dengan skema lama.
+
+### Deploy otomatis ke staging
+
+| | |
+| --- | --- |
+| **Job** | `deploy-staging` di `.github/workflows/supabase.yml`, setelah job tes lulus |
+| **Kapan** | push ke `main` yang menyentuh `supabase/**`, atau dijalankan manual dari `main` |
+| **Langkah** | `supabase db push --dry-run`, lalu `supabase db push`, lalu riwayat migrasi staging ke ringkasan run |
+| **Secret** | `SUPABASE_STAGING_DB_URL`, di environment `staging` |
+
+Secret berisi connection string **Session pooler** proyek staging. Di paket
+Free koneksi langsung `db.<ref>.supabase.co` hanya IPv6, sedangkan shared
+pooler selalu IPv4 ([sumber](../sumber/supabase-connecting-postgres.md)); CLI
+menerima string itu lewat `--db-url` asal *percent-encoded*
+([sumber](../sumber/supabase-cli-db-push.md)). Sengaja bukan access token
+pribadi Supabase: token klasik membawa seluruh akses akun pemiliknya — semua
+proyek, termasuk produksi — dan token yang bisa dibatasi ke satu proyek masih
+*public alpha* ([sumber](../sumber/supabase-personal-access-tokens.md)).
+String ini hanya membuka staging.
+
+Memasangnya — butuh akses admin repo, jadi dikerjakan pemilik repo:
+
+1. Anggota org Supabase membuka dashboard proyek staging → **Connect** →
+   **Session pooler**, menyalin string-nya, dan mengisi password database
+   (reset dulu kalau tidak ada yang tahu). Karakter khusus di password harus
+   di-*percent-encode*.
+2. String itu diserahkan ke pemilik repo lewat jalur pribadi — **tidak pernah**
+   lewat issue, PR, chat grup, atau commit.
+3. Pemilik repo: *Settings → Environments → New environment* `staging`,
+   batasi *Deployment branches* ke `main`, lalu tambahkan secret
+   `SUPABASE_STAGING_DB_URL`.
+
+Selama secret belum ada, job tetap hijau tetapi melewati semua langkah dan
+menampilkan peringatan "Deploy staging dilewati" di ringkasan run.
+
+Kalau job merah:
+
+* **Gagal di "Rencana (dry run)"** — belum ada yang diterapkan. Biasanya riwayat
+  migrasi staging tidak cocok dengan `supabase/migrations/` (mis. migrasi yang
+  diterapkan lewat MCP dengan versi berbeda), atau proyek sedang **dijeda**:
+  paket Free menjeda proyek yang sepekan tidak dipakai
+  ([sumber](../sumber/supabase-pricing-pausing.md), T-19 di
+  [backlog teknis](../proyek/backlog-teknis.md)). Pulihkan proyeknya dari
+  dashboard, lalu jalankan ulang job.
+* **Gagal di "Terapkan migrasi"** — migrasinya sendiri ditolak staging. Baca
+  galatnya di log langkah itu, lalu cek riwayat migrasi staging (dashboard, atau
+  `list_migrations` lewat konektor Supabase) untuk melihat berkas mana yang
+  sudah tercatat. Perbaiki dengan migrasi baru — jangan menyunting migrasi yang
+  sudah diterapkan.
+
+Menjalankan ulang tanpa push baru:
+
+```bash
+gh workflow run supabase.yml --ref main
+```
+
+### Menerapkan manual
 
 Menerapkan ke satu proyek — `link` menentukan proyek mana yang dituju, jadi
 pastikan ref-nya benar sebelum `push` (staging `herafvadqziftszhxqeq`, produksi
