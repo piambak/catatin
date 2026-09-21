@@ -3,6 +3,7 @@
 // Barrel seluruh model. Model sengaja dipisah dari service supaya lapisan
 // data (`core/data/`) bisa memakainya tanpa ikut menarik logika service.
 
+export 'attachment_model.dart';
 export 'business_model.dart';
 export 'dashboard_model.dart';
 export 'recurring_model.dart';

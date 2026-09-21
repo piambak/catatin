@@ -10,6 +10,9 @@
 // simpan profil usaha) disimpan di memori/SharedPreferences supaya alur
 // aplikasi tetap terasa nyata dalam satu sesi.
 
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/models.dart';
@@ -471,6 +474,60 @@ class MockRecurringRepository implements RecurringRepository {
     return (isActive: false, nextDate: null);
   }
   return (isActive: true, nextDate: nextDate);
+}
+
+// ── Lampiran struk ────────────────────────────────────────────────────────────
+
+class MockAttachmentRepository implements AttachmentRepository {
+  /// Hidup di memori saja, satu daftar per transaksi — sama polanya dengan
+  /// [MockRecurringRepository._templates].
+  static final Map<String, List<TxAttachment>> _byTransaction = {};
+
+  @override
+  Future<List<TxAttachment>> getAttachments(String transactionId) async {
+    await Future.delayed(MockData.latency);
+    return [...?_byTransaction[transactionId]];
+  }
+
+  /// URL-nya adalah data URI berisi berkasnya sendiri — mode mock tidak
+  /// punya Storage sungguhan untuk disimpan.
+  @override
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) async {
+    checkAttachmentUpload(bytes: bytes, mimeType: mimeType);
+    await Future.delayed(MockData.latency);
+    final now = DateTime.now();
+    final attachment = TxAttachment(
+      id: 'local-${now.microsecondsSinceEpoch}',
+      transactionId: transactionId,
+      fileName: fileName,
+      mimeType: mimeType,
+      sizeBytes: bytes.length,
+      url: 'data:$mimeType;base64,${base64Encode(bytes)}',
+      urlExpiresAt: now.add(const Duration(hours: 1)),
+      createdAt: now,
+    );
+    (_byTransaction[transactionId] ??= []).add(attachment);
+    return attachment;
+  }
+
+  @override
+  Future<void> deleteAttachment(String transactionId, String attachmentId) async {
+    await Future.delayed(MockData.latency);
+    final list = _byTransaction[transactionId];
+    final index = list?.indexWhere((a) => a.id == attachmentId) ?? -1;
+    if (index == -1) {
+      throw const ApiException(
+        statusCode: 404,
+        message: 'Lampiran tidak ditemukan.',
+      );
+    }
+    list!.removeAt(index);
+  }
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

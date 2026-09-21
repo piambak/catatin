@@ -185,6 +185,23 @@ pemetaan tambahan.
   penerbit sebagai pemilik fungsinya (`postgres`). Proyek Free yang dijeda
   (T-19) tidak menjalankan pg_cron; kemunculan yang tertinggal diterbitkan pada
   penerbitan pertama setelah proyek dipulihkan.
+- **Lampiran struk** (#59, kontrak di
+  [Backend & API](backend-dan-api.md#lampiran-struk)) — berkasnya di bucket
+  Storage privat `receipts` (5 MB, JPEG/PNG/WebP), metadatanya di tabel
+  `transaction_attachments`. Lokasi berkas wajib
+  `<user_id>/<transaction_id>/<id>.<jpg|png|webp>` — dijaga constraint
+  `transaction_attachments_path_check` di tabel dan kebijakan `catatin: …` di
+  `storage.objects`, sehingga pengguna hanya bisa mengunggah ke foldernya
+  sendiri, untuk transaksinya sendiri, dan hanya bisa membaca atau menghapus
+  berkas di foldernya. Klien membuka berkas lewat signed URL 1 jam.
+  Menghapus transaksi ikut menghapus baris lampirannya (cascade), tapi
+  **berkasnya harus dihapus lewat Storage API**: Supabase menolak penghapusan
+  langsung dari `storage.objects` lewat SQL
+  ([sumber](../sumber/staging-storage-uji.md)). Karena itu
+  `deleteTransaction` di klien menghapus berkas lampirannya lebih dulu; kalau
+  langkah itu gagal, transaksi tetap terhapus dan berkasnya tertinggal sebagai
+  yatim. Batas ukuran dan tipe dipasang di bucket hanya bila kolomnya ada —
+  stack lokal CI memakai skema Storage minimal tanpa kolom itu.
 - **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
   Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
   tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
@@ -507,6 +524,10 @@ diturunkan dari template versi yang sama.
   `recurring_template_id` yang tidak bisa dipalsukan, validasi, dan isolasi
   antar-akun (#58). Tanggal "hari ini" dipatok lewat setelan
   `catatin.hari_ini`.
+- `06_lampiran_struk.test.sql` (16 tes) — lokasi berkas terikat ke pemilik
+  dan transaksinya, tipe dan ukuran, isolasi antar-akun, cascade saat
+  transaksi dihapus, dan kebijakan `storage.objects` (dilewati bila skema
+  Storage tidak ada) (#59).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 
