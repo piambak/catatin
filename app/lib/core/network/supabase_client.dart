@@ -308,15 +308,87 @@ ApiException _fromPostgrest(
         errors: {'amount': 'Nominal terlalu besar.'},
       );
     case '23514': // check violation
-    case '23502': // not null violation
     case '23503': // foreign key violation
-    case '22P02': // format teks tidak valid, mis. UUID
+      return _constraintViolation(e) ??
+          const ApiException(statusCode: 400, message: 'Data tidak valid.');
+    case '23502': // not null violation
+      final column = _notNullColumn.firstMatch(e.message)?.group(1);
+      return column == null
+          ? const ApiException(statusCode: 400, message: 'Data tidak valid.')
+          : ApiException(
+              statusCode: 400,
+              message: 'Data tidak valid.',
+              errors: {column: 'Data wajib belum diisi.'},
+            );
     case '22007': // format tanggal tidak valid
-    case '22008': // tanggal di luar rentang
+    case '22008': // tanggal yang tidak ada, mis. 30 Februari
+      // Satu-satunya kolom tanggal yang ditulis klien: transactions.date.
+      return const ApiException(
+        statusCode: 400,
+        message: 'Tanggal tidak valid.',
+        errors: {'date': 'Tanggal tidak valid.'},
+      );
+    case '22P02': // format teks tidak valid, mis. UUID
       return const ApiException(statusCode: 400, message: 'Data tidak valid.');
   }
   _debugUnmapped(e);
   return ApiException(statusCode: 500, message: e.message);
+}
+
+/// Nama constraint di pesan Postgres, mis.
+/// `new row for relation "transactions" violates check constraint "transactions_amount_check"`.
+final _constraintName = RegExp(r'constraint "([^"]+)"');
+
+/// Kolom di pesan not-null, mis.
+/// `null value in column "business_name" of relation "business_profiles" violates not-null constraint`.
+final _notNullColumn = RegExp(r'column "([^"]+)"');
+
+/// Constraint skema → (field form, pesan untuk pengguna). Namanya berasal dari
+/// migrasi di `supabase/migrations/` dan dijaga persis oleh
+/// `supabase/tests/database/04_validasi_transaksi.test.sql`; mengganti nama
+/// constraint berarti mengganti peta ini juga.
+const _constraintFields = <String, (String, String)>{
+  'transactions_amount_check': ('amount', 'Nominal harus lebih dari 0.'),
+  'transactions_date_range_check': (
+    'date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'transactions_category_id_fkey': ('category_id', 'Kategori tidak ditemukan.'),
+  'transactions_category_type_fkey': (
+    'category_id',
+    'Kategori tidak cocok dengan jenis transaksi.',
+  ),
+  'transactions_type_check': (
+    'type',
+    'Jenis transaksi harus pemasukan atau pengeluaran.',
+  ),
+  'transactions_payment_method_check': (
+    'payment_method',
+    'Metode pembayaran tidak dikenal.',
+  ),
+  'transactions_business_id_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  'business_profiles_business_name_check': (
+    'business_name',
+    'Nama usaha wajib diisi.',
+  ),
+  'business_profiles_employee_count_check': (
+    'employee_count',
+    'Jumlah karyawan tidak boleh negatif.',
+  ),
+};
+
+/// Galat 400 dengan pesan per field untuk constraint yang dikenal, supaya
+/// [ApiException.userMessage] menyebut apa yang salah — bukan sekadar
+/// "Data tidak valid.". `null` untuk constraint yang tidak ada di peta.
+ApiException? _constraintViolation(sb.PostgrestException e) {
+  final name = _constraintName.firstMatch(e.message)?.group(1);
+  final field = _constraintFields[name];
+  if (field == null) return null;
+  final (key, message) = field;
+  return ApiException(statusCode: 400, message: message, errors: {key: message});
 }
 
 /// Galat yang tidak dikenali jatuh ke pesan umum di UI; di mode debug pesan
