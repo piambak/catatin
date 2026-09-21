@@ -142,6 +142,13 @@ Saat server membalas `401`, klien otomatis sekali memanggil `/auth/refresh`
 dengan refresh token tersimpan, lalu mengulang request aslinya. Kalau refresh
 ikut gagal, sesi lokal dihapus dan pengguna dikembalikan ke layar masuk.
 
+**Umur dan rotasi token** mengikuti default D-14 selama PO belum memutus lain
+([log keputusan](../proyek/log-keputusan.md)): access token berlaku
+**15 menit**, dan setiap `/auth/refresh` **merotasi** refresh token — yang lama
+hangus begitu ditukar. Mode Supabase sudah berperilaku begini; rinciannya,
+termasuk deteksi pakai-ulang, di
+[Supabase §5](supabase.md#sesi-dan-token-d-14).
+
 #### `POST /auth/register`
 
 ```json
@@ -178,8 +185,28 @@ register tidak dibaca.
 ```
 
 ```json
-{ "access_token": "eyJhbGciOi…" }
+{ "access_token": "eyJhbGciOi…", "refresh_token": "eyJhbGciOi…" }
 ```
+
+* **Autentikasinya hanya refresh token di body.** Header `Authorization`
+  diabaikan dan tidak pernah menggantikan refresh token: request yang hanya
+  membawa Bearer — sah atau kedaluwarsa — dibalas `401 unauthorized`. Klien
+  karena itu tidak mengirim Bearer ke endpoint ini sama sekali.
+* **Respons memuat refresh token baru** (rotasi D-14). Klien wajib menyimpannya
+  menggantikan yang lama; yang lama tidak bisa dipakai lagi.
+* **Refresh token yang sudah ditukar, dicabut, atau tidak dikenal** dibalas
+  `401 unauthorized`. Server boleh memberi jeda pakai-ulang singkat untuk
+  request refresh yang datang bersamaan — Supabase memakai 10 detik — tapi
+  pakai-ulang di luar jeda itu mencabut seluruh sesi.
+* Beberapa request yang kena `401` bersamaan harus berbagi **satu** panggilan
+  refresh, bukan masing-masing menukar refresh token yang sama (#34).
+
+Padanan di mode Supabase: `POST /auth/v1/token?grant_type=refresh_token`, yang
+membalas galat tadi dengan `400` dan kode `validation_failed` (tanpa refresh
+token) atau `refresh_token_not_found`
+([Supabase §5](supabase.md#sesi-dan-token-d-14)). Klien Supabase memperbarui
+sesi sendiri; refresh token yang dicabut berujung event `signedOut` dan
+pengguna kembali ke layar masuk ([Supabase §7](supabase.md#7-sesi-demo-dan-galat)).
 
 #### `GET /auth/me`
 
