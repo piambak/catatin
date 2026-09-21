@@ -218,6 +218,39 @@ class HybridTransactionRepository implements TransactionRepository {
       );
 }
 
+// ── Transaksi berulang ──────────────────────────────────────────────────────
+
+class HybridRecurringRepository implements RecurringRepository {
+  final RecurringRepository api;
+  final RecurringRepository mock;
+
+  HybridRecurringRepository(this.api, this.mock);
+
+  @override
+  Future<List<RecurringTemplate>> getTemplates() =>
+      _orFallback(api.getTemplates, mock.getTemplates);
+
+  @override
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) =>
+      _orFallback(
+        () => api.createTemplate(draft),
+        () => mock.createTemplate(draft),
+      );
+
+  @override
+  Future<RecurringTemplate> updateTemplate(String id, RecurringDraft draft) =>
+      _orFallback(
+        () => api.updateTemplate(id, draft),
+        () => mock.updateTemplate(id, draft),
+      );
+
+  @override
+  Future<RecurringTemplate> stopTemplate(String id) => _orFallback(
+        () => api.stopTemplate(id),
+        () => mock.stopTemplate(id),
+      );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 class HybridDashboardRepository implements DashboardRepository {

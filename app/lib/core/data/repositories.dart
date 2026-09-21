@@ -138,6 +138,23 @@ void checkTransactionFilter({
 DateTime dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
+abstract class RecurringRepository {
+  /// Template aktif lebih dulu, lalu diurutkan `next_date` makin dekat;
+  /// template tanpa `next_date` (nonaktif) di paling akhir.
+  Future<List<RecurringTemplate>> getTemplates();
+
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft);
+
+  /// Mengganti seluruh isi template [id]. Menolak dengan [ApiException] 409
+  /// kalau template itu sudah dihentikan — buat template baru, bukan
+  /// menghidupkan yang lama.
+  Future<RecurringTemplate> updateTemplate(String id, RecurringDraft draft);
+
+  /// Menghentikan pengulangan template [id]. Template yang sudah nonaktif
+  /// dikembalikan apa adanya, tanpa galat.
+  Future<RecurringTemplate> stopTemplate(String id);
+}
+
 /// Metrik yang bisa ditarik riwayat bulanannya untuk grafik KPI.
 enum KpiMetric { income, expense, profit, ytd }
 
@@ -173,6 +190,7 @@ class Repos {
   static BusinessRepository? _business;
   static TransactionRepository? _transaction;
   static DashboardRepository? _dashboard;
+  static RecurringRepository? _recurring;
 
   static bool _demo = false;
 
@@ -226,12 +244,22 @@ class Repos {
         DataSource.supabase => SupabaseDashboardRepository(),
       };
 
+  static RecurringRepository get recurring =>
+      _recurring ??= switch (_source) {
+        DataSource.mock => MockRecurringRepository(),
+        DataSource.api => ApiRecurringRepository(),
+        DataSource.hybrid => HybridRecurringRepository(
+            ApiRecurringRepository(), MockRecurringRepository()),
+        DataSource.supabase => SupabaseRecurringRepository(),
+      };
+
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 
   static set auth(AuthRepository value) => _auth = value;
   static set business(BusinessRepository value) => _business = value;
   static set transaction(TransactionRepository value) => _transaction = value;
   static set dashboard(DashboardRepository value) => _dashboard = value;
+  static set recurring(RecurringRepository value) => _recurring = value;
 
   /// Buang semua instance supaya dibangun ulang dari [AppConfig].
   static void reset() {
@@ -239,5 +267,6 @@ class Repos {
     _business = null;
     _transaction = null;
     _dashboard = null;
+    _recurring = null;
   }
 }

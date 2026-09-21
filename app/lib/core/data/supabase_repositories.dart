@@ -31,10 +31,28 @@ sb.SupabaseClient get _db => SupabaseBackend.client;
 
 const _businessTable = 'business_profiles';
 const _txTable = 'transactions';
+const _recurringTable = 'recurring_templates';
 
-/// Transaksi beserta kategorinya, disematkan dengan nama kunci `category`
-/// seperti yang diharapkan `TxData.fromJson` dan `RecentTx.fromJson`.
+/// Transaksi (atau template berulang) beserta kategorinya, disematkan dengan
+/// nama kunci `category` seperti yang diharapkan `TxData.fromJson`,
+/// `RecentTx.fromJson`, dan `RecurringTemplate.fromJson`.
 const _txWithCategory = '*, category:tx_categories(*)';
+
+/// Id profil usaha milik pengguna yang sedang masuk. Dipakai
+/// [SupabaseTransactionRepository] dan [SupabaseRecurringRepository] karena
+/// keduanya menyisipkan `business_id` dari server, bukan dari data lokal —
+/// id yang tersimpan lokal bisa sisa akun lain di perangkat yang sama.
+Future<String> _currentBusinessId() async {
+  final row = await _db.from(_businessTable).select('id').maybeSingle();
+  final id = row?['id'] as String?;
+  if (id == null) {
+    throw const ApiException(
+      statusCode: 409,
+      message: 'Lengkapi profil usaha dulu sebelum mencatat transaksi.',
+    );
+  }
+  return id;
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -374,17 +392,92 @@ class SupabaseTransactionRepository implements TransactionRepository {
         final rows = await _monthlyTotals(year);
         return YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(rows));
       });
+}
 
-  Future<String> _currentBusinessId() async {
-    final row = await _db.from(_businessTable).select('id').maybeSingle();
-    final id = row?['id'] as String?;
-    if (id == null) {
-      throw const ApiException(
-        statusCode: 409,
-        message: 'Lengkapi profil usaha dulu sebelum mencatat transaksi.',
-      );
-    }
-    return id;
+// ── Transaksi berulang ──────────────────────────────────────────────────────
+
+class SupabaseRecurringRepository implements RecurringRepository {
+  static const _notFound = ApiException(
+    statusCode: 404,
+    message: 'Transaksi berulang tidak ditemukan.',
+  );
+
+  static const _inactiveConflict = ApiException(
+    statusCode: 409,
+    message: 'Transaksi berulang ini sudah dihentikan. Buat yang baru.',
+  );
+
+  /// `next_date`/`is_active` dihitung trigger database, bukan di sini — lihat
+  /// `wiki/arsitektur/backend-dan-api.md`.
+  @override
+  Future<List<RecurringTemplate>> getTemplates() => runSupabase(() async {
+        final rows = await _db
+            .from(_recurringTable)
+            .select(_txWithCategory)
+            .order('is_active', ascending: false)
+            // Bawaan `nullsFirst: false` sudah menaruh `next_date` kosong
+            // (template nonaktif) di akhir.
+            .order('next_date', ascending: true);
+        return rows.map(RecurringTemplate.fromJson).toList();
+      });
+
+  /// `business_id` selalu diambil dari server, sama seperti
+  /// [SupabaseTransactionRepository.createTransaction].
+  @override
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) =>
+      runSupabase(() async {
+        final businessId = await _currentBusinessId();
+        final row = await _db
+            .from(_recurringTable)
+            .insert({...draft.toJson(), 'business_id': businessId})
+            .select(_txWithCategory)
+            .single();
+        return RecurringTemplate.fromJson(row);
+      });
+
+  /// Hanya menimpa baris yang masih aktif. Kalau tidak ada baris yang
+  /// cocok, dibedakan lagi: id ada tapi nonaktif → 409 (sudah dihentikan),
+  /// id tidak ada sama sekali → 404.
+  @override
+  Future<RecurringTemplate> updateTemplate(
+    String id,
+    RecurringDraft draft,
+  ) async {
+    if (!isUuid(id)) throw _notFound;
+    return runSupabase(() async {
+      final row = await _db
+          .from(_recurringTable)
+          .update(draft.toJson())
+          .eq('id', id)
+          .eq('is_active', true)
+          .select(_txWithCategory)
+          .maybeSingle();
+      if (row != null) return RecurringTemplate.fromJson(row);
+      final existing = await _db
+          .from(_recurringTable)
+          .select('id')
+          .eq('id', id)
+          .maybeSingle();
+      if (existing != null) throw _inactiveConflict;
+      throw _notFound;
+    });
+  }
+
+  /// Idempoten: menghentikan template yang sudah nonaktif tetap menimpa baris
+  /// yang sama (`is_active` sudah `false`) dan mengembalikannya apa adanya.
+  @override
+  Future<RecurringTemplate> stopTemplate(String id) async {
+    if (!isUuid(id)) throw _notFound;
+    return runSupabase(() async {
+      final row = await _db
+          .from(_recurringTable)
+          .update({'is_active': false})
+          .eq('id', id)
+          .select(_txWithCategory)
+          .maybeSingle();
+      if (row == null) throw _notFound;
+      return RecurringTemplate.fromJson(row);
+    });
   }
 }
 

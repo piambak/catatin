@@ -59,6 +59,10 @@ class TxData {
   final DateTime createdAt;
   final bool isFavorite;
 
+  /// Id template transaksi berulang yang menerbitkan transaksi ini, atau
+  /// `null` kalau dicatat manual. Lihat `models/recurring_model.dart`.
+  final String? recurringTemplateId;
+
   const TxData({
     required this.id,
     required this.businessId,
@@ -71,6 +75,7 @@ class TxData {
     this.receiptNote,
     required this.createdAt,
     this.isFavorite = false,
+    this.recurringTemplateId,
   });
 
   bool get isIncome => type == 'INCOME';
@@ -87,6 +92,7 @@ class TxData {
         receiptNote: receiptNote,
         createdAt: createdAt,
         isFavorite: isFavorite ?? this.isFavorite,
+        recurringTemplateId: recurringTemplateId,
       );
 
   factory TxData.fromJson(Map<String, dynamic> j) => TxData(
@@ -103,6 +109,7 @@ class TxData {
         // Server mengirim UTC; tanpa toLocal transaksi yang dibuat sebelum
         // 07.00 WIB tampil di tanggal kemarin.
         createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
+        recurringTemplateId: j['recurring_template_id'] as String?,
       );
 }
 
