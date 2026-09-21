@@ -3,9 +3,10 @@ name: Supabase
 # Menjaga skema database: setiap perubahan di supabase/ dibangun dari nol di
 # Postgres lokal runner, di-lint, lalu dites pgTAP (RLS & hak akses).
 #
-# Tidak menyentuh proyek remote mana pun (produksi `catatin` maupun staging
-# `catatin-staging`) dan tidak butuh secret. Menerapkan migrasi ke proyek remote
-# tetap langkah manual — lihat wiki/panduan/rilis-dan-deploy.md.
+# Push ke `main` yang lolos tes lalu menerapkan migrasi baru ke staging
+# `catatin-staging` (job deploy-staging, secret SUPABASE_STAGING_DB_URL).
+# Produksi `catatin` tidak pernah disentuh workflow ini — menerapkan migrasi ke
+# sana tetap langkah manual. Lihat wiki/panduan/rilis-dan-deploy.md.
 on:
   pull_request:
     paths:
@@ -19,7 +20,9 @@ on:
 
 concurrency:
   group: supabase-${{ github.ref }}
-  cancel-in-progress: true
+  # Di main jangan batalkan run yang berjalan: bisa saja sedang di tengah
+  # `db push` ke staging. Run berikutnya menunggu giliran.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   database:
@@ -50,3 +53,63 @@ jobs:
         # Terpisah karena berkas tesnya bersebelahan dengan skrip yang
         # di-include-nya; `supabase test db` hanya me-mount folder tes itu.
         run: supabase test db supabase/staging/data_contoh.test.sql
+
+  deploy-staging:
+    name: Deploy migrasi ke staging
+    needs: database
+    # Hanya main, tidak pernah dari PR maupun cabang lain.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: supabase-deploy-staging
+      cancel-in-progress: false
+    env:
+      # Connection string Session pooler staging. Di paket Free koneksi
+      # langsung db.<ref>.supabase.co hanya IPv6; shared pooler selalu IPv4.
+      # Sengaja bukan access token pribadi: token itu juga membuka produksi,
+      # URL ini hanya membuka staging.
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+
+    steps:
+      - name: Cek secret
+        id: secret
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning title=Deploy staging dilewati::Secret SUPABASE_STAGING_DB_URL belum dipasang. Cara memasang: wiki/panduan/rilis-dan-deploy.md."
+            echo "ada=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ada=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.secret.outputs.ada == 'true'
+
+      - uses: supabase/setup-cli@v3
+        if: steps.secret.outputs.ada == 'true'
+        with:
+          version: 2.117.0
+
+      - name: Rencana (dry run)
+        # Gagal di sini — sebelum apa pun diterapkan — kalau riwayat migrasi
+        # staging tidak cocok dengan supabase/migrations/, atau proyek sedang
+        # dijeda (paket Free menjeda proyek yang sepekan tidak dipakai, T-19).
+        if: steps.secret.outputs.ada == 'true'
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+      - name: Terapkan migrasi
+        if: steps.secret.outputs.ada == 'true'
+        # --yes: tidak ada TTY di runner, jangan sampai menunggu konfirmasi.
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes
+
+      - name: Riwayat migrasi staging
+        if: steps.secret.outputs.ada == 'true'
+        run: |
+          {
+            echo '### Migrasi di staging `catatin-staging`'
+            echo '```text'
+            supabase migration list --db-url "$SUPABASE_DB_URL"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
