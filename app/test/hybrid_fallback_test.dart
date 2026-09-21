@@ -58,10 +58,9 @@ class _FakeAuth implements AuthRepository {
 }
 
 class _FakeTx implements TransactionRepository {
-  _FakeTx({this.galat, this.hasil = true});
+  _FakeTx({this.galat});
 
   final ApiException? galat;
-  final bool hasil;
   int createDipanggil = 0;
   int getDipanggil = 0;
 
@@ -69,7 +68,7 @@ class _FakeTx implements TransactionRepository {
   Future<bool> createTransaction(TransactionDraft draft) async {
     createDipanggil++;
     if (galat != null) throw galat!;
-    return hasil;
+    return true;
   }
 
   @override
