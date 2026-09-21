@@ -142,6 +142,13 @@ Saat server membalas `401`, klien otomatis sekali memanggil `/auth/refresh`
 dengan refresh token tersimpan, lalu mengulang request aslinya. Kalau refresh
 ikut gagal, sesi lokal dihapus dan pengguna dikembalikan ke layar masuk.
 
+**Umur dan rotasi token** mengikuti default D-14 selama PO belum memutus lain
+([log keputusan](../proyek/log-keputusan.md)): access token berlaku
+**15 menit**, dan setiap `/auth/refresh` **merotasi** refresh token — yang lama
+hangus begitu ditukar. Mode Supabase sudah berperilaku begini; rinciannya,
+termasuk deteksi pakai-ulang, di
+[Supabase §5](supabase.md#sesi-dan-token-d-14).
+
 #### `POST /auth/register`
 
 ```json
@@ -178,8 +185,28 @@ register tidak dibaca.
 ```
 
 ```json
-{ "access_token": "eyJhbGciOi…" }
+{ "access_token": "eyJhbGciOi…", "refresh_token": "eyJhbGciOi…" }
 ```
+
+* **Autentikasinya hanya refresh token di body.** Header `Authorization`
+  diabaikan dan tidak pernah menggantikan refresh token: request yang hanya
+  membawa Bearer — sah atau kedaluwarsa — dibalas `401 unauthorized`. Klien
+  karena itu tidak mengirim Bearer ke endpoint ini sama sekali.
+* **Respons memuat refresh token baru** (rotasi D-14). Klien wajib menyimpannya
+  menggantikan yang lama; yang lama tidak bisa dipakai lagi.
+* **Refresh token yang sudah ditukar, dicabut, atau tidak dikenal** dibalas
+  `401 unauthorized`. Server boleh memberi jeda pakai-ulang singkat untuk
+  request refresh yang datang bersamaan — Supabase memakai 10 detik — tapi
+  pakai-ulang di luar jeda itu mencabut seluruh sesi.
+* Beberapa request yang kena `401` bersamaan harus berbagi **satu** panggilan
+  refresh, bukan masing-masing menukar refresh token yang sama (#34).
+
+Padanan di mode Supabase: `POST /auth/v1/token?grant_type=refresh_token`, yang
+membalas galat tadi dengan `400` dan kode `validation_failed` (tanpa refresh
+token) atau `refresh_token_not_found`
+([Supabase §5](supabase.md#sesi-dan-token-d-14)). Klien Supabase memperbarui
+sesi sendiri; refresh token yang dicabut berujung event `signedOut` dan
+pengguna kembali ke layar masuk ([Supabase §7](supabase.md#7-sesi-demo-dan-galat)).
 
 #### `GET /auth/me`
 
@@ -298,6 +325,9 @@ mode, jadi kesalahan pemanggil sudah ketahuan saat memakai data contoh. Mode
 * `payment_method`: `CASH` | `TRANSFER` | `QRIS` | `KARTU_DEBIT` | `KARTU_KREDIT` | `COD` | `OTHER`
 * `category` disematkan penuh (bukan sekadar id) supaya daftar transaksi bisa
   dirender tanpa request kedua.
+* `recurring_template_id`: id [transaksi berulang](#transaksi-berulang) yang
+  menerbitkannya, atau `null` untuk transaksi yang dicatat manual. Klien lama
+  boleh mengabaikannya. *(Kontrak Minggu 3, #60.)*
 
 #### `GET /transactions/{id}` → `{ "transaction": { … } }`
 
@@ -409,6 +439,151 @@ Contoh di atas adalah data contoh staging ([Supabase §8](supabase.md#8-staging-
 
 ---
 
+### Transaksi berulang
+
+> **Status: kontrak untuk sinkronisasi Rabu Minggu 3 (#60), belum
+> diimplementasikan.** Implementasinya #58. Ubah bagian ini dulu kalau FE butuh
+> bentuk lain — bukan kodenya.
+
+Template yang menerbitkan transaksi biasa secara otomatis, mis. sewa kios tiap
+bulan atau gaji tiap minggu. Transaksi hasil terbitan adalah transaksi biasa:
+muncul di `GET /transactions`, ikut agregat, dan bisa diubah atau dihapus satu
+per satu tanpa menyentuh templatenya.
+
+```json
+{
+  "id": "rec_01",
+  "business_id": "biz_01",
+  "type": "EXPENSE",
+  "amount": 1500000,
+  "category": { "id": "ec4", "name": "Sewa Tempat", "type": "EXPENSE", "tax_relevant": true, "is_cogs": false, "icon": "🏠", "color": "#F59E0B" },
+  "description": "Sewa kios",
+  "payment_method": "TRANSFER",
+  "frequency": "MONTHLY",
+  "start_date": "2026-01-01",
+  "end_date": null,
+  "next_date": "2026-10-01",
+  "is_active": true,
+  "created_at": "2026-09-21T10:00:00Z"
+}
+```
+
+| Field | Arti |
+| --- | --- |
+| `frequency` | `WEEKLY` \| `MONTHLY` |
+| `start_date` | Jangkar jadwal. Bulanan: tanggal yang sama tiap bulan; kalau bulan itu lebih pendek, tanggal terakhirnya (31 Jan → 28 Feb → 31 Mar). Mingguan: hari yang sama tiap 7 hari. |
+| `end_date` | Opsional, **inklusif**. Kemunculan setelah tanggal ini tidak diterbitkan. |
+| `next_date` | Kemunculan berikutnya yang akan diterbitkan. `null` kalau template sudah selesai atau dihentikan. |
+| `is_active` | `false` setelah dihentikan atau setelah melewati `end_date`. Template nonaktif tidak bisa dinyalakan lagi — buat template baru. |
+
+**Aturan penerbitan.**
+
+* Server menerbitkan setiap kemunculan yang jatuh tempo **sekali sehari**,
+  tidak lama setelah pukul 00.00 WIB. Tanggal transaksinya = tanggal kemunculan,
+  bukan tanggal penerbitan.
+* **Tidak ada pengisian mundur.** Kemunculan sebelum template dibuat tidak
+  pernah diterbitkan; `start_date` di masa lalu hanya menentukan jangkar
+  jadwal. Kemunculan yang jatuh **hari ini** saat template dibuat langsung
+  diterbitkan, tidak menunggu besok.
+* Kalau penerbitan harian sempat terlewat (mis. server berhenti), semua
+  kemunculan yang tertinggal sejak itu diterbitkan pada penerbitan berikutnya.
+* Satu kemunculan tidak pernah diterbitkan dua kali, walau penerbitan diulang.
+
+#### `GET /recurring`
+
+`{ "templates": [ … ] }` — yang aktif lebih dulu, lalu menurut `next_date`.
+
+#### `POST /recurring`
+
+```json
+{
+  "type": "EXPENSE",
+  "amount": 1500000,
+  "category_id": "ec4",
+  "description": "Sewa kios",
+  "payment_method": "TRANSFER",
+  "frequency": "MONTHLY",
+  "start_date": "2026-01-01",
+  "end_date": null
+}
+```
+
+Balas `201` dengan `{ "template": { … } }`. `business_id` diambil server dari
+profil usaha pengguna; tanpa profil usaha balas `409 business_profile_required`.
+
+#### `PATCH /recurring/{id}`
+
+Body lengkap, sama dengan `POST`. Balas `200` dengan `{ "template": { … } }`.
+Perubahan hanya berlaku untuk kemunculan **berikutnya**; transaksi yang sudah
+terbit tidak ikut berubah. Kalau `frequency` atau `start_date` berubah,
+`next_date` dihitung ulang: kemunculan pertama jadwal baru yang jatuh hari ini
+atau sesudahnya. Template nonaktif balas `409 conflict`.
+
+#### `POST /recurring/{id}/stop`
+
+Menghentikan pengulangan: `is_active` jadi `false`, `next_date` jadi `null`.
+Balas `200` dengan `{ "template": { … } }`. Transaksi yang sudah terbit tetap
+ada. Menghentikan template yang sudah nonaktif tidak mengubah apa pun.
+
+**Galat** untuk `POST` dan `PATCH`: aturan validasi sama dengan
+[`POST /transactions`](#post-transactions) — nominal, kategori yang sejenis,
+`type`, `payment_method` — ditambah `frequency` di luar daftar, `start_date` di
+luar 2000–2099, atau `end_date` sebelum `start_date`, semuanya
+`400 validation_failed` dengan satu field di `details`. Template milik akun
+lain atau yang tidak ada balas `404 not_found`.
+
+---
+
+### Lampiran struk
+
+> **Status: kontrak untuk sinkronisasi Rabu Minggu 3 (#60), belum
+> diimplementasikan.** Implementasinya #59.
+
+Foto struk yang menempel ke satu transaksi. Satu transaksi boleh punya lebih
+dari satu lampiran.
+
+```json
+{
+  "id": "att_01",
+  "transaction_id": "trx_01",
+  "file_name": "struk-sewa.jpg",
+  "mime_type": "image/jpeg",
+  "size_bytes": 482113,
+  "url": "https://…/struk-sewa.jpg?token=…",
+  "url_expires_at": "2026-09-21T11:00:00Z",
+  "created_at": "2026-09-21T10:00:00Z"
+}
+```
+
+* `url` adalah **signed URL** yang berlaku **1 jam** (`url_expires_at`). Jangan
+  simpan URL-nya; minta ulang lewat `GET` saat dibutuhkan. Berkasnya tidak
+  pernah bisa dibuka tanpa URL bertanda tangan.
+* Tipe yang diterima: `image/jpeg`, `image/png`, `image/webp`. Ukuran paling
+  besar **5 MB** (5.242.880 byte). Klien sebaiknya mengecilkan foto kamera
+  sebelum mengunggah.
+
+#### `GET /transactions/{id}/attachments`
+
+`{ "attachments": [ … ] }`, yang terlama lebih dulu. Transaksi yang tidak ada
+atau milik akun lain balas `404 not_found`.
+
+#### `POST /transactions/{id}/attachments`
+
+`multipart/form-data` dengan satu bagian `file`. Balas `201` dengan
+`{ "attachment": { … } }`.
+
+| Status | Kapan |
+| --- | --- |
+| `400 validation_failed` | `details.file`: berkas lebih dari 5 MB, kosong, atau bukan JPEG/PNG/WebP |
+| `404 not_found` | Transaksi tidak ada atau milik akun lain |
+
+#### `DELETE /transactions/{id}/attachments/{attachmentId}` → `204`
+
+Menghapus lampiran beserta berkasnya. Menghapus transaksi (`DELETE
+/transactions/{id}`) ikut menghapus semua lampirannya.
+
+---
+
 ### Dashboard
 
 #### `GET /dashboard/summary?month=8&year=2026`
@@ -425,6 +600,37 @@ Contoh di atas adalah data contoh staging ([Supabase §8](supabase.md#8-staging-
 
 Persentase ambang PKP dihitung di klien (`ytd_omzet / 4.800.000.000`), jadi
 backend tidak perlu mengirimkannya.
+
+#### `GET /dashboard/close?month=8&year=2026`
+
+> **Status: kontrak Minggu 4 (#74).**
+
+Ringkasan tutup bulan — angka satu bulan yang siap dipakai kartu ringkasan
+dashboard dan Simulator. `month` dan `year` wajib.
+
+```json
+{
+  "month": 8,
+  "year": 2026,
+  "income": 28500000,
+  "expense": 18200000,
+  "profit": 10300000,
+  "cogs": 6200000,
+  "tx_count": 12,
+  "ytd_omzet": 285000000
+}
+```
+
+* `profit` = `income − expense`; `cogs` adalah bagian `expense` dari kategori
+  ber-`is_cogs`; `ytd_omzet` = pemasukan Januari sampai bulan itu. Semua angka
+  dari sumber yang sama dengan
+  [`GET /transactions/aggregate`](#get-transactionsaggregateyear2026), jadi
+  bulan yang sama selalu memberi angka yang sama.
+* Bulan tanpa transaksi bernilai nol, bukan `404`.
+* Balas `400 validation_failed` kalau `month` bukan 1–12 atau `year` kosong.
+
+Contoh di atas adalah bulan Agustus data contoh staging, sama dengan contoh
+`GET /dashboard/summary` dan `GET /transactions/aggregate`.
 
 #### `GET /dashboard/kpi-history?metric=income`
 

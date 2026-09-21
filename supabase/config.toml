@@ -179,7 +179,9 @@ additional_redirect_urls = [
   "com.catatin.catatin://login-callback",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
-jwt_expiry = 3600
+# Catatin: 15 menit, default keputusan D-14 (wiki/proyek/log-keputusan.md).
+# Proyek remote diatur terpisah di dashboard — lihat wiki/arsitektur/supabase.md §5.
+jwt_expiry = 900
 # JWT issuer URL. If not set, defaults to auth.external_url.
 # jwt_issuer = ""
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
