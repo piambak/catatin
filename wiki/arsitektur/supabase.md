@@ -310,6 +310,76 @@ Tidak ada akun kedua dan tidak ada email konfirmasi.
   Google, lalu ganti kata sandi di Pengaturan. Pemulihan lewat email masih
   menunggu custom SMTP (T-18).
 
+### Sesi dan token (D-14)
+
+D-14 menanyakan umur token dan apakah refresh token boleh disimpan di
+browser; tenggatnya 25 Sep 2026 dan default-nya "access 15 menit, refresh
+dirotasi" ([log keputusan](../proyek/log-keputusan.md)). Selama PO belum
+memutus lain, proyek ini mengikuti default itu (#39):
+
+| Setelan | Nilai | Tempat |
+| --- | --- | --- |
+| Umur access token (JWT) | **900 detik** (15 menit) | Dashboard, *Authentication → Sessions*; lokal `jwt_expiry` di `supabase/config.toml` |
+| Rotasi refresh token | Menyala | Bawaan Supabase; lokal `enable_refresh_token_rotation` |
+| Interval pakai-ulang refresh token | 10 detik | Bawaan Supabase; lokal `refresh_token_reuse_interval` |
+| Umur maksimum sesi, batas tidak aktif, satu sesi per pengguna | Tidak tersedia | Hanya paket Pro ke atas |
+
+Yang dijamin Supabase Auth ([sumber](../sumber/supabase-auth-sessions.md)):
+
+- **Rotasi.** Refresh token hanya bisa ditukar sekali, menghasilkan pasangan
+  access + refresh token baru; refresh token sendiri tidak kedaluwarsa.
+- **Deteksi pakai-ulang.** Refresh token lama yang dipakai lagi di luar
+  interval 10 detik — dan bukan induk langsung token aktif — membuat seluruh
+  sesi dianggap berakhir dan semua refresh token-nya dicabut. Ini melindungi
+  dari refresh token yang bocor lewat log, bukan dari perangkat yang dicuri.
+- **Tanpa umur maksimum.** Di paket Free sesi hidup sampai pengguna keluar,
+  mengganti kata sandi, atau tertangkap deteksi pakai-ulang — *time-box*,
+  *inactivity timeout*, dan *single session per user* hanya untuk paket Pro ke
+  atas.
+- **900 detik masih aman.** Dokumen Supabase menyarankan tidak di bawah
+  5 menit, karena klien Supabase memperbarui sesi sebelum kedaluwarsa dan
+  selisih jam perangkat bisa beberapa menit.
+
+**Refresh token di browser.** Di web, sesi — termasuk refresh token —
+disimpan klien Supabase di `localStorage` (T-11 di
+[backlog teknis](../proyek/backlog-teknis.md)). Cookie HTTP-only, yang
+disebut catatan #156, tidak bisa dipakai aplikasi yang logikanya di browser:
+browser tidak akan bisa membaca token untuk memperbaruinya
+([sumber](../sumber/supabase-auth-sessions.md)). Apakah `localStorage` bisa
+diterima tetap keputusan D-14.
+
+**`/auth/refresh` menolak Bearer.** Padanan Supabase-nya,
+`POST /auth/v1/token?grant_type=refresh_token`, hanya menerima refresh token
+di body: request yang hanya membawa `Authorization: Bearer` dibalas
+`400 validation_failed`, dan refresh token yang tidak pernah diterbitkan
+dibalas `400 refresh_token_not_found`
+([sumber](../sumber/staging-auth-cors-uji.md)). Klien memetakan
+`refresh_token_not_found` dan `refresh_token_already_used` ke sesi berakhir
+(401) di `supabase_client.dart`.
+
+**Setelan remote.** `config.toml` hanya berlaku untuk stack lokal dan CI
+([§2](#2-menyiapkan-dari-nol)), jadi 900 detik dipasang di dashboard
+masing-masing proyek: staging lebih dulu, produksi setelah D-14 diputus atau
+tenggatnya lewat tanpa keputusan lain.
+
+### CORS
+
+[Backend & API §5](backend-dan-api.md#5-cors-khusus-web) — daftar origin
+yang diizinkan — hanya berlaku untuk backend REST buatan sendiri. API Supabase
+yang di-host membalas `Access-Control-Allow-Origin: *` untuk origin mana pun,
+baik di Auth maupun REST, tanpa `Access-Control-Allow-Credentials`
+([sumber](../sumber/staging-auth-cors-uji.md)); tidak ada setelan untuk
+mempersempitnya.
+
+Itu bisa diterima karena kredensialnya bukan cookie: setiap request membawa
+access token di header `Authorization`, yang dipasang klien Supabase dari
+penyimpanan halaman Catatin sendiri — bukan sesuatu yang dilampirkan browser
+secara otomatis ke situs mana pun. Situs lain bisa memanggil API yang sama,
+tapi hanya dengan publishable key — yang memang publik (§6) — dan tanpa sesi
+pengguna, jadi diperlakukan sebagai peran `anon` yang tidak punya hak apa pun
+(§3). Pengaturan per origin yang memang ada di Supabase adalah **Redirect
+URLs** di URL Configuration (awal bagian ini).
+
 ## 6. Kunci dan rahasia
 
 | Nilai | Boleh di repo? |
@@ -449,15 +519,20 @@ atau data yang tertinggal.
    mengubah, dan menghapus satu transaksi dan memastikan dashboard ikut berubah.
 
 Staging juga dijeda setelah seminggu tidak aktif (T-19 di
-[backlog teknis](../proyek/backlog-teknis.md)). Migrasi baru diterapkan ke
-staging lebih dulu, baru ke produksi
-([Rilis & deploy](../panduan/rilis-dan-deploy.md)).
+[backlog teknis](../proyek/backlog-teknis.md)); selama dijeda, job
+`deploy-staging` gagal di langkah dry run. Migrasi baru sampai ke staging
+lebih dulu — otomatis saat digabung ke `main` — baru diterapkan manual ke
+produksi ([Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging)).
 
 ## 9. CI database
 
 Workflow `.github/workflows/supabase.yml` berjalan pada setiap push dan PR yang
-menyentuh `supabase/**` atau workflow itu sendiri. Ia tidak menyentuh proyek
-remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
+menyentuh `supabase/**` atau workflow itu sendiri. Job `database` tidak
+menyentuh proyek remote mana pun dan tidak butuh secret: semuanya di Postgres
+lokal runner. Kalau job itu lulus pada push ke `main`, job `deploy-staging`
+menerapkan migrasi baru ke staging dengan `supabase db push` — produksi tidak
+pernah disentuh. Secret, cara memasangnya, dan cara membaca kegagalannya ada di
+[Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging).
 
 | Langkah | Perintah | Menangkap |
 | --- | --- | --- |
@@ -465,6 +540,7 @@ remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
 | Lint | `supabase db lint --level warning --fail-on warning` | Galat fungsi yang baru muncul saat dijalankan, lewat `plpgsql_check`. Tanpa `--fail-on`, perintah ini selalu keluar dengan status 0 ([sumber](../sumber/supabase-testing-pgtap.md)) |
 | Tes | `supabase test db` | `supabase/tests/database/*.test.sql` |
 | Tes data contoh | `supabase test db supabase/staging/data_contoh.test.sql` | Skrip data contoh menyimpang dari contoh kontrak |
+| Deploy staging (hanya `main`) | `supabase db push --db-url … --dry-run`, lalu `supabase db push --db-url …` | Migrasi baru belum sampai ke staging ([sumber](../sumber/supabase-cli-db-push.md)) |
 
 CLI di-pin ke versi 2.117.0 lewat `supabase/setup-cli@v3`
 ([sumber](../sumber/supabase-setup-cli-action.md)); `supabase/config.toml`
@@ -481,6 +557,9 @@ diturunkan dari template versi yang sama.
   menghapus data A, dan tidak bisa mencatat ke usaha A maupun menyamar sebagai
   A; A tidak bisa memindahkan transaksi ke usaha B; `monthly_totals` dan
   `has_password()` benar; `anon` ditolak.
+- `03_agregat_bulanan.test.sql` (3 tes) — `monthly_totals` selalu 12 bulan
+  termasuk bulan kosong, HPP hanya dari kategori ber-`is_cogs`, dan total
+  pemasukan setahun (#41).
 - `04_validasi_transaksi.test.sql` (14 tes) — semua aturan validasi di
   [§3](#3-skema), dijalankan sebagai `authenticated`, dengan pesan galat yang
   dicocokkan persis karena nama constraint di dalamnya dibaca klien (#40).
