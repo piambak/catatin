@@ -149,6 +149,85 @@ void main() {
     });
   });
 
+  // Pesan persis seperti yang dikirim PostgREST — sama dengan yang dicocokkan
+  // supabase/tests/database/04_validasi_transaksi.test.sql.
+  group('supabaseException — validasi per field (#40)', () {
+    ApiException map(String code, String message) => supabaseException(
+          sb.PostgrestException(message: message, code: code),
+          hasSession: true,
+        )!;
+
+    String check(String table, String constraint) =>
+        'new row for relation "$table" violates check constraint "$constraint"';
+    String fk(String constraint) =>
+        'insert or update on table "transactions" violates foreign key '
+        'constraint "$constraint"';
+
+    test('nominal ≤ 0 → field amount', () {
+      final e = map('23514', check('transactions', 'transactions_amount_check'));
+      expect(e.statusCode, 400);
+      expect(e.errors, {'amount': 'Nominal harus lebih dari 0.'});
+      expect(e.userMessage, 'Nominal harus lebih dari 0.');
+    });
+
+    test('tanggal di luar 2000–2099 → field date', () {
+      final e =
+          map('23514', check('transactions', 'transactions_date_range_check'));
+      expect(e.errors?.keys, ['date']);
+      expect(e.userMessage, contains('2000'));
+    });
+
+    test('kategori tidak ada dan kategori salah jenis dibedakan', () {
+      final hilang = map('23503', fk('transactions_category_id_fkey'));
+      final salahJenis = map('23503', fk('transactions_category_type_fkey'));
+      expect(hilang.statusCode, 400);
+      expect(hilang.userMessage, 'Kategori tidak ditemukan.');
+      expect(salahJenis.statusCode, 400);
+      expect(salahJenis.userMessage,
+          'Kategori tidak cocok dengan jenis transaksi.');
+      expect(salahJenis.errors?.keys, ['category_id']);
+    });
+
+    test('metode pembayaran dan nama usaha', () {
+      expect(
+        map('23514',
+                check('transactions', 'transactions_payment_method_check'))
+            .errors
+            ?.keys,
+        ['payment_method'],
+      );
+      expect(
+        map('23514', check('business_profiles',
+                'business_profiles_business_name_check'))
+            .userMessage,
+        'Nama usaha wajib diisi.',
+      );
+    });
+
+    test('tanggal kalender yang tidak ada (22008) → field date', () {
+      final e =
+          map('22008', 'date/time field value out of range: "2026-02-30"');
+      expect(e.statusCode, 400);
+      expect(e.errors?.keys, ['date']);
+    });
+
+    test('not-null → kolomnya wajib diisi', () {
+      final e = map(
+        '23502',
+        'null value in column "business_name" of relation "business_profiles" '
+            'violates not-null constraint',
+      );
+      expect(e.errors, {'business_name': 'Data wajib belum diisi.'});
+    });
+
+    test('constraint tak dikenal tetap 400 umum, tanpa errors', () {
+      final e = map('23514', check('transactions', 'constraint_baru_lain'));
+      expect(e.statusCode, 400);
+      expect(e.userMessage, 'Data tidak valid.');
+      expect(e.errors, isNull);
+    });
+  });
+
   group('supabaseException — lain-lain', () {
     test('ClientException dan TimeoutException → gagal jaringan', () {
       expect(

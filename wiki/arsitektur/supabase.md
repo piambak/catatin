@@ -148,6 +148,26 @@ pemetaan tambahan.
   habis), dan hapus/ubah yang tidak menyentuh baris apa pun jadi 404.
 - **Kategori diisi di migrasi**, bukan `supabase/seed.sql`, supaya ikut
   `db push` ke proyek remote.
+- **Validasi transaksi ada di database** (#40), jadi berlaku untuk klien apa
+  pun, bukan hanya form aplikasi:
+
+  | Aturan | Constraint | Kode |
+  | --- | --- | --- |
+  | Nominal lebih dari 0 | `transactions_amount_check` | `23514` |
+  | Tanggal 1 Jan 2000 s.d. 31 Des 2099 | `transactions_date_range_check` | `23514` |
+  | Tanggal kalender yang ada (bukan 30 Februari) | tipe `date` | `22008` |
+  | Kategori ada | `transactions_category_id_fkey` | `23503` |
+  | Kategori sejenis dengan transaksi (`INCOME`/`EXPENSE`) | `transactions_category_type_fkey` — FK komposit ke `tx_categories (id, type)` | `23503` |
+  | `type` dan `payment_method` dari daftar tetap | `transactions_type_check`, `transactions_payment_method_check` | `23514` |
+
+  Batas tanggal sengaja konstanta, bukan `current_date`, supaya constraint-nya
+  immutable. Kategori yang tidak ada sama sekali tetap dilaporkan lewat FK
+  lama, jadi "tidak ditemukan" dan "salah jenis" bisa dibedakan.
+  `supabaseException()` di `supabase_client.dart` membaca nama constraint dari
+  pesan galat dan mengubahnya jadi 400 dengan pesan per field di
+  `ApiException.errors` — mis. "Kategori tidak cocok dengan jenis transaksi."
+  — alih-alih "Data tidak valid." umum. Nama constraint karena itu bagian dari
+  kontrak: mengganti namanya berarti mengganti peta di klien dan tesnya.
 - **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
   Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
   tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
@@ -159,8 +179,8 @@ Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 `db push`. Migrasi yang sudah di-push jangan disunting — buat migrasi baru.
 
 Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak,
-`has_password()` satu-satunya security definer, dan isolasi data antar-akun —
-dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
+`has_password()` satu-satunya security definer, isolasi data antar-akun, dan
+validasi transaksi — dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
 migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 
 ## 4. Pemetaan kontrak
@@ -540,6 +560,9 @@ diturunkan dari template versi yang sama.
 - `03_agregat_bulanan.test.sql` (3 tes) — `monthly_totals` selalu 12 bulan
   termasuk bulan kosong, HPP hanya dari kategori ber-`is_cogs`, dan total
   pemasukan setahun (#41).
+- `04_validasi_transaksi.test.sql` (14 tes) — semua aturan validasi di
+  [§3](#3-skema), dijalankan sebagai `authenticated`, dengan pesan galat yang
+  dicocokkan persis karena nama constraint di dalamnya dibaca klien (#40).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 

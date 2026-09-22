@@ -348,6 +348,22 @@ mode, jadi kesalahan pemanggil sudah ketahuan saat memakai data contoh. Mode
 
 Balas `201`. Isi respons tidak dibaca klien.
 
+Aturan validasi yang sama berlaku untuk `POST` dan `PATCH`. Server membalas
+`400 validation_failed` dengan `details` berisi **satu** field yang salah:
+
+| Field | Aturan | Contoh `details` |
+| --- | --- | --- |
+| `amount` | Lebih dari 0 | `{ "amount": "Nominal harus lebih dari 0." }` |
+| `date` | `YYYY-MM-DD` yang ada di kalender, 2000-01-01 s.d. 2099-12-31 | `{ "date": "Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099." }` |
+| `category_id` | Kategori ada | `{ "category_id": "Kategori tidak ditemukan." }` |
+| `category_id` | Kategori sejenis dengan `type` — kategori pemasukan hanya untuk `INCOME`, pengeluaran hanya untuk `EXPENSE` | `{ "category_id": "Kategori tidak cocok dengan jenis transaksi." }` |
+| `type` | `INCOME` \| `EXPENSE` | `{ "type": "Jenis transaksi harus pemasukan atau pengeluaran." }` |
+| `payment_method` | Salah satu dari tujuh nilai di atas | `{ "payment_method": "Metode pembayaran tidak dikenal." }` |
+
+Di mode Supabase aturan ini dijaga constraint database, dan pesan per field
+yang sama dibentuk klien dari nama constraint-nya
+([Supabase §3](supabase.md#3-skema)).
+
 #### `PATCH /transactions/{id}`
 
 Mengganti isi transaksi. Body **lengkap**, sama dengan `POST /transactions` —
@@ -359,7 +375,7 @@ klien tidak membaca isinya.
 
 | Status | Kapan |
 | --- | --- |
-| `400 validation_failed` | Nominal ≤ 0, tanggal tidak valid, `type` atau `payment_method` di luar daftar, atau kategori tidak ada |
+| `400 validation_failed` | Melanggar aturan validasi di `POST /transactions` di atas: nominal ≤ 0, tanggal tidak valid atau di luar 2000–2099, `type` atau `payment_method` di luar daftar, kategori tidak ada, atau kategori tidak sejenis dengan `type` |
 | `401 unauthorized` | Sesi habis |
 | `404 not_found` | Transaksi tidak ada **atau milik akun lain** — sengaja tidak dibedakan |
 
@@ -683,7 +699,10 @@ Body galat diurai `apiExceptionFromResponse()` di
 `api` dan `hybrid`. Mode `supabase` tidak punya body REST: galat Supabase
 diterjemahkan ke status yang sama di `supabase_client.dart` dengan `code`
 kosong — bercabanglah pada `statusCode` kalau kodenya harus jalan di semua mode.
-Bentuk ini dijaga tes `app/test/kontrak_transaksi_test.dart`.
+Pelanggaran constraint yang dikenal tetap membawa pesan per field di
+`ApiException.errors`, sama dengan `details` di mode REST (#40).
+Bentuk ini dijaga tes `app/test/kontrak_transaksi_test.dart` dan
+`app/test/supabase_mapping_test.dart`.
 
 ---
 
