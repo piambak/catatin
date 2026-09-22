@@ -125,6 +125,34 @@ tumbuh terus.
   error). `flutter test` 105 lulus + 1 di-skip di empat cabang, **111 + 1** di
   #13 — tepat enam tes baru. `flutter build web --release` sukses.
 
+- **2026-09-18** — TAX — **Spesifikasi pajak Minggu 1 dikunci (#21–#27).**
+  Folder baru `wiki/domain/pajak/` berisi
+  [spek PPh 21 TER](../domain/pajak/spek-pph21-ter.md),
+  [spek PPh Final UMKM](../domain/pajak/spek-pph-final-umkm.md),
+  [keputusan TAX](../domain/pajak/keputusan-tax.md),
+  serta dua berkas data: `ter-bulanan.csv` (tabel TER bulanan, bentuk normatif)
+  dan `kasus-pph21.csv` (15 kasus uji pada batas lapisan). Sumbernya slide
+  sosialisasi PMK 168/2023 yang diserahkan TAX, disimpan di
+  [wiki/sumber](../sumber/pmk-168-2023-slide-ter.md).
+  **Temuan 1 — `terTableA` salah, bukan sekadar kurang.** Tabel resmi kategori A
+  punya 44 lapisan, kode punya 32, dan 28 di antaranya salah tarif atau salah
+  batas; dua belas lapisan teratas (Rp 62.200.001–Rp 1.400.000.000, 21%–33%)
+  hilang sama sekali. Bruto Rp 20 juta dihitung 11% padahal tarif resminya 9%.
+  Ini memperberat T-1 dan belum punya nomor temuan sendiri.
+  **Temuan 2 — tenggat SPT Tahunan OP salah.** `generateCalendar()` memakai
+  30 April; yang benar 31 Maret. Membuka jalan untuk #154 (T-25).
+  **Keputusan.** D-8: tarif PPN 11% ditetapkan (dasar hukum masih `[CEK]`);
+  lingkup modul PPN dan proyeksi SPT Tahunan direkomendasikan keluar dari Fase
+  Dua, `kind` `PPN` dihapus dari skema mesin tarif tetapi `PPH_PASAL_17`
+  dipertahankan karena dipakai pada masa pajak terakhir — ratifikasinya masih
+  menunggu di #26. D-10: aturan tampilan, termasuk larangan menampilkan angka
+  PKP di layar PPh 21 (T-4). D-11: matriks profesi ke rezim pajak, dengan batas
+  bahwa Catatin hanya memodelkan dua profil.
+  **Yang sengaja dibiarkan terbuka:** besaran biaya jabatan tidak tercantum di
+  sumber mana pun yang tersedia, dan seluruh angka PPh Final menunggu salinan
+  PP 23/2018 serta PP 55/2022. Semuanya terdaftar sebagai `[CEK]` dan tidak ada
+  yang menjadi prasyarat pekerjaan FE/BE Minggu 2.
+
 - **2026-09-15** — Backend — **Issue #17–#20: staging Supabase, CI database,
   kontrak transaksi, dan draf skema mesin tarif.** Keempat issue ditulis PO
   sebelum D-7 ([sumber](../sumber/github-issue-17-20-backend-minggu-1.md)); #17

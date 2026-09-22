@@ -29,6 +29,8 @@ pelanggaran gaya markdown.
 | Mengubah skema database dan menjalankan tesnya | [Supabase §9](arsitektur/supabase.md#9-ci-database) |
 | Melihat rancangan tabel konfigurasi tarif pajak | [Backend & API §7](arsitektur/backend-dan-api.md#7-skema-mesin-tarif-pajak-draf-untuk-review-tax) |
 | Tahu dari mana angka pajaknya datang | [Aturan pajak](domain/aturan-pajak.md) |
+| Tahu tarif TER mana yang berlaku untuk suatu status PTKP | [Spek PPh 21 TER](domain/pajak/spek-pph21-ter.md) |
+| Lihat keputusan regulasi yang sudah diambil | [Keputusan TAX](domain/pajak/keputusan-tax.md) |
 | Paham arti PKP, PTKP, TER, HPP | [Glosarium](domain/glosarium.md) |
 | Merilis atau melakukan rollback | [Rilis & deploy](panduan/rilis-dan-deploy.md) |
 | Mengubah warna, tipografi, atau jarak | [Design tokens](desain/design-tokens.md) |
@@ -73,6 +75,14 @@ pelanggaran gaya markdown.
   bug tarif yang sudah diketahui.
 - **[Glosarium](domain/glosarium.md)** — istilah pajak dan istilah teknis khas
   repo ini.
+- **[Spesifikasi PPh 21 TER](domain/pajak/spek-pph21-ter.md)** — tabel TER
+  bulanan A/B/C (PMK 168/2023), pemetaan status PTKP ke kategori, TER harian,
+  perlakuan masa pajak terakhir, aturan tampilan, dan temuan audit tabel tarif.
+- **[Spesifikasi PPh Final UMKM](domain/pajak/spek-pph-final-umkm.md)** —
+  tarif, pengecualian omzet, batas jangka waktu, transisi ambang, tenggat
+  pelaporan.
+- **[Keputusan TAX](domain/pajak/keputusan-tax.md)** — register keputusan
+  regulasi D-8 sampai D-13 beserta alasan dan statusnya.
 
 ### Desain
 
@@ -127,6 +137,9 @@ sumbernya berubah, simpan salinan baru.
 - **[PostgreSQL 17: range types](sumber/postgres-range-exclusion.md)** — batas
   inklusif/eksklusif, range tanpa batas, exclusion constraint dengan
   `btree_gist`.
+- **[Slide PMK 168/2023 (TER)](sumber/pmk-168-2023-slide-ter.md)** — tarif
+  Pasal 17, pemetaan status PTKP ke kategori TER, TER harian, dan matriks
+  dasar pengenaan per penerima penghasilan.
 
 ---
 

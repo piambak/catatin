@@ -18,7 +18,7 @@ sesungguhnya, kodenya adalah sumber kebenaran (alasannya di
 
 > **Bukan nasihat pajak.** Catatin adalah alat bantu hitung. Angka yang
 > dikeluarkannya belum divalidasi terhadap kalkulator resmi DJP — validasi itu
-> adalah milestone **M4** yang belum tercapai. Dua bug tarif yang sudah
+> adalah milestone **M4** yang belum tercapai. Bug tarif yang sudah
 > diketahui ada di bagian [Yang belum benar](#yang-belum-benar).
 
 ---
@@ -139,7 +139,7 @@ Status tiap tenggat: `overdue` (lewat), `urgent` (≤ 7 hari), `warning`
 
 ## Yang belum benar
 
-Dua bug tarif yang sudah dikonfirmasi. Keduanya wajib beres sebelum milestone
+Temuan yang sudah dikonfirmasi. Semuanya wajib beres sebelum milestone
 **M4** (validasi terhadap kalkulator resmi DJP):
 
 - **[T-1](../proyek/backlog-teknis.md) — kategori TER B & C tidak ada.**
@@ -150,8 +150,17 @@ Dua bug tarif yang sudah dikonfirmasi. Keduanya wajib beres sebelum milestone
   Pengecualian omzet Rp 500 juta pertama untuk WP orang pribadi dan batas
   jangka waktu pemakaian tarif PP 23/2018 sama-sekali belum dimodelkan.
   Tidak ada input "sejak tahun berapa".
+- **Tabel TER kategori A sendiri tidak sesuai tabel resmi.** Ditemukan
+  18 Sep 2026 saat audit TAX terhadap PMK 168/2023: tabel resmi punya
+  44 lapisan, `terTableA` punya 32, dan 28 di antaranya salah tarif atau salah
+  batas. Dua belas lapisan teratas hilang. Rinciannya, berikut tabel resmi
+  penggantinya, ada di
+  [Spesifikasi PPh 21 TER](pajak/spek-pph21-ter.md#8-temuan-audit-terhadap-kode-saat-ini).
+- **Tenggat SPT Tahunan PPh Orang Pribadi salah.** `generateCalendar()`
+  memakai 30 April; yang benar 31 Maret
+  ([Spek PPh Final §6](pajak/spek-pph-final-umkm.md#6-tenggat-pelaporan-d-12)).
 
-**Aturan kerja untuk keduanya:** jangan mengimplementasikan dari sumber
+**Aturan kerja untuk semuanya:** jangan mengimplementasikan dari sumber
 sekunder. Tabel resmi harus datang dari pakar regulasi DJP & Kemenkeu — satu
 tarif salah membuat seluruh hasil validasi M4 ikut salah.
 
@@ -197,6 +206,8 @@ kebenaran.
 
 ## Halaman terkait
 
+- [Spesifikasi PPh 21 TER](pajak/spek-pph21-ter.md) — tabel TER resmi milik TAX.
+- [Spesifikasi PPh Final UMKM](pajak/spek-pph-final-umkm.md) — spesifikasi TAX.
 - [Glosarium](glosarium.md) — arti PKP, PTKP, TER, HPP, dan istilah lain.
 - [Backlog teknis](../proyek/backlog-teknis.md) — temuan T-1, T-3, T-4, T-13 selengkapnya.
 - [Arsitektur](../arsitektur/gambaran-umum.md) — di mana mesin pajak duduk dalam lapisan aplikasi.
