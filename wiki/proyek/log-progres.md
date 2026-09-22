@@ -18,6 +18,18 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #103: pemantauan.** Migrasi `pemantauan`:
+  tabel `app_errors` (galat terstruktur dari klien, tanpa pesan bebas, hanya
+  bisa ditambah, dibatasi 30 laporan per 10 menit), cuplikan latensi
+  `monthly_totals` dari `pg_stat_statements` tiap 15 menit lewat pg_cron, dan
+  `catatin_health()` yang boleh dipanggil `anon`. Klien melaporkan 403 (bersesi),
+  5xx, dan galat tak dikenal dari `runSupabase`. Workflow `pemantauan.yml`
+  memanggilnya tiap 30 menit dengan publishable key — tanpa secret baru — dan
+  gagal kalau galat, latensi, atau job transaksi berulang melewati ambang.
+  Bagian khusus cloud (hak kolom, batas laju, `pg_stat_statements`, jadwal
+  pg_cron) dibuktikan di staging dengan pola rollback. Detail:
+  [Supabase §11](../arsitektur/supabase.md#11-pemantauan).
+
 - **2026-09-22** — Backend — **Issue #89: nilai awal Simulator
   (`GET /simulator/inputs`).** `SimulatorRepository.getInputs` di keempat mode
   dan fasad `SimulatorInputService`: rata-rata tiga bulan penuh sebelum bulan

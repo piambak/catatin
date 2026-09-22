@@ -1,0 +1,143 @@
+name: Pemantauan
+
+# Memeriksa kesehatan proyek Supabase tiap 30 menit lewat rpc catatin_health()
+# (#103). Memakai SUPABASE_URL dan publishable key dari app/dart_define.*.json
+# — keduanya memang publik — jadi workflow ini tidak butuh secret apa pun.
+#
+# Job gagal, dan GitHub mengirim email kegagalan, kalau:
+#   - galat 5xx yang dilaporkan klien dalam 60 menit >= AMBANG_GALAT_SERVER
+#   - galat 403 padahal sesi ada (RLS menolak) >= AMBANG_GALAT_403
+#   - rata-rata latensi monthly_totals > AMBANG_LATENSI_MS
+#   - job pg_cron transaksi berulang gagal pada run terakhirnya, atau sukses
+#     terakhirnya lebih dari AMBANG_CRON_JAM jam lalu
+#   - produksi tidak terjangkau
+# Staging yang dijeda paket Free (T-19) hanya peringatan. Panggilan tiap 30
+# menit ini sekaligus menjaga staging tetap aktif.
+#
+# Wiki: arsitektur/supabase.md §11 Pemantauan.
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pemantauan
+  cancel-in-progress: false
+
+env:
+  AMBANG_GALAT_SERVER: 5
+  AMBANG_GALAT_403: 5
+  AMBANG_LATENSI_MS: 500
+  AMBANG_CRON_JAM: 26
+
+jobs:
+  kesehatan:
+    name: Kesehatan ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: produksi
+            config: app/dart_define.pages.json
+            wajib: true
+          - target: staging
+            config: app/dart_define.staging.json
+            wajib: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app/dart_define.pages.json
+            app/dart_define.staging.json
+          sparse-checkout-cone-mode: false
+
+      - name: Panggil catatin_health()
+        id: health
+        env:
+          TARGET: ${{ matrix.target }}
+          CONFIG: ${{ matrix.config }}
+          WAJIB: ${{ matrix.wajib }}
+        run: |
+          url=$(jq -r .SUPABASE_URL "$CONFIG")
+          key=$(jq -r .SUPABASE_PUBLISHABLE_KEY "$CONFIG")
+          code=$(curl -sS -o body.json -w '%{http_code}' --max-time 30 \
+            -X POST "$url/rest/v1/rpc/catatin_health" \
+            -H "apikey: $key" -H 'Content-Type: application/json' \
+            -d '{"p_window_minutes": 60}') || code=000
+          echo "HTTP $code"
+
+          # PGRST202 = fungsi tidak ada: migrasi pemantauan belum diterapkan.
+          if [ "$code" = 404 ] && grep -q PGRST202 body.json; then
+            echo "::warning title=$TARGET::catatin_health() belum ada — migrasi pemantauan belum diterapkan di proyek ini."
+            echo "lanjut=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$code" != 200 ]; then
+            pesan="catatin_health() membalas HTTP $code — proyek dijeda atau tidak terjangkau."
+            if [ "$WAJIB" = true ]; then
+              echo "::error title=$TARGET::$pesan"
+              exit 1
+            fi
+            echo "::warning title=$TARGET::$pesan"
+            echo "lanjut=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "lanjut=true" >> "$GITHUB_OUTPUT"
+
+      - name: Periksa ambang
+        if: steps.health.outputs.lanjut == 'true'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          jq . body.json
+
+          {
+            echo "### Kesehatan \`$TARGET\`"
+            jq -r '
+              "| Ukuran | Nilai |",
+              "| --- | --- |",
+              "| Jendela | \(.window_minutes) menit |",
+              "| Galat 5xx | \(.errors.server) (\(.errors.users) akun) |",
+              "| Galat 403 | \(.errors.forbidden) |",
+              "| Panggilan monthly_totals | \(.aggregation.calls // "–") |",
+              "| Latensi rata-rata | \(.aggregation.mean_ms // "–") ms |",
+              "| Cron transaksi berulang | \(.recurring_cron.last_status // "belum pernah jalan"), sukses \(.recurring_cron.hours_since_success // "–") jam lalu |"
+            ' body.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          masalah=$(jq -r \
+            --argjson server "$AMBANG_GALAT_SERVER" \
+            --argjson forbidden "$AMBANG_GALAT_403" \
+            --argjson latensi "$AMBANG_LATENSI_MS" \
+            --argjson jam "$AMBANG_CRON_JAM" '
+            (if .errors.server >= $server
+               then "galat 5xx dari klien: \(.errors.server) dalam \(.window_minutes) menit (\(.errors.users) akun)"
+               else empty end),
+            (if .errors.forbidden >= $forbidden
+               then "galat 403 padahal sesi ada: \(.errors.forbidden) dalam \(.window_minutes) menit"
+               else empty end),
+            (if (.aggregation.mean_ms // 0) > $latensi
+               then "latensi monthly_totals rata-rata \(.aggregation.mean_ms) ms (\(.aggregation.calls) panggilan)"
+               else empty end),
+            (if .recurring_cron.last_status == "failed"
+               then "job pg_cron transaksi berulang gagal pada run terakhir (\(.recurring_cron.last_run_at))"
+               else empty end),
+            (if (.recurring_cron.hours_since_success // 0) > $jam
+               then "job pg_cron transaksi berulang terakhir sukses \(.recurring_cron.hours_since_success) jam lalu"
+               else empty end)
+          ' body.json)
+
+          if [ -n "$masalah" ]; then
+            while IFS= read -r baris; do
+              echo "::error title=$TARGET::$baris"
+            done <<< "$masalah"
+            exit 1
+          fi
+          echo "Sehat."
