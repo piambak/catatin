@@ -655,6 +655,43 @@ npx supabase test db
 npx supabase test db supabase/staging/data_contoh.test.sql
 ```
 
+## 10. Uji beban
+
+`supabase/staging/uji_beban_agregasi.sql` mengisi 12 bulan × 200 transaksi
+per akun untuk banyak akun sekaligus, lalu mengukur — sebagai `authenticated`,
+jadi RLS ikut berlaku — tiga kueri yang benar-benar dikirim aplikasi (#75).
+Seluruhnya satu transaksi yang diakhiri `raise exception` berisi laporan, jadi
+tidak ada yang tertinggal. Jalankan di staging lewat MCP `execute_sql` (tempel
+isi berkasnya) atau `psql`; **jangan di produksi**. Jumlah akun diatur di
+baris `set_config('uji.akun', …)`.
+
+**Hasil 22 Sep 2026** — staging Free (ap-southeast-1), 50 akun × 2.400 =
+120.000 transaksi (24 MB), diisi dalam 9,1 detik:
+
+| Kueri | Dipakai untuk | p50 | p95 | Maks |
+| --- | --- | --- | --- | --- |
+| `monthly_totals(2026)`, 30× | Dashboard, grafik KPI, agregat tahunan, tutup bulan | 4,0 ms | 4,2 ms | 4,5 ms |
+| Satu bulan + kategori (200 baris), 30× | Tab Pembukuan | 1,1 ms | 1,1 ms | 1,8 ms |
+| Setahun, 3 halaman × 1.000 (2.400 baris), 10× | Jalur data ekspor CSV (#72) | 28,3 ms | 30,4 ms | 31,4 ms |
+
+- Akun yang diukur hanya melihat 2.400 baris miliknya, dan `monthly_totals`
+  menjumlah tepat 2.400 — isolasi RLS tetap benar di bawah beban.
+- Rencana kueri inti `monthly_totals` memakai **Bitmap Index Scan on
+  `transactions_user_date_idx`**: biayanya mengikuti jumlah baris milik akun
+  itu sendiri, bukan besar tabel. Tidak perlu indeks baru.
+- Halaman ketiga paling mahal karena `offset` tetap mengurutkan baris yang
+  dilewati. Untuk 2.400 baris itu tidak berarti; kalau kelak satu akun
+  menyimpan puluhan ribu transaksi setahun, ganti paginasi `range()` di
+  `getTransactions` dengan keyset (`date`, `created_at`).
+
+**Batasan.** Waktu diukur di dalam database: belum termasuk PostgREST dan
+jaringan ke ap-southeast-1. Satu sesi, bukan pengguna serentak — uji 50
+pengguna serentak masuk #114 dan butuh akun staging sungguhan. Ekspor CSV
+sendiri (#72) diformat di klien; ukur ulang langkah 3 setelah endpoint itu
+ada. Sisipan yang digulung balik meninggalkan ruang mati ± 8 MB di tabel
+`transactions` sampai autovacuum membersihkannya — aman untuk batas 500 MB
+paket Free, tapi jangan menjalankannya berkali-kali berturut-turut.
+
 ## Halaman terkait
 
 - [Backend & API](backend-dan-api.md) — mode sumber data, lingkungan, kontrak REST, dan draf skema mesin tarif (§7).
