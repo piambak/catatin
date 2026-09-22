@@ -18,6 +18,8 @@
 //     bilang "berhasil" → transaksi hilang saat halaman dimuat ulang.
 // Perbaikannya adalah menangkap LEBIH SEDIKIT, bukan menambah penanganan error.
 
+import 'dart:typed_data';
+
 import '../../models/models.dart';
 import '../network/api_client.dart';
 import 'repositories.dart';
@@ -248,6 +250,43 @@ class HybridRecurringRepository implements RecurringRepository {
   Future<RecurringTemplate> stopTemplate(String id) => _orFallback(
         () => api.stopTemplate(id),
         () => mock.stopTemplate(id),
+      );
+}
+
+// ── Lampiran struk ────────────────────────────────────────────────────────────
+
+class HybridAttachmentRepository implements AttachmentRepository {
+  final AttachmentRepository api;
+  final AttachmentRepository mock;
+
+  HybridAttachmentRepository(this.api, this.mock);
+
+  @override
+  Future<List<TxAttachment>> getAttachments(String transactionId) =>
+      _orFallback(
+        () => api.getAttachments(transactionId),
+        () => mock.getAttachments(transactionId),
+      );
+
+  @override
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) =>
+      _orFallback(
+        () => api.uploadAttachment(transactionId,
+            bytes: bytes, fileName: fileName, mimeType: mimeType),
+        () => mock.uploadAttachment(transactionId,
+            bytes: bytes, fileName: fileName, mimeType: mimeType),
+      );
+
+  @override
+  Future<void> deleteAttachment(String transactionId, String attachmentId) =>
+      _orFallback(
+        () => api.deleteAttachment(transactionId, attachmentId),
+        () => mock.deleteAttachment(transactionId, attachmentId),
       );
 }
 

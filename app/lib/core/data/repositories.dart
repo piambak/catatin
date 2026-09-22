@@ -15,6 +15,8 @@
 //
 // Semua method boleh melempar [ApiException] (lihat `core/network/api_client.dart`).
 
+import 'dart:typed_data';
+
 import '../config/app_config.dart';
 import '../../models/models.dart';
 import '../network/api_client.dart';
@@ -155,6 +157,24 @@ abstract class RecurringRepository {
   Future<RecurringTemplate> stopTemplate(String id);
 }
 
+abstract class AttachmentRepository {
+  /// Lampiran transaksi [transactionId], terlama lebih dulu.
+  Future<List<TxAttachment>> getAttachments(String transactionId);
+
+  /// Mengunggah lampiran baru. Setiap implementasi memanggil
+  /// [checkAttachmentUpload] lebih dulu — berkas kosong, lebih dari
+  /// [kAttachmentMaxBytes], atau bukan JPEG/PNG/WebP gagal dengan
+  /// [ApiException] 400 SEBELUM permintaan jaringan dikirim.
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  });
+
+  Future<void> deleteAttachment(String transactionId, String attachmentId);
+}
+
 /// Metrik yang bisa ditarik riwayat bulanannya untuk grafik KPI.
 enum KpiMetric { income, expense, profit, ytd }
 
@@ -191,6 +211,7 @@ class Repos {
   static TransactionRepository? _transaction;
   static DashboardRepository? _dashboard;
   static RecurringRepository? _recurring;
+  static AttachmentRepository? _attachment;
 
   static bool _demo = false;
 
@@ -253,6 +274,15 @@ class Repos {
         DataSource.supabase => SupabaseRecurringRepository(),
       };
 
+  static AttachmentRepository get attachment =>
+      _attachment ??= switch (_source) {
+        DataSource.mock => MockAttachmentRepository(),
+        DataSource.api => ApiAttachmentRepository(),
+        DataSource.hybrid => HybridAttachmentRepository(
+            ApiAttachmentRepository(), MockAttachmentRepository()),
+        DataSource.supabase => SupabaseAttachmentRepository(),
+      };
+
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 
   static set auth(AuthRepository value) => _auth = value;
@@ -260,6 +290,7 @@ class Repos {
   static set transaction(TransactionRepository value) => _transaction = value;
   static set dashboard(DashboardRepository value) => _dashboard = value;
   static set recurring(RecurringRepository value) => _recurring = value;
+  static set attachment(AttachmentRepository value) => _attachment = value;
 
   /// Buang semua instance supaya dibangun ulang dari [AppConfig].
   static void reset() {
@@ -268,5 +299,6 @@ class Repos {
     _transaction = null;
     _dashboard = null;
     _recurring = null;
+    _attachment = null;
   }
 }

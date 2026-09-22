@@ -12,7 +12,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(59);
+select plan(64);
 
 -- ── Tabel ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ select has_table('public', 'tx_categories', 'tabel tx_categories ada');
 select has_table('public', 'business_profiles', 'tabel business_profiles ada');
 select has_table('public', 'transactions', 'tabel transactions ada');
 select has_table('public', 'recurring_templates', 'tabel recurring_templates ada');
+select has_table('public', 'transaction_attachments', 'tabel transaction_attachments ada');
 
 select is(
   (select count(*)::integer from public.tx_categories),
@@ -44,6 +45,10 @@ select ok(
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.recurring_templates'::regclass),
   'RLS menyala di recurring_templates'
+);
+select ok(
+  (select relrowsecurity from pg_class where oid = 'public.transaction_attachments'::regclass),
+  'RLS menyala di transaction_attachments'
 );
 
 select policies_are(
@@ -80,6 +85,15 @@ select policies_are(
   ],
   'kebijakan recurring_templates persis sesuai migrasi'
 );
+select policies_are(
+  'public', 'transaction_attachments',
+  array[
+    'Pengguna melihat lampirannya sendiri',
+    'Pengguna menambah lampiran untuk transaksinya sendiri',
+    'Pengguna menghapus lampirannya sendiri'
+  ],
+  'kebijakan transaction_attachments persis sesuai migrasi'
+);
 
 -- ── Hak tabel ────────────────────────────────────────────────────────────────
 --
@@ -94,6 +108,8 @@ select table_privs_are('public', 'transactions', 'anon', array[]::text[],
   'anon tanpa hak di transactions');
 select table_privs_are('public', 'recurring_templates', 'anon', array[]::text[],
   'anon tanpa hak di recurring_templates');
+select table_privs_are('public', 'transaction_attachments', 'anon', array[]::text[],
+  'anon tanpa hak di transaction_attachments');
 
 select table_privs_are('public', 'tx_categories', 'authenticated',
   array['SELECT'],
@@ -107,6 +123,9 @@ select table_privs_are('public', 'transactions', 'authenticated',
 select table_privs_are('public', 'recurring_templates', 'authenticated',
   array['SELECT', 'INSERT', 'UPDATE'],
   'authenticated: baca/buat/ubah recurring_templates, tanpa delete (dibatasi RLS)');
+select table_privs_are('public', 'transaction_attachments', 'authenticated',
+  array['SELECT', 'INSERT', 'DELETE'],
+  'authenticated: baca/tambah/hapus transaction_attachments, tanpa update (dibatasi RLS)');
 
 -- ── Fungsi ───────────────────────────────────────────────────────────────────
 

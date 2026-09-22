@@ -166,6 +166,9 @@ const _sessionEnded = ApiException(
 ApiException? supabaseException(Object error, {required bool hasSession}) {
   if (error is ApiException) return error;
   if (error is sb.AuthException) return _fromAuth(error);
+  if (error is sb.StorageException) {
+    return _fromStorage(error, hasSession: hasSession);
+  }
   if (error is sb.PostgrestException) {
     return _fromPostgrest(error, hasSession: hasSession);
   }
@@ -276,6 +279,55 @@ ApiException _fromAuth(sb.AuthException e) {
   }
   _debugUnmapped(e);
   return ApiException(statusCode: status ?? 500, message: e.message);
+}
+
+const _attachmentTooLarge = ApiException(
+  statusCode: 400,
+  message: 'Ukuran foto maksimal 5 MB.',
+  errors: {'file': 'Ukuran foto maksimal 5 MB.'},
+);
+
+const _attachmentWrongType = ApiException(
+  statusCode: 400,
+  message: 'Format foto harus JPEG, PNG, atau WebP.',
+  errors: {'file': 'Format foto harus JPEG, PNG, atau WebP.'},
+);
+
+/// Galat Storage (unggah/hapus lampiran struk, issue #59) → [ApiException].
+///
+/// `statusCode` di [sb.StorageException] adalah teks (mis. `'413'`), bukan
+/// `int`. Ukuran dan tipe berkas dicek dua kali — lewat `statusCode` KALAU
+/// server mengirimnya, ATAU lewat kata kunci di [sb.StorageException.message]
+/// kalau tidak — supaya galat yang sama tetap tampil sebagai pesan form untuk
+/// pengguna walau proxy di antara klien dan Storage tidak meneruskan status
+/// aslinya.
+ApiException _fromStorage(sb.StorageException e, {required bool hasSession}) {
+  final message = e.message.toLowerCase();
+  if (e.statusCode == '413' || message.contains('size')) {
+    return _attachmentTooLarge;
+  }
+  if (e.statusCode == '415' ||
+      message.contains('mime') ||
+      message.contains('type')) {
+    return _attachmentWrongType;
+  }
+  switch (e.statusCode) {
+    case '401':
+      return _sessionEnded;
+    case '403':
+      return hasSession
+          ? const ApiException(statusCode: 403, message: 'Akses ditolak.')
+          : _sessionEnded;
+    case '404':
+      return const ApiException(statusCode: 404, message: 'Data tidak ditemukan.');
+    case '409':
+      return const ApiException(
+        statusCode: 409,
+        message: 'Berkas yang sama sudah ada.',
+      );
+  }
+  _debugUnmapped(e);
+  return ApiException(statusCode: 500, message: e.message);
 }
 
 ApiException _fromPostgrest(
@@ -410,6 +462,22 @@ const _constraintFields = <String, (String, String)>{
   'recurring_templates_category_type_fkey': (
     'category_id',
     'Kategori tidak cocok dengan jenis transaksi.',
+  ),
+  'transaction_attachments_mime_type_check': (
+    'file',
+    'Format foto harus JPEG, PNG, atau WebP.',
+  ),
+  'transaction_attachments_size_bytes_check': (
+    'file',
+    'Ukuran foto maksimal 5 MB.',
+  ),
+  'transaction_attachments_file_name_check': (
+    'file',
+    'Nama berkas tidak valid.',
+  ),
+  'transaction_attachments_path_check': (
+    'file',
+    'Lokasi berkas tidak valid.',
   ),
 };
 

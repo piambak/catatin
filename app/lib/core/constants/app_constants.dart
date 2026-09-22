@@ -140,6 +140,12 @@ class ApiEndpoints {
   static String recurringById(String id) => '/recurring/$id';
   static String recurringStop(String id) => '/recurring/$id/stop';
 
+  // Lampiran struk
+  static String attachments(String transactionId) =>
+      '/transactions/$transactionId/attachments';
+  static String attachmentById(String transactionId, String attachmentId) =>
+      '/transactions/$transactionId/attachments/$attachmentId';
+
   // Dashboard
   static const dashboardSummary = '/dashboard/summary';
   static const dashboardKpiHistory = '/dashboard/kpi-history';
