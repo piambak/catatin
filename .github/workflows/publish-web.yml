@@ -80,13 +80,18 @@ jobs:
             exit 0
           fi
           SUMBER="${{ github.event.workflow_run.head_sha || github.sha }}"
+          # Checkout lewat head_sha meninggalkan detached HEAD, dan di situ
+          # `git pull` maupun `git push` tanpa argumen menolak jalan ("You are
+          # not currently on a branch") — publikasi gagal di setiap merge sejak
+          # 21 Sep 2026. Pasang branch lokal dulu, lalu push eksplisit ke main.
+          git switch -C publikasi
           git commit -m "build: publikasi web dari ${SUMBER::7} [skip ci]"
           # Dua PR yang digabung berurutan membuat push kedua gagal
           # non-fast-forward, dan publikasi diam-diam tidak jalan. Rebase dulu,
           # lalu coba sekali lagi kalau tetap gagal.
           git pull --rebase origin main
-          git push || {
+          git push origin HEAD:main || {
             echo "Push ditolak, coba rebase sekali lagi…"
             git pull --rebase origin main
-            git push
+            git push origin HEAD:main
           }
