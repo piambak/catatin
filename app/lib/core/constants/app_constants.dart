@@ -148,6 +148,7 @@ class ApiEndpoints {
 
   // Dashboard
   static const dashboardSummary = '/dashboard/summary';
+  static const dashboardClose = '/dashboard/close';
   static const dashboardKpiHistory = '/dashboard/kpi-history';
   static const taxCalendar = '/tax-calendar';
 

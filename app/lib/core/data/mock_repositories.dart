@@ -556,4 +556,14 @@ class MockDashboardRepository implements DashboardRepository {
     await Future.delayed(MockData.latency);
     return MockData.kpiHistory(metric.name);
   }
+
+  /// Dari agregat transaksi contoh, bukan angka tetap di [MockData] — jadi
+  /// sama dengan tab Pembukuan, termasuk transaksi yang ditambah selama sesi.
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+    checkMonthClose(month: month);
+    final aggregate =
+        await MockTransactionRepository().getAggregate(year: year);
+    return MonthClose.fromAggregate(year, aggregate[month]);
+  }
 }

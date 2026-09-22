@@ -410,4 +410,18 @@ class ApiDashboardRepository implements DashboardRepository {
       throw apiException(e);
     }
   }
+
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+    checkMonthClose(month: month);
+    try {
+      final res = await ApiClient.get(ApiEndpoints.dashboardClose, params: {
+        'month': month,
+        'year': year,
+      });
+      return MonthClose.fromJson(res.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
 }
