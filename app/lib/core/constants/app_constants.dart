@@ -10,6 +10,15 @@ class AppConstants {
   static const appName = 'Catatin';
   static const appVersion = '1.0.0';
 
+  // ── Status tinjauan pakar pajak ───────────────────────────
+  //
+  // Sampai Pakar Regulasi menandatangani `wiki/domain/pajak/sign-off.md`,
+  // setiap angka pajak yang tampil harus menyatakan dirinya perkiraan (T-17).
+  // Saat sign-off turun (Minggu 8), cukup ubah DUA baris di bawah ini:
+  // `taxReviewStatus` jadi 'verified' dan `taxReviewDate` diisi tanggalnya.
+  static const taxReviewStatus = 'draft'; // 'draft' | 'verified'
+  static const taxReviewDate = ''; // mis. '6 November 2026'
+
   // ── Konstanta pajak (PP 23/2018, PMK 168/2023) ────────────
   static const pphFinalRate = 0.005; // 0,5%
   static const pkpThreshold = 4800000000.0; // Rp 4,8 Miliar
@@ -126,10 +135,24 @@ class ApiEndpoints {
   static String transactionById(String id) => '/transactions/$id';
   static const txCategories = '/tx-categories';
 
+  // Transaksi berulang
+  static const recurring = '/recurring';
+  static String recurringById(String id) => '/recurring/$id';
+  static String recurringStop(String id) => '/recurring/$id/stop';
+
+  // Lampiran struk
+  static String attachments(String transactionId) =>
+      '/transactions/$transactionId/attachments';
+  static String attachmentById(String transactionId, String attachmentId) =>
+      '/transactions/$transactionId/attachments/$attachmentId';
+
   // Dashboard
   static const dashboardSummary = '/dashboard/summary';
+  static const dashboardClose = '/dashboard/close';
   static const dashboardKpiHistory = '/dashboard/kpi-history';
   static const taxCalendar = '/tax-calendar';
 
-  // Simulator pajak murni hitungan lokal — tidak butuh endpoint.
+  // Simulator: hitungan pajaknya lokal (simulator_service.dart); backend hanya
+  // menyiapkan nilai awalnya dari data Pembukuan.
+  static const simulatorInputs = '/simulator/inputs';
 }

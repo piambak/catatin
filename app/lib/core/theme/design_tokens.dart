@@ -86,6 +86,18 @@ class DS {
   /// Warna wordmark "Catat".
   static Color get wordmark => _dark ? const Color(0xFFAEAEE8) : const Color(0xFF2A2A72);
 
+  /// Peringatan lembut — dipakai chip "belum ditinjau pakar pajak" (T-17).
+  /// Rasio kontras teks terhadap latarnya diukur: 6,75:1 terang, 8,44:1 gelap.
+  static Color get warnBg => _dark ? const Color(0xFF3A3320) : const Color(0xFFFFF3CC);
+  static Color get warnFg => _dark ? const Color(0xFFFFCC70) : const Color(0xFF7A4A00);
+  static Color get warnBorder => _dark ? const Color(0xFF8A7340) : const Color(0xFFC08A2E);
+
+  /// Varian yang dipakai di atas [invSurface] (panel hasil simulator), yang
+  /// tetap gelap di kedua mode. Kontras teks 9,32:1.
+  static const warnBgOnDark = Color(0xFF243447);
+  static const warnFgOnDark = Color(0xFFFFD79A);
+  static const warnBorderOnDark = Color(0xFF46607F);
+
   /// Permukaan gelap panel hasil simulator — tetap gelap di kedua mode,
   /// itu memang maksudnya di mockup.
   static const invSurface = Color(0xFF0D1B2A);

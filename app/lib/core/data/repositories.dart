@@ -15,6 +15,8 @@
 //
 // Semua method boleh melempar [ApiException] (lihat `core/network/api_client.dart`).
 
+import 'dart:typed_data';
+
 import '../config/app_config.dart';
 import '../../models/models.dart';
 import '../network/api_client.dart';
@@ -138,6 +140,41 @@ void checkTransactionFilter({
 DateTime dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
+abstract class RecurringRepository {
+  /// Template aktif lebih dulu, lalu diurutkan `next_date` makin dekat;
+  /// template tanpa `next_date` (nonaktif) di paling akhir.
+  Future<List<RecurringTemplate>> getTemplates();
+
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft);
+
+  /// Mengganti seluruh isi template [id]. Menolak dengan [ApiException] 409
+  /// kalau template itu sudah dihentikan — buat template baru, bukan
+  /// menghidupkan yang lama.
+  Future<RecurringTemplate> updateTemplate(String id, RecurringDraft draft);
+
+  /// Menghentikan pengulangan template [id]. Template yang sudah nonaktif
+  /// dikembalikan apa adanya, tanpa galat.
+  Future<RecurringTemplate> stopTemplate(String id);
+}
+
+abstract class AttachmentRepository {
+  /// Lampiran transaksi [transactionId], terlama lebih dulu.
+  Future<List<TxAttachment>> getAttachments(String transactionId);
+
+  /// Mengunggah lampiran baru. Setiap implementasi memanggil
+  /// [checkAttachmentUpload] lebih dulu — berkas kosong, lebih dari
+  /// [kAttachmentMaxBytes], atau bukan JPEG/PNG/WebP gagal dengan
+  /// [ApiException] 400 SEBELUM permintaan jaringan dikirim.
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  });
+
+  Future<void> deleteAttachment(String transactionId, String attachmentId);
+}
+
 /// Metrik yang bisa ditarik riwayat bulanannya untuk grafik KPI.
 enum KpiMetric { income, expense, profit, ytd }
 
@@ -149,6 +186,18 @@ abstract class DashboardRepository {
   Future<List<TaxDeadline>> getDeadlines({int limit = 3});
 
   Future<List<KpiPoint>> getKpiHistory(KpiMetric metric);
+
+  /// Ringkasan tutup bulan [month]/[year]: pemasukan, pengeluaran, laba, HPP,
+  /// jumlah transaksi, dan omzet YTD. Bulan tanpa transaksi bernilai nol.
+  /// Setiap implementasi memanggil [checkMonthParam] lebih dulu.
+  Future<MonthClose> getMonthClose({required int month, required int year});
+}
+
+abstract class SimulatorRepository {
+  /// Nilai awal Simulator untuk bulan acuan [month]/[year] — keduanya
+  /// default bulan berjalan. Lihat [simulatorInputsFrom] untuk aturannya.
+  /// Setiap implementasi memanggil [checkMonthParam] lebih dulu.
+  Future<SimulatorInputs> getInputs({int? month, int? year});
 }
 
 // ── Pemilih implementasi ──────────────────────────────────────────────────────
@@ -173,6 +222,9 @@ class Repos {
   static BusinessRepository? _business;
   static TransactionRepository? _transaction;
   static DashboardRepository? _dashboard;
+  static RecurringRepository? _recurring;
+  static AttachmentRepository? _attachment;
+  static SimulatorRepository? _simulator;
 
   static bool _demo = false;
 
@@ -226,12 +278,42 @@ class Repos {
         DataSource.supabase => SupabaseDashboardRepository(),
       };
 
+  static RecurringRepository get recurring =>
+      _recurring ??= switch (_source) {
+        DataSource.mock => MockRecurringRepository(),
+        DataSource.api => ApiRecurringRepository(),
+        DataSource.hybrid => HybridRecurringRepository(
+            ApiRecurringRepository(), MockRecurringRepository()),
+        DataSource.supabase => SupabaseRecurringRepository(),
+      };
+
+  static AttachmentRepository get attachment =>
+      _attachment ??= switch (_source) {
+        DataSource.mock => MockAttachmentRepository(),
+        DataSource.api => ApiAttachmentRepository(),
+        DataSource.hybrid => HybridAttachmentRepository(
+            ApiAttachmentRepository(), MockAttachmentRepository()),
+        DataSource.supabase => SupabaseAttachmentRepository(),
+      };
+
+  static SimulatorRepository get simulator =>
+      _simulator ??= switch (_source) {
+        DataSource.mock => MockSimulatorRepository(),
+        DataSource.api => ApiSimulatorRepository(),
+        DataSource.hybrid => HybridSimulatorRepository(
+            ApiSimulatorRepository(), MockSimulatorRepository()),
+        DataSource.supabase => SupabaseSimulatorRepository(),
+      };
+
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 
   static set auth(AuthRepository value) => _auth = value;
   static set business(BusinessRepository value) => _business = value;
   static set transaction(TransactionRepository value) => _transaction = value;
   static set dashboard(DashboardRepository value) => _dashboard = value;
+  static set recurring(RecurringRepository value) => _recurring = value;
+  static set attachment(AttachmentRepository value) => _attachment = value;
+  static set simulator(SimulatorRepository value) => _simulator = value;
 
   /// Buang semua instance supaya dibangun ulang dari [AppConfig].
   static void reset() {
@@ -239,5 +321,8 @@ class Repos {
     _business = null;
     _transaction = null;
     _dashboard = null;
+    _recurring = null;
+    _attachment = null;
+    _simulator = null;
   }
 }

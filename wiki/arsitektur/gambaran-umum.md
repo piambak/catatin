@@ -78,7 +78,7 @@ Aturan yang dijaga:
 | `core/data/` | Kontrak repository dan implementasinya: mock, api, hybrid, supabase |
 | `core/network/` | `ApiClient` (Dio + refresh token), `SupabaseBackend` (klien Supabase + penerjemah galat), `app_router` (go_router) |
 | `core/services/` | Fasad yang dipanggil layar; `storage_service`, `theme_notifier`, `simulator_service` |
-| `core/theme/` | `AppColors`, `AppTextStyles`, `AppTheme` terang & gelap |
+| `core/theme/` | `design_tokens.dart` — `DS`, `Typo`, `Space`, `Radii`: **sistem token yang berlaku**, dipakai semua kode baru · `breakpoints.dart` — `Bp`, satu-satunya tempat angka breakpoint boleh ditulis · `app_theme.dart` — `AppTheme` terang & gelap, plus `AppColors`/`AppTextStyles` yang **akan dihapus** setelah migrasi tema (issue #53); jangan tambah pemakaian baru |
 | `core/utils/` | Format rupiah dan tanggal |
 | `models/` | Struktur data murni + `fromJson`/`toJson` |
 | `screens/` | Satu folder per fitur: auth, dashboard, accounting, simulator, settings, splash |

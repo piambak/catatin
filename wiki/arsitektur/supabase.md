@@ -140,7 +140,8 @@ pemetaan tambahan.
   pengeluaran, HPP, dan jumlah transaksi per bulan milik pemanggil. Berjalan
   dengan hak pemanggil (`security invoker`), jadi RLS tetap berlaku. Kolom HPP
   disiapkan untuk Simulator yang menarik data pembukuan asli.
-- **Peran `anon` tidak mendapat hak apa pun.** Hak tabel diberikan eksplisit
+- **Peran `anon` tidak mendapat hak apa pun** — kecuali memanggil
+  `catatin_health()` untuk pemantauan ([§11](#11-pemantauan)). Hak tabel diberikan eksplisit
   dengan `GRANT` karena Postgres memeriksa hak tabel lebih dulu, baru RLS:
   hak yang hilang menghasilkan galat izin, sedangkan kebijakan yang tidak cocok
   hanya mengembalikan hasil kosong ([sumber](../sumber/supabase-api-keys.md)).
@@ -148,9 +149,79 @@ pemetaan tambahan.
   habis), dan hapus/ubah yang tidak menyentuh baris apa pun jadi 404.
 - **Kategori diisi di migrasi**, bukan `supabase/seed.sql`, supaya ikut
   `db push` ke proyek remote.
+- **Validasi transaksi ada di database** (#40), jadi berlaku untuk klien apa
+  pun, bukan hanya form aplikasi:
+
+  | Aturan | Constraint | Kode |
+  | --- | --- | --- |
+  | Nominal lebih dari 0 | `transactions_amount_check` | `23514` |
+  | Tanggal 1 Jan 2000 s.d. 31 Des 2099 | `transactions_date_range_check` | `23514` |
+  | Tanggal kalender yang ada (bukan 30 Februari) | tipe `date` | `22008` |
+  | Kategori ada | `transactions_category_id_fkey` | `23503` |
+  | Kategori sejenis dengan transaksi (`INCOME`/`EXPENSE`) | `transactions_category_type_fkey` — FK komposit ke `tx_categories (id, type)` | `23503` |
+  | `type` dan `payment_method` dari daftar tetap | `transactions_type_check`, `transactions_payment_method_check` | `23514` |
+
+  Batas tanggal sengaja konstanta, bukan `current_date`, supaya constraint-nya
+  immutable. Kategori yang tidak ada sama sekali tetap dilaporkan lewat FK
+  lama, jadi "tidak ditemukan" dan "salah jenis" bisa dibedakan.
+  `supabaseException()` di `supabase_client.dart` membaca nama constraint dari
+  pesan galat dan mengubahnya jadi 400 dengan pesan per field di
+  `ApiException.errors` — mis. "Kategori tidak cocok dengan jenis transaksi."
+  — alih-alih "Data tidak valid." umum. Nama constraint karena itu bagian dari
+  kontrak: mengganti namanya berarti mengganti peta di klien dan tesnya.
+- **Pengerasan validasi** (#115) menutup tiga celah sisa:
+
+  | Aturan | Constraint | Kode |
+  | --- | --- | --- |
+  | Transaksi dan templat hanya di usaha milik akun yang sama | `transactions_business_owner_fkey`, `recurring_templates_business_owner_fkey` — FK komposit `(business_id, user_id)` ke `business_profiles (id, user_id)` | `23503` |
+  | Transaksi hanya bertaut ke templat milik akun yang sama | `transactions_recurring_owner_fkey` — `on delete set null (recurring_template_id)`, jadi `user_id` tidak ikut dikosongkan | `23503` |
+  | Lampiran hanya di transaksi milik akun yang sama | `transaction_attachments_transaction_owner_fkey` | `23503` |
+  | Keterangan dan catatan struk ≤ 500 karakter | `transactions_description_length_check`, `transactions_receipt_note_length_check`, `recurring_templates_description_length_check` | `23514` |
+  | Nama usaha, nama pemilik, jenis usaha ≤ 100 karakter | `business_profiles_*_length_check` | `23514` |
+  | NPWP hanya angka, titik, dan tanda hubung (1–30 karakter) | `business_profiles_npwp_format_check` | `23514` |
+
+  Kepemilikan sebelumnya **hanya** dijaga RLS, dan RLS tidak berlaku bagi
+  pemilik tabel maupun fungsi `security definer` seperti
+  `issue_recurring_transactions()` yang dijalankan pg_cron. FK komposit
+  menjadikannya lapis kedua yang berlaku untuk peran apa pun; lewat PostgREST
+  pelanggaran tetap ditolak RLS lebih dulu (`42501`). Jumlah digit NPWP
+  sengaja tidak dikunci — itu aturan domain pajak.
+- **Transaksi berulang** (#58, kontrak di
+  [Backend & API](backend-dan-api.md#transaksi-berulang)) — tabel
+  `recurring_templates`, dibaca dan ditulis pemiliknya lewat RLS (tanpa hapus;
+  berhenti = `is_active` jadi `false`). `next_date` dan `is_active` selalu
+  dihitung trigger, bukan klien: jadwal dihitung dari jangkar `start_date`
+  (`recurring_first_on_or_after`), tanpa pengisian mundur, dan template yang
+  sudah berhenti membeku. Penerbitnya `issue_recurring_transactions()` — tidak
+  bisa dipanggil pengguna — dijalankan **pg_cron** tiap hari pukul 17.05 UTC
+  (00.05 WIB, job `catatin-transaksi-berulang`) dan langsung saat template
+  dibuat atau diubah, untuk kemunculan yang jatuh hari itu. Transaksi terbitan
+  membawa `recurring_template_id`; indeks unik `(recurring_template_id, date)`
+  membuat penerbitan ulang tidak pernah ganda, dan trigger menolak klien
+  mengisi kolom itu sendiri. Pembeda "penerbit" dari "pengguna" adalah
+  `current_user`: permintaan PostgREST berjalan sebagai `authenticated`,
+  penerbit sebagai pemilik fungsinya (`postgres`). Proyek Free yang dijeda
+  (T-19) tidak menjalankan pg_cron; kemunculan yang tertinggal diterbitkan pada
+  penerbitan pertama setelah proyek dipulihkan.
+- **Lampiran struk** (#59, kontrak di
+  [Backend & API](backend-dan-api.md#lampiran-struk)) — berkasnya di bucket
+  Storage privat `receipts` (5 MB, JPEG/PNG/WebP), metadatanya di tabel
+  `transaction_attachments`. Lokasi berkas wajib
+  `<user_id>/<transaction_id>/<id>.<jpg|png|webp>` — dijaga constraint
+  `transaction_attachments_path_check` di tabel dan kebijakan `catatin: …` di
+  `storage.objects`, sehingga pengguna hanya bisa mengunggah ke foldernya
+  sendiri, untuk transaksinya sendiri, dan hanya bisa membaca atau menghapus
+  berkas di foldernya. Klien membuka berkas lewat signed URL 1 jam.
+  Menghapus transaksi ikut menghapus baris lampirannya (cascade), tapi
+  **berkasnya harus dihapus lewat Storage API**: Supabase menolak penghapusan
+  langsung dari `storage.objects` lewat SQL
+  ([sumber](../sumber/staging-storage-uji.md)). Karena itu
+  `deleteTransaction` di klien menghapus berkas lampirannya lebih dulu; kalau
+  langkah itu gagal, transaksi tetap terhapus dan berkasnya tertinggal sebagai
+  yatim. Batas ukuran dan tipe dipasang di bucket hanya bila kolomnya ada —
+  stack lokal CI memakai skema Storage minimal tanpa kolom itu.
 - **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
-  Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
-  tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
+  `security definer` karena `authenticated` tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
   `auth.uid()`, hanya mengembalikan boolean, dan tidak bisa dipanggil `anon`.
   Security Advisor karena itu sengaja dibiarkan melaporkan lint
   `authenticated_security_definer_function_executable` untuk fungsi ini.
@@ -158,9 +229,11 @@ pemetaan tambahan.
 Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 `db push`. Migrasi yang sudah di-push jangan disunting — buat migrasi baru.
 
-Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak,
-`has_password()` satu-satunya security definer, dan isolasi data antar-akun —
-dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
+Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak (kecuali
+`catatin_health()`), daftar persis fungsi security definer (`has_password`,
+dua fungsi transaksi berulang, dan tiga fungsi pemantauan — lihat
+`01_skema`), isolasi data
+antar-akun, dan validasi transaksi — dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
 migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 
 ## 4. Pemetaan kontrak
@@ -182,6 +255,8 @@ migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 | `TransactionRepository.createTransaction` | insert; `business_id` diambil dari server, bukan dari perangkat |
 | `TransactionRepository.updateTransaction` / `deleteTransaction` | per id; tidak ada baris tersentuh → 404 |
 | `DashboardRepository.getSummary` / `getKpiHistory` | `rpc('monthly_totals')` |
+| `SimulatorRepository.getInputs` | `rpc('monthly_totals')` tahun acuan (dan tahun sebelumnya bila bulan acuan ≤ Maret) + `business_profiles`, serentak → `simulatorInputsFrom()`. Tanpa migrasi baru (#89) |
+| `DashboardRepository.getMonthClose` | `rpc('monthly_totals')` → `monthCloseFromMonthlyTotals()`; satu bulan dari 12 baris yang sama, jadi angkanya selalu sama dengan agregat tahunan. Tanpa migrasi baru (#74) |
 | `DashboardRepository.getRecentTransactions` | select + kategori, `limit` |
 | `DashboardRepository.getDeadlines` | `generateCalendar()` di aplikasi, memakai status PKP dan jumlah karyawan profil usaha |
 
@@ -289,6 +364,76 @@ Tidak ada akun kedua dan tidak ada email konfirmasi.
 - "Lupa kata sandi?" di layar masuk mengarahkan ke jalur ini: masuk dengan
   Google, lalu ganti kata sandi di Pengaturan. Pemulihan lewat email masih
   menunggu custom SMTP (T-18).
+
+### Sesi dan token (D-14)
+
+D-14 menanyakan umur token dan apakah refresh token boleh disimpan di
+browser; tenggatnya 25 Sep 2026 dan default-nya "access 15 menit, refresh
+dirotasi" ([log keputusan](../proyek/log-keputusan.md)). Selama PO belum
+memutus lain, proyek ini mengikuti default itu (#39):
+
+| Setelan | Nilai | Tempat |
+| --- | --- | --- |
+| Umur access token (JWT) | **900 detik** (15 menit) | Dashboard, *Authentication → Sessions*; lokal `jwt_expiry` di `supabase/config.toml` |
+| Rotasi refresh token | Menyala | Bawaan Supabase; lokal `enable_refresh_token_rotation` |
+| Interval pakai-ulang refresh token | 10 detik | Bawaan Supabase; lokal `refresh_token_reuse_interval` |
+| Umur maksimum sesi, batas tidak aktif, satu sesi per pengguna | Tidak tersedia | Hanya paket Pro ke atas |
+
+Yang dijamin Supabase Auth ([sumber](../sumber/supabase-auth-sessions.md)):
+
+- **Rotasi.** Refresh token hanya bisa ditukar sekali, menghasilkan pasangan
+  access + refresh token baru; refresh token sendiri tidak kedaluwarsa.
+- **Deteksi pakai-ulang.** Refresh token lama yang dipakai lagi di luar
+  interval 10 detik — dan bukan induk langsung token aktif — membuat seluruh
+  sesi dianggap berakhir dan semua refresh token-nya dicabut. Ini melindungi
+  dari refresh token yang bocor lewat log, bukan dari perangkat yang dicuri.
+- **Tanpa umur maksimum.** Di paket Free sesi hidup sampai pengguna keluar,
+  mengganti kata sandi, atau tertangkap deteksi pakai-ulang — *time-box*,
+  *inactivity timeout*, dan *single session per user* hanya untuk paket Pro ke
+  atas.
+- **900 detik masih aman.** Dokumen Supabase menyarankan tidak di bawah
+  5 menit, karena klien Supabase memperbarui sesi sebelum kedaluwarsa dan
+  selisih jam perangkat bisa beberapa menit.
+
+**Refresh token di browser.** Di web, sesi — termasuk refresh token —
+disimpan klien Supabase di `localStorage` (T-11 di
+[backlog teknis](../proyek/backlog-teknis.md)). Cookie HTTP-only, yang
+disebut catatan #156, tidak bisa dipakai aplikasi yang logikanya di browser:
+browser tidak akan bisa membaca token untuk memperbaruinya
+([sumber](../sumber/supabase-auth-sessions.md)). Apakah `localStorage` bisa
+diterima tetap keputusan D-14.
+
+**`/auth/refresh` menolak Bearer.** Padanan Supabase-nya,
+`POST /auth/v1/token?grant_type=refresh_token`, hanya menerima refresh token
+di body: request yang hanya membawa `Authorization: Bearer` dibalas
+`400 validation_failed`, dan refresh token yang tidak pernah diterbitkan
+dibalas `400 refresh_token_not_found`
+([sumber](../sumber/staging-auth-cors-uji.md)). Klien memetakan
+`refresh_token_not_found` dan `refresh_token_already_used` ke sesi berakhir
+(401) di `supabase_client.dart`.
+
+**Setelan remote.** `config.toml` hanya berlaku untuk stack lokal dan CI
+([§2](#2-menyiapkan-dari-nol)), jadi 900 detik dipasang di dashboard
+masing-masing proyek: staging lebih dulu, produksi setelah D-14 diputus atau
+tenggatnya lewat tanpa keputusan lain.
+
+### CORS
+
+[Backend & API §5](backend-dan-api.md#5-cors-khusus-web) — daftar origin
+yang diizinkan — hanya berlaku untuk backend REST buatan sendiri. API Supabase
+yang di-host membalas `Access-Control-Allow-Origin: *` untuk origin mana pun,
+baik di Auth maupun REST, tanpa `Access-Control-Allow-Credentials`
+([sumber](../sumber/staging-auth-cors-uji.md)); tidak ada setelan untuk
+mempersempitnya.
+
+Itu bisa diterima karena kredensialnya bukan cookie: setiap request membawa
+access token di header `Authorization`, yang dipasang klien Supabase dari
+penyimpanan halaman Catatin sendiri — bukan sesuatu yang dilampirkan browser
+secara otomatis ke situs mana pun. Situs lain bisa memanggil API yang sama,
+tapi hanya dengan publishable key — yang memang publik (§6) — dan tanpa sesi
+pengguna, jadi diperlakukan sebagai peran `anon` yang tidak punya hak apa pun
+(§3). Pengaturan per origin yang memang ada di Supabase adalah **Redirect
+URLs** di URL Configuration (awal bagian ini).
 
 ## 6. Kunci dan rahasia
 
@@ -429,15 +574,20 @@ atau data yang tertinggal.
    mengubah, dan menghapus satu transaksi dan memastikan dashboard ikut berubah.
 
 Staging juga dijeda setelah seminggu tidak aktif (T-19 di
-[backlog teknis](../proyek/backlog-teknis.md)). Migrasi baru diterapkan ke
-staging lebih dulu, baru ke produksi
-([Rilis & deploy](../panduan/rilis-dan-deploy.md)).
+[backlog teknis](../proyek/backlog-teknis.md)); selama dijeda, job
+`deploy-staging` gagal di langkah dry run. Migrasi baru sampai ke staging
+lebih dulu — otomatis saat digabung ke `main` — baru diterapkan manual ke
+produksi ([Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging)).
 
 ## 9. CI database
 
 Workflow `.github/workflows/supabase.yml` berjalan pada setiap push dan PR yang
-menyentuh `supabase/**` atau workflow itu sendiri. Ia tidak menyentuh proyek
-remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
+menyentuh `supabase/**` atau workflow itu sendiri. Job `database` tidak
+menyentuh proyek remote mana pun dan tidak butuh secret: semuanya di Postgres
+lokal runner. Kalau job itu lulus pada push ke `main`, job `deploy-staging`
+menerapkan migrasi baru ke staging dengan `supabase db push` — produksi tidak
+pernah disentuh. Secret, cara memasangnya, dan cara membaca kegagalannya ada di
+[Rilis & deploy](../panduan/rilis-dan-deploy.md#deploy-otomatis-ke-staging).
 
 | Langkah | Perintah | Menangkap |
 | --- | --- | --- |
@@ -445,6 +595,7 @@ remote mana pun dan tidak butuh secret: semuanya di Postgres lokal runner.
 | Lint | `supabase db lint --level warning --fail-on warning` | Galat fungsi yang baru muncul saat dijalankan, lewat `plpgsql_check`. Tanpa `--fail-on`, perintah ini selalu keluar dengan status 0 ([sumber](../sumber/supabase-testing-pgtap.md)) |
 | Tes | `supabase test db` | `supabase/tests/database/*.test.sql` |
 | Tes data contoh | `supabase test db supabase/staging/data_contoh.test.sql` | Skrip data contoh menyimpang dari contoh kontrak |
+| Deploy staging (hanya `main`) | `supabase db push --db-url … --dry-run`, lalu `supabase db push --db-url …` | Migrasi baru belum sampai ke staging ([sumber](../sumber/supabase-cli-db-push.md)) |
 
 CLI di-pin ke versi 2.117.0 lewat `supabase/setup-cli@v3`
 ([sumber](../sumber/supabase-setup-cli-action.md)); `supabase/config.toml`
@@ -452,15 +603,39 @@ diturunkan dari template versi yang sama.
 
 **Isi tes pgTAP:**
 
-- `01_skema.test.sql` (26 tes) — tabel ada, RLS menyala, kebijakan persis
+- `01_skema.test.sql` (64 tes) — tabel ada, RLS menyala, kebijakan persis
   sesuai migrasi, `anon` tanpa hak tabel maupun fungsi, hak `authenticated`,
-  dan `has_password()` satu-satunya security definer dengan `search_path`
-  kosong.
+  daftar persis fungsi security definer di skema `public`, dan
+  `has_password()` dengan `search_path` kosong.
 - `02_rls_isolasi.test.sql` (17 tes) — uji isolasi 13 Sep 2026 yang dulu manual
   ([log progres](../proyek/log-progres.md)): B tidak melihat, mengubah, atau
   menghapus data A, dan tidak bisa mencatat ke usaha A maupun menyamar sebagai
   A; A tidak bisa memindahkan transaksi ke usaha B; `monthly_totals` dan
   `has_password()` benar; `anon` ditolak.
+- `03_agregat_bulanan.test.sql` (3 tes) — `monthly_totals` selalu 12 bulan
+  termasuk bulan kosong, HPP hanya dari kategori ber-`is_cogs`, dan total
+  pemasukan setahun (#41).
+- `04_validasi_transaksi.test.sql` (14 tes) — semua aturan validasi di
+  [§3](#3-skema), dijalankan sebagai `authenticated`, dengan pesan galat yang
+  dicocokkan persis karena nama constraint di dalamnya dibaca klien (#40).
+- `05_transaksi_berulang.test.sql` (51 tes) — jadwal (jangkar akhir bulan,
+  mingguan), tanpa pengisian mundur, penerbitan kejar-ketinggalan yang tidak
+  pernah ganda, `end_date` inklusif, berhenti permanen, tautan
+  `recurring_template_id` yang tidak bisa dipalsukan, validasi, dan isolasi
+  antar-akun (#58). Tanggal "hari ini" dipatok lewat setelan
+  `catatin.hari_ini`.
+- `06_lampiran_struk.test.sql` (16 tes) — lokasi berkas terikat ke pemilik
+  dan transaksinya, tipe dan ukuran, isolasi antar-akun, cascade saat
+  transaksi dihapus, dan kebijakan `storage.objects` (dilewati bila skema
+  Storage tidak ada) (#59).
+- `07_pengerasan_validasi.test.sql` (23 tes) — FK komposit kepemilikan diuji
+  sebagai `postgres` (melewati RLS, seperti pg_cron), termasuk menghapus templat
+  yang hanya memutus tautan; batas panjang teks dan bentuk NPWP diuji sebagai
+  `authenticated` (#115).
+- `08_pemantauan.test.sql` (34 tes) — `app_errors` hanya bisa ditambah per
+  kolom dan dibatasi 30 laporan per 10 menit, `catatin_health()` boleh
+  dipanggil `anon` dan menghitung galat serta latensi dengan benar (termasuk
+  saat `pg_stat_statements` direset), dan pembersihan berkala (#103).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 
@@ -486,6 +661,92 @@ npx supabase db lint --level warning --fail-on warning
 npx supabase test db
 npx supabase test db supabase/staging/data_contoh.test.sql
 ```
+
+## 10. Uji beban
+
+`supabase/staging/uji_beban_agregasi.sql` mengisi 12 bulan × 200 transaksi
+per akun untuk banyak akun sekaligus, lalu mengukur — sebagai `authenticated`,
+jadi RLS ikut berlaku — tiga kueri yang benar-benar dikirim aplikasi (#75).
+Seluruhnya satu transaksi yang diakhiri `raise exception` berisi laporan, jadi
+tidak ada yang tertinggal. Jalankan di staging lewat MCP `execute_sql` (tempel
+isi berkasnya) atau `psql`; **jangan di produksi**. Jumlah akun diatur di
+baris `set_config('uji.akun', …)`.
+
+**Hasil 22 Sep 2026** — staging Free (ap-southeast-1), 50 akun × 2.400 =
+120.000 transaksi (24 MB), diisi dalam 9,1 detik:
+
+| Kueri | Dipakai untuk | p50 | p95 | Maks |
+| --- | --- | --- | --- | --- |
+| `monthly_totals(2026)`, 30× | Dashboard, grafik KPI, agregat tahunan, tutup bulan | 4,0 ms | 4,2 ms | 4,5 ms |
+| Satu bulan + kategori (200 baris), 30× | Tab Pembukuan | 1,1 ms | 1,1 ms | 1,8 ms |
+| Setahun, 3 halaman × 1.000 (2.400 baris), 10× | Jalur data ekspor CSV (#72) | 28,3 ms | 30,4 ms | 31,4 ms |
+
+- Akun yang diukur hanya melihat 2.400 baris miliknya, dan `monthly_totals`
+  menjumlah tepat 2.400 — isolasi RLS tetap benar di bawah beban.
+- Rencana kueri inti `monthly_totals` memakai **Bitmap Index Scan on
+  `transactions_user_date_idx`**: biayanya mengikuti jumlah baris milik akun
+  itu sendiri, bukan besar tabel. Tidak perlu indeks baru.
+- Halaman ketiga paling mahal karena `offset` tetap mengurutkan baris yang
+  dilewati. Untuk 2.400 baris itu tidak berarti; kalau kelak satu akun
+  menyimpan puluhan ribu transaksi setahun, ganti paginasi `range()` di
+  `getTransactions` dengan keyset (`date`, `created_at`).
+
+**Batasan.** Waktu diukur di dalam database: belum termasuk PostgREST dan
+jaringan ke ap-southeast-1. Satu sesi, bukan pengguna serentak — uji 50
+pengguna serentak masuk #114 dan butuh akun staging sungguhan. Ekspor CSV
+sendiri (#72) diformat di klien; ukur ulang langkah 3 setelah endpoint itu
+ada. Sisipan yang digulung balik meninggalkan ruang mati ± 8 MB di tabel
+`transactions` sampai autovacuum membersihkannya — aman untuk batas 500 MB
+paket Free, tapi jangan menjalankannya berkali-kali berturut-turut.
+
+## 11. Pemantauan
+
+Paket Free Supabase tidak punya peringatan bawaan, jadi database menyiapkan
+angka kesehatannya sendiri dan `.github/workflows/pemantauan.yml` memeriksanya
+tiap 30 menit (#103).
+
+| Bagian | Isi |
+| --- | --- |
+| `app_errors` | Galat terstruktur yang dilaporkan klien: status, kode mesin, sumber (`postgrest`/`auth`/`storage`/`lain`), versi aplikasi, platform. **Tanpa pesan bebas**, jadi tidak ada data pribadi. Klien hanya bisa menambah (hak `INSERT` per kolom — `user_id` dan `occurred_at` selalu default), tidak bisa membaca. Paling banyak 30 laporan per akun per 10 menit; disimpan 30 hari. |
+| `latency_snapshots` | Cuplikan `pg_stat_statements` tiap 15 menit untuk `monthly_totals` yang dijalankan peran `authenticated` (= permintaan PostgREST); blok `DO` dikecualikan. Selisih dua cuplikan = rata-rata latensi dalam jendela itu. Disimpan 7 hari. |
+| `catatin_pemantauan_berkala()` | Job pg_cron `catatin-pemantauan` (`*/15 * * * *`): cuplikan + pembersihan. |
+| `catatin_health(p_window_minutes)` | Ringkasan jendela 15–1440 menit (bawaan 60): `errors` (`total`, `server` = 5xx, `forbidden` = 403, `users`), `aggregation` (`calls`, `mean_ms`, `snapshots`), dan `recurring_cron` (`last_status`, `last_success_at`, `hours_since_success` job transaksi berulang). |
+
+**Yang dilaporkan klien** (`reportableAppError()` di `supabase_client.dart`,
+dipanggil `runSupabase`): 403 padahal sesi ada (RLS menolak — berarti bug di
+klien), 5xx, dan galat yang tidak dikenali. Validasi (400), tidak ditemukan
+(404), bentrok (409), sesi habis (401), dan jaringan putus (0) adalah jalannya
+aplikasi yang normal. Laporan dikirim tanpa ditunggu dan kegagalannya ditelan,
+jadi tidak pernah mengganti galat aslinya.
+
+**Satu-satunya pengecualian "anon tanpa hak".** `catatin_health()` boleh
+dipanggil `anon` supaya workflow cukup memakai publishable key dari
+`app/dart_define.*.json` — kunci yang memang publik — tanpa secret baru
+yang juga membuka produksi. Isinya hanya hitungan agregat, tidak ada baris
+milik siapa pun. Security Advisor karena itu akan melaporkan fungsi
+`security definer` yang bisa dipanggil `anon`; itu disengaja.
+
+**Kapan workflow gagal** (ambangnya di blok `env` workflow):
+
+| Kondisi | Ambang |
+| --- | --- |
+| Galat 5xx dari klien dalam 60 menit | ≥ 5 |
+| Galat 403 padahal sesi ada dalam 60 menit | ≥ 5 |
+| Rata-rata latensi `monthly_totals` | > 500 ms (uji beban: p95 4,2 ms, [§10](#10-uji-beban)) |
+| Job transaksi berulang gagal pada run terakhir, atau sukses terakhir | > 26 jam lalu |
+| Produksi tidak terjangkau | HTTP selain 200 |
+
+Staging yang tidak terjangkau — biasanya dijeda paket Free (T-19) — hanya
+peringatan; panggilan tiap 30 menit ini sekaligus menjaganya tetap aktif.
+Proyek yang belum punya `catatin_health()` (migrasi belum diterapkan) juga
+hanya peringatan. GitHub mengirim email kegagalan workflow terjadwal ke orang
+yang terakhir mengubah jadwal `cron`-nya.
+
+**Saat gagal:** buka ringkasan run (tabel angka per proyek), lalu Logs
+Explorer dashboard Supabase untuk jendela yang sama. Galat klien per kode:
+`select status, code, source, count(*) from app_errors where occurred_at >
+now() - interval '1 hour' group by 1, 2, 3 order by 4 desc;` (sebagai
+`postgres`, di SQL Editor).
 
 ## Halaman terkait
 

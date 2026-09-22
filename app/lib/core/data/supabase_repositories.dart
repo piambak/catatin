@@ -15,7 +15,10 @@
 // Kontrak galat sama dengan REST: setiap method melempar [ApiException]
 // (lewat `runSupabase`).
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, debugPrint;
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -31,10 +34,33 @@ sb.SupabaseClient get _db => SupabaseBackend.client;
 
 const _businessTable = 'business_profiles';
 const _txTable = 'transactions';
+const _recurringTable = 'recurring_templates';
+const _attachmentTable = 'transaction_attachments';
 
-/// Transaksi beserta kategorinya, disematkan dengan nama kunci `category`
-/// seperti yang diharapkan `TxData.fromJson` dan `RecentTx.fromJson`.
+/// Bucket Storage privat tempat berkas struk sungguhan disimpan — lihat
+/// `supabase/migrations/…_lampiran_struk.sql`.
+const _receiptsBucket = 'receipts';
+
+/// Transaksi (atau template berulang) beserta kategorinya, disematkan dengan
+/// nama kunci `category` seperti yang diharapkan `TxData.fromJson`,
+/// `RecentTx.fromJson`, dan `RecurringTemplate.fromJson`.
 const _txWithCategory = '*, category:tx_categories(*)';
+
+/// Id profil usaha milik pengguna yang sedang masuk. Dipakai
+/// [SupabaseTransactionRepository] dan [SupabaseRecurringRepository] karena
+/// keduanya menyisipkan `business_id` dari server, bukan dari data lokal —
+/// id yang tersimpan lokal bisa sisa akun lain di perangkat yang sama.
+Future<String> _currentBusinessId() async {
+  final row = await _db.from(_businessTable).select('id').maybeSingle();
+  final id = row?['id'] as String?;
+  if (id == null) {
+    throw const ApiException(
+      statusCode: 409,
+      message: 'Lengkapi profil usaha dulu sebelum mencatat transaksi.',
+    );
+  }
+  return id;
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -356,10 +382,15 @@ class SupabaseTransactionRepository implements TransactionRepository {
     });
   }
 
+  /// Baris `transaction_attachments` ikut ter-cascade lewat FK saat transaksi
+  /// dihapus, TAPI berkas sungguhannya di Storage tidak — Storage bukan
+  /// bagian dari transaksi Postgres. Berkasnya karena itu dibersihkan di sini
+  /// dulu, sebelum baris transaksinya dihapus.
   @override
   Future<bool> deleteTransaction(String id) async {
     if (!isUuid(id)) throw _notFound;
     return runSupabase(() async {
+      await _removeAttachmentFiles(id);
       final rows = await _db.from(_txTable).delete().eq('id', id).select('id');
       if (rows.isEmpty) throw _notFound;
       return true;
@@ -374,19 +405,289 @@ class SupabaseTransactionRepository implements TransactionRepository {
         final rows = await _monthlyTotals(year);
         return YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(rows));
       });
+}
 
-  Future<String> _currentBusinessId() async {
-    final row = await _db.from(_businessTable).select('id').maybeSingle();
-    final id = row?['id'] as String?;
-    if (id == null) {
-      throw const ApiException(
-        statusCode: 409,
-        message: 'Lengkapi profil usaha dulu sebelum mencatat transaksi.',
-      );
+/// Menghapus dari Storage seluruh berkas lampiran struk milik transaksi
+/// [transactionId], sebelum baris transaksinya sendiri dihapus.
+///
+/// Usaha terbaik saja ("best effort"): kegagalan di sisi Storage (mis.
+/// jaringan putus di tengah jalan) TIDAK BOLEH menggagalkan penghapusan
+/// transaksi — baris `transaction_attachments` tetap ter-cascade lewat FK,
+/// jadi metadatanya tetap bersih walau ada berkas yatim yang tertinggal.
+/// Galatnya hanya dicetak di mode debug.
+Future<void> _removeAttachmentFiles(String transactionId) async {
+  try {
+    final rows = await _db
+        .from(_attachmentTable)
+        .select('storage_path')
+        .eq('transaction_id', transactionId);
+    final paths = [for (final row in rows) row['storage_path'] as String];
+    if (paths.isNotEmpty) {
+      await _db.storage.from(_receiptsBucket).remove(paths);
     }
-    return id;
+  } catch (error) {
+    if (kDebugMode) {
+      debugPrint('[Catatin] gagal menghapus lampiran Storage: $error');
+    }
   }
 }
+
+// ── Transaksi berulang ──────────────────────────────────────────────────────
+
+class SupabaseRecurringRepository implements RecurringRepository {
+  static const _notFound = ApiException(
+    statusCode: 404,
+    message: 'Transaksi berulang tidak ditemukan.',
+  );
+
+  static const _inactiveConflict = ApiException(
+    statusCode: 409,
+    message: 'Transaksi berulang ini sudah dihentikan. Buat yang baru.',
+  );
+
+  /// `next_date`/`is_active` dihitung trigger database, bukan di sini — lihat
+  /// `wiki/arsitektur/backend-dan-api.md`.
+  @override
+  Future<List<RecurringTemplate>> getTemplates() => runSupabase(() async {
+        final rows = await _db
+            .from(_recurringTable)
+            .select(_txWithCategory)
+            .order('is_active', ascending: false)
+            // Bawaan `nullsFirst: false` sudah menaruh `next_date` kosong
+            // (template nonaktif) di akhir.
+            .order('next_date', ascending: true);
+        return rows.map(RecurringTemplate.fromJson).toList();
+      });
+
+  /// `business_id` selalu diambil dari server, sama seperti
+  /// [SupabaseTransactionRepository.createTransaction].
+  @override
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) =>
+      runSupabase(() async {
+        final businessId = await _currentBusinessId();
+        final row = await _db
+            .from(_recurringTable)
+            .insert({...draft.toJson(), 'business_id': businessId})
+            .select(_txWithCategory)
+            .single();
+        return RecurringTemplate.fromJson(row);
+      });
+
+  /// Hanya menimpa baris yang masih aktif. Kalau tidak ada baris yang
+  /// cocok, dibedakan lagi: id ada tapi nonaktif → 409 (sudah dihentikan),
+  /// id tidak ada sama sekali → 404.
+  @override
+  Future<RecurringTemplate> updateTemplate(
+    String id,
+    RecurringDraft draft,
+  ) async {
+    if (!isUuid(id)) throw _notFound;
+    return runSupabase(() async {
+      final row = await _db
+          .from(_recurringTable)
+          .update(draft.toJson())
+          .eq('id', id)
+          .eq('is_active', true)
+          .select(_txWithCategory)
+          .maybeSingle();
+      if (row != null) return RecurringTemplate.fromJson(row);
+      final existing = await _db
+          .from(_recurringTable)
+          .select('id')
+          .eq('id', id)
+          .maybeSingle();
+      if (existing != null) throw _inactiveConflict;
+      throw _notFound;
+    });
+  }
+
+  /// Idempoten: menghentikan template yang sudah nonaktif tetap menimpa baris
+  /// yang sama (`is_active` sudah `false`) dan mengembalikannya apa adanya.
+  @override
+  Future<RecurringTemplate> stopTemplate(String id) async {
+    if (!isUuid(id)) throw _notFound;
+    return runSupabase(() async {
+      final row = await _db
+          .from(_recurringTable)
+          .update({'is_active': false})
+          .eq('id', id)
+          .select(_txWithCategory)
+          .maybeSingle();
+      if (row == null) throw _notFound;
+      return RecurringTemplate.fromJson(row);
+    });
+  }
+}
+
+// ── Lampiran struk ────────────────────────────────────────────────────────────
+
+class SupabaseAttachmentRepository implements AttachmentRepository {
+  static const _notFound = ApiException(
+    statusCode: 404,
+    message: 'Lampiran tidak ditemukan.',
+  );
+
+  static const _txNotFound = ApiException(
+    statusCode: 404,
+    message: 'Transaksi tidak ditemukan.',
+  );
+
+  /// Terlama lebih dulu. Kalau tidak ada satu pun baris, dibedakan lagi:
+  /// transaksinya sendiri tidak ada (atau milik orang lain, disamarkan RLS
+  /// jadi 404 yang sama) → 404, transaksinya ada tapi memang belum punya
+  /// lampiran → daftar kosong.
+  @override
+  Future<List<TxAttachment>> getAttachments(String transactionId) async {
+    if (!isUuid(transactionId)) throw _txNotFound;
+    return runSupabase(() async {
+      final rows = await _db
+          .from(_attachmentTable)
+          .select()
+          .eq('transaction_id', transactionId)
+          .order('created_at', ascending: true);
+      if (rows.isEmpty) {
+        await _ensureTransactionExists(transactionId);
+        return const <TxAttachment>[];
+      }
+      final paths = [for (final row in rows) row['storage_path'] as String];
+      final signed = await _db.storage
+          .from(_receiptsBucket)
+          .createSignedUrlsResult(paths, _signedUrlTtlSeconds);
+      final urlByPath = {
+        for (final result in signed)
+          if (result is sb.SignedUrlSuccess) result.path: result.signedUrl,
+      };
+      final expiresAt = DateTime.now().add(_signedUrlTtl);
+      return [
+        for (final row in rows)
+          _attachmentFromRow(
+            row,
+            url: urlByPath[row['storage_path']] ?? '',
+            expiresAt: expiresAt,
+          ),
+      ];
+    });
+  }
+
+  /// Id lampiran dibuat di klien ([newUuidV4]) SEBELUM berkas diunggah: nama
+  /// berkas di Storage memuat id ini (`transaction_attachments_path_check`),
+  /// jadi id-nya harus sudah diketahui lebih dulu — tidak bisa menunggu nilai
+  /// bawaan `gen_random_uuid()` dari server seperti tabel lain.
+  ///
+  /// Kalau baris metadatanya gagal disisipkan (mis. constraint lain gagal),
+  /// berkas yang sudah terlanjur terunggah dibersihkan lagi (usaha terbaik)
+  /// supaya tidak ada berkas yatim di Storage.
+  @override
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) async {
+    checkAttachmentUpload(bytes: bytes, mimeType: mimeType);
+    if (!isUuid(transactionId)) throw _txNotFound;
+    return runSupabase(() async {
+      await _ensureTransactionExists(transactionId);
+      final userId = _currentUserId();
+      final id = newUuidV4();
+      final path = '$userId/$transactionId/$id.${_extensionFor(mimeType)}';
+      await _db.storage.from(_receiptsBucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: sb.FileOptions(contentType: mimeType, upsert: false),
+          );
+      try {
+        final row = await _db.from(_attachmentTable).insert({
+          'id': id,
+          'transaction_id': transactionId,
+          'storage_path': path,
+          'file_name': fileName,
+          'mime_type': mimeType,
+          'size_bytes': bytes.length,
+        }).select().single();
+        final url = await _db.storage
+            .from(_receiptsBucket)
+            .createSignedUrl(path, _signedUrlTtlSeconds);
+        return _attachmentFromRow(
+          row,
+          url: url,
+          expiresAt: DateTime.now().add(_signedUrlTtl),
+        );
+      } catch (error) {
+        try {
+          await _db.storage.from(_receiptsBucket).remove([path]);
+        } catch (_) {
+          // Usaha terbaik — kegagalan pembersihan tidak boleh menutupi galat
+          // asli yang membuat baris metadatanya gagal disisipkan.
+        }
+        rethrow;
+      }
+    });
+  }
+
+  @override
+  Future<void> deleteAttachment(
+    String transactionId,
+    String attachmentId,
+  ) async {
+    if (!isUuid(transactionId) || !isUuid(attachmentId)) throw _notFound;
+    return runSupabase(() async {
+      final row = await _db
+          .from(_attachmentTable)
+          .select('storage_path')
+          .eq('id', attachmentId)
+          .eq('transaction_id', transactionId)
+          .maybeSingle();
+      if (row == null) throw _notFound;
+      await _db.storage
+          .from(_receiptsBucket)
+          .remove([row['storage_path'] as String]);
+      await _db.from(_attachmentTable).delete().eq('id', attachmentId);
+    });
+  }
+}
+
+const _signedUrlTtlSeconds = 3600;
+const _signedUrlTtl = Duration(seconds: _signedUrlTtlSeconds);
+
+Future<void> _ensureTransactionExists(String transactionId) async {
+  final row = await _db
+      .from(_txTable)
+      .select('id')
+      .eq('id', transactionId)
+      .maybeSingle();
+  if (row == null) {
+    throw const ApiException(
+      statusCode: 404,
+      message: 'Transaksi tidak ditemukan.',
+    );
+  }
+}
+
+/// Baris `transaction_attachments` + URL bertanda tangan yang baru diminta →
+/// [TxAttachment], lewat `fromJson` supaya cara membaca `created_at` sama
+/// dengan [RecurringTemplate] dan [TxData].
+TxAttachment _attachmentFromRow(
+  Map<String, dynamic> row, {
+  required String url,
+  required DateTime expiresAt,
+}) =>
+    TxAttachment.fromJson({
+      ...row,
+      'url': url,
+      'url_expires_at': expiresAt.toUtc().toIso8601String(),
+    });
+
+/// Ekstensi berkas dari `mime_type` — sama dengan pemetaan yang dipaksa
+/// `transaction_attachments_path_check` di migrasi. [checkAttachmentUpload]
+/// sudah menjamin [mimeType] salah satu dari ketiganya sebelum method ini
+/// pernah dipanggil.
+String _extensionFor(String mimeType) => switch (mimeType) {
+      'image/jpeg' => 'jpg',
+      'image/png' => 'png',
+      'image/webp' => 'webp',
+      _ => 'bin',
+    };
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -436,6 +737,45 @@ class SupabaseDashboardRepository implements DashboardRepository {
         final rows = await _monthlyTotals(now.year);
         return kpiFromMonthlyTotals(rows, metric, upToMonth: now.month);
       });
+
+  /// Tanpa migrasi baru: `monthly_totals` yang sama dengan agregat tahunan
+  /// dan ringkasan dashboard, jadi angkanya tidak mungkin berbeda.
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) {
+    checkMonthParam(month: month);
+    return runSupabase(() async {
+      final rows = await _monthlyTotals(year);
+      return monthCloseFromMonthlyTotals(rows, month: month, year: year);
+    });
+  }
+}
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+/// Tanpa migrasi: `monthly_totals` tahun acuan (plus tahun sebelumnya kalau
+/// jendela tiga bulan menyeberang tahun) dan profil usaha, diminta serentak.
+class SupabaseSimulatorRepository implements SimulatorRepository {
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) {
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+    checkMonthParam(month: m);
+    return runSupabase(() async {
+      final (current, previous, business) = await (
+        _monthlyTotals(y),
+        m <= 3 ? _monthlyTotals(y - 1) : Future.value(null),
+        SupabaseBusinessRepository().getCurrent(),
+      ).wait;
+      return simulatorInputsFromMonthlyTotals(
+        month: m,
+        year: y,
+        current: current,
+        previous: previous,
+        business: business,
+      );
+    });
+  }
 }
 
 /// Satu baris per bulan dari fungsi Postgres `monthly_totals`.
@@ -451,6 +791,22 @@ final _uuidPattern = RegExp(
 );
 
 bool isUuid(String value) => _uuidPattern.hasMatch(value);
+
+final _uuidRandom = Random.secure();
+
+/// UUID v4 acak (RFC 4122), dibuat di klien untuk
+/// [SupabaseAttachmentRepository.uploadAttachment] — lihat komentar di sana
+/// untuk alasannya. Formatnya sengaja memenuhi [isUuid].
+String newUuidV4() {
+  final bytes = List<int>.generate(16, (_) => _uuidRandom.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0F) | 0x40; // versi 4
+  bytes[8] = (bytes[8] & 0x3F) | 0x80; // varian RFC 4122
+  String hex(int start, int end) => bytes
+      .sublist(start, end)
+      .map((b) => b.toRadixString(16).padLeft(2, '0'))
+      .join();
+  return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
+}
 
 String _currentUserId() {
   final id = _db.auth.currentUser?.id;
@@ -529,6 +885,36 @@ MonthlySummary summaryFromMonthlyTotals(
     'tx_count': m.txCount,
   });
 }
+
+/// Baris `monthly_totals` → ringkasan tutup bulan [month]/[year].
+MonthClose monthCloseFromMonthlyTotals(
+  List<Map<String, dynamic>> rows, {
+  required int month,
+  required int year,
+}) =>
+    MonthClose.fromAggregate(
+      year,
+      monthAggregates(monthTotalsFromRows(rows))[month - 1],
+    );
+
+/// Baris `monthly_totals` tahun acuan (dan tahun sebelumnya, kalau ada) →
+/// nilai awal Simulator.
+SimulatorInputs simulatorInputsFromMonthlyTotals({
+  required int month,
+  required int year,
+  required List<Map<String, dynamic>> current,
+  List<Map<String, dynamic>>? previous,
+  BusinessProfile? business,
+}) =>
+    simulatorInputsFrom(
+      month: month,
+      year: year,
+      current: YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(current)),
+      previous: previous == null
+          ? null
+          : YearAggregate.fromMonthlyTotals(year - 1, monthTotalsFromRows(previous)),
+      business: business,
+    );
 
 /// Baris `monthly_totals` → titik grafik KPI Januari sampai [upToMonth],
 /// berlabel bulan pendek Bahasa Indonesia ("Jan", "Mei", "Agu", …).

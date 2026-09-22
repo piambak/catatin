@@ -53,6 +53,20 @@ jobs:
         # Konfigurasi yang sama persis dengan publish-web.yml.
         run: flutter build web --release --base-href "/catatin/" --dart-define-from-file=dart_define.pages.json
 
+      - name: Skor PRD redesain UI
+        # Non-blocking dulu: mencetak angka, tidak menggagalkan build. Tugasnya
+        # membuat kemunduran KELIHATAN di setiap PR — audit 12 Sep menemukan dua
+        # kriteria yang mundur tanpa disadari karena tidak ada yang mengukur.
+        # Jadi blocking (`--strict`) mulai Minggu 3, setelah issue #52 memecah
+        # accounting_screen.dart. Lihat wiki/proyek/rencana-frontend.md.
+        working-directory: .
+        run: |
+          {
+            echo "## Skor PRD redesain UI"
+            echo
+            bash tool/prd_score.sh --markdown
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Simpan hasil build untuk ditinjau
         uses: actions/upload-artifact@v4
         with:

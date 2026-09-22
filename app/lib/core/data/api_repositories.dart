@@ -12,6 +12,8 @@
 // Kontrak error: setiap method melempar [ApiException] (bukan
 // `DioException`) supaya lapisan di atasnya tidak perlu tahu soal Dio.
 
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../../models/models.dart';
@@ -236,6 +238,117 @@ class ApiTransactionRepository implements TransactionRepository {
   }
 }
 
+// ── Transaksi berulang ──────────────────────────────────────────────────────
+
+class ApiRecurringRepository implements RecurringRepository {
+  @override
+  Future<List<RecurringTemplate>> getTemplates() async {
+    try {
+      final res = await ApiClient.get(ApiEndpoints.recurring);
+      return (res.data['templates'] as List)
+          .map((e) => RecurringTemplate.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) async {
+    try {
+      final res =
+          await ApiClient.post(ApiEndpoints.recurring, data: draft.toJson());
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> updateTemplate(
+    String id,
+    RecurringDraft draft,
+  ) async {
+    try {
+      final res = await ApiClient.patch(
+        ApiEndpoints.recurringById(id),
+        data: draft.toJson(),
+      );
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> stopTemplate(String id) async {
+    try {
+      final res = await ApiClient.post(ApiEndpoints.recurringStop(id));
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+}
+
+// ── Lampiran struk ────────────────────────────────────────────────────────────
+
+class ApiAttachmentRepository implements AttachmentRepository {
+  @override
+  Future<List<TxAttachment>> getAttachments(String transactionId) async {
+    try {
+      final res = await ApiClient.get(ApiEndpoints.attachments(transactionId));
+      return (res.data['attachments'] as List)
+          .map((e) => TxAttachment.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  /// Validasi [checkAttachmentUpload] jalan SEBELUM `FormData` dibentuk —
+  /// berkas yang jelas ditolak tidak pernah dikirim ke server.
+  @override
+  Future<TxAttachment> uploadAttachment(
+    String transactionId, {
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) async {
+    checkAttachmentUpload(bytes: bytes, mimeType: mimeType);
+    try {
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+          contentType: DioMediaType.parse(mimeType),
+        ),
+      });
+      final res = await ApiClient.post(
+        ApiEndpoints.attachments(transactionId),
+        data: form,
+      );
+      return TxAttachment.fromJson(
+          res.data['attachment'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteAttachment(String transactionId, String attachmentId) async {
+    try {
+      await ApiClient.delete(
+          ApiEndpoints.attachmentById(transactionId, attachmentId));
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 class ApiDashboardRepository implements DashboardRepository {
@@ -293,6 +406,40 @@ class ApiDashboardRepository implements DashboardRepository {
       return (res.data['points'] as List)
           .map((e) => KpiPoint.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+    checkMonthParam(month: month);
+    try {
+      final res = await ApiClient.get(ApiEndpoints.dashboardClose, params: {
+        'month': month,
+        'year': year,
+      });
+      return MonthClose.fromJson(res.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+}
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+class ApiSimulatorRepository implements SimulatorRepository {
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) async {
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    checkMonthParam(month: m);
+    try {
+      final res = await ApiClient.get(ApiEndpoints.simulatorInputs, params: {
+        'month': m,
+        'year': year ?? now.year,
+      });
+      return SimulatorInputs.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);
     }

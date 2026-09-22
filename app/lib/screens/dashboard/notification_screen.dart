@@ -83,6 +83,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // T-19: layar ini berada di luar bottom nav. Kalau dibuka lewat
+        // `context.go`, tumpukan kosong dan AppBar tidak memunculkan tombol
+        // kembali otomatis — di ponsel pengguna benar-benar terjebak. Tombol
+        // ini eksplisit dan selalu punya tujuan.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Kembali',
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.dashboard),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

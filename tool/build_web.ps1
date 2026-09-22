@@ -14,6 +14,10 @@
   .\tool\build_web.ps1 -ApiBaseUrl "https://api.contoh.id/api/v1"
   Build yang menembak backend REST (mode hybrid).
 
+.EXAMPLE
+  .\tool\build_web.ps1 -Yes
+  Tanpa -Yes skrip hanya melaporkan apa yang akan dihapus & disalin (dry-run).
+
 .NOTES
   Base href wajib "/catatin/" karena situs tayang di sub-direktori
   https://piambak.github.io/catatin/.
@@ -21,14 +25,21 @@
 [CmdletBinding()]
 param(
     [string]$ApiBaseUrl = "",
-    [switch]$Mock
+    [switch]$Mock,
+    [switch]$Yes
 )
 
 $ErrorActionPreference = "Stop"
 
-$Root  = Split-Path -Parent $PSScriptRoot
-$App   = Join-Path $Root "app"
-$Build = Join-Path $App "build\web"
+$Root     = Split-Path -Parent $PSScriptRoot
+$App      = Join-Path $Root "app"
+$Build    = Join-Path $App "build\web"
+$Manifest = Join-Path $Root "tool\.last_build_files"
+
+# T-29: versi lama menghapus SEMUA isi root yang tidak ada di $Keep, termasuk
+# dotfile (-Force ikut mengambil .env, .vscode, .idea). Sekarang yang dihapus
+# hanya jejak build sebelumnya, dicatat di tool\.last_build_files, dan $Keep
+# tetap jadi lapisan kedua. Tanpa -Yes skrip berhenti setelah melaporkan.
 
 # Root repo yang bukan hasil build — jangan sampai terhapus.
 # Harus sama persis dengan daftar KEEP di tool/sync_build.sh.
@@ -75,12 +86,48 @@ if (-not (Test-Path (Join-Path $Build "index.html"))) {
     throw "Hasil build tidak punya index.html. Batal."
 }
 
-Write-Host "-> Membersihkan output lama di root..."
-Get-ChildItem -Path $Root -Force |
-    Where-Object { $Keep -notcontains $_.Name } |
-    ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+# Berkas yang akan disalin, sebagai path relatif terhadap $Build.
+$prefix   = (Resolve-Path $Build).Path.TrimEnd('\') + '\'
+$NewFiles = Get-ChildItem -Path $Build -Recurse -File -Force |
+    ForEach-Object { $_.FullName.Substring($prefix.Length) }
+
+# Yang boleh dihapus: HANYA jejak build sebelumnya yang tidak dihasilkan lagi.
+$Stale = @()
+if (Test-Path $Manifest) {
+    $newSet = [System.Collections.Generic.HashSet[string]]::new(
+        [string[]]$NewFiles, [StringComparer]::OrdinalIgnoreCase)
+    foreach ($rel in (Get-Content $Manifest | Where-Object { $_ -ne "" })) {
+        $top = ($rel -split '[\\/]')[0]
+        if ($Keep -contains $top) { continue }
+        if ($newSet.Contains($rel)) { continue }
+        $full = Join-Path $Root $rel
+        if (Test-Path $full) { $Stale += $rel }
+    }
+} else {
+    Write-Host "! Manifes $Manifest belum ada (klon baru atau pemakaian pertama)."
+    Write-Host "  Pembersihan dilewati; skrip hanya menyalin dan menulis manifes."
+}
+
+Write-Host "-> Akan menyalin $($NewFiles.Count) berkas dari $Build"
+if ($Stale.Count -gt 0) {
+    Write-Host "-> Akan menghapus $($Stale.Count) sisa build sebelumnya:"
+    $Stale | ForEach-Object { Write-Host "     $_" }
+} else {
+    Write-Host "-> Tidak ada sisa build sebelumnya yang perlu dihapus."
+}
+
+if (-not $Yes) {
+    Write-Host ""
+    Write-Host "* Ini dry-run. Jalankan ulang dengan -Yes untuk benar-benar mengubah root."
+    exit 0
+}
+
+foreach ($rel in $Stale) {
+    Remove-Item (Join-Path $Root $rel) -Force -ErrorAction SilentlyContinue
+}
 
 Write-Host "-> Menyalin $Build -> $Root"
 Copy-Item -Path (Join-Path $Build "*") -Destination $Root -Recurse -Force
 
-Write-Host "OK. Output web tersinkron - periksa dengan 'git status'."
+Set-Content -Path $Manifest -Value $NewFiles -Encoding utf8
+Write-Host "OK. Output web tersinkron; manifes diperbarui - periksa dengan 'git status'."

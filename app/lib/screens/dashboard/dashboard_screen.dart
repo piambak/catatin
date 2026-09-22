@@ -268,10 +268,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ? '≈ ${Rupiah.format(_obligationAmount)}'
       : 'Belum dihitung';
 
-  void _openTx(RecentTx tx) => context.go('/accounting/${tx.id}');
+  // T-19: rute penuh-layar di LUAR ShellRoute dibuka dengan `push` supaya
+  // tumpukan navigasi punya sesuatu untuk di-`pop`. Dengan `go` tumpukan
+  // diganti, sehingga tombol kembali di layar tujuan hilang (Notifikasi) atau
+  // melempar pengguna ke rute cadangan alih-alih kembali ke Dashboard.
+  void _openTx(RecentTx tx) => context.push('/accounting/${tx.id}');
+  void _openNewTx() => context.push(AppRoutes.newTx);
+
+  // Dua ini tetap `go`: keduanya adalah TAB di dalam ShellRoute. Memakai
+  // `push` akan menumpuk halaman tanpa batas setiap kali pengguna pindah tab.
   void _openAccounting() => context.go(AppRoutes.accounting);
   void _openSimulator() => context.go(AppRoutes.simulator);
-  void _openNewTx() => context.go(AppRoutes.newTx);
 
   void _markPaid() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -312,7 +319,7 @@ class _Header extends StatelessWidget {
           icon: Icons.notifications_none_rounded,
           badge: true,
           tooltip: 'Notifikasi',
-          onTap: () => context.go(AppRoutes.notifications),
+          onTap: () => context.push(AppRoutes.notifications),
         ),
       ],
     );
@@ -390,6 +397,9 @@ class _NextObligation extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const DsLabel('Kewajiban berikutnya'),
+        const SizedBox(height: 10),
+        // T-17: nominal ini dihitung dari tarif yang belum ditinjau pakar.
+        const DsTrustChip(),
         SizedBox(height: compact ? 12 : 14),
         Semantics(
           label: 'Kewajiban berikutnya $amountText, $pillText',

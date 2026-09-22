@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../config/app_config.dart';
+import '../constants/app_constants.dart';
 import 'api_client.dart';
 import 'browser_url.dart';
 
@@ -138,9 +139,74 @@ Future<T> runSupabase<T>(Future<T> Function() call) async {
       error,
       hasSession: SupabaseBackend.hasSession,
     );
+    _reportAppError(error, mapped);
     if (mapped == null) rethrow;
     throw mapped;
   }
+}
+
+// ── Laporan galat untuk pemantauan (#103) ─────────────────────────────────────
+
+/// Baris untuk tabel `app_errors`, atau `null` kalau galat ini tidak perlu
+/// dilaporkan.
+///
+/// Hanya galat yang menandakan masalah di sisi kita: 403 padahal sesi ada
+/// (RLS menolak — bug klien), 5xx, dan galat yang tidak dikenali (dianggap
+/// 500). Validasi (400), tidak ditemukan (404), bentrok (409), sesi habis
+/// (401), dan jaringan putus (0 — laporannya pun tidak akan sampai) adalah
+/// jalannya aplikasi yang normal, bukan insiden.
+///
+/// SENGAJA tanpa pesan galat: hanya status, kode mesin, dan sumber, jadi
+/// tidak ada data pribadi yang ikut tersimpan.
+Map<String, Object?>? reportableAppError(
+  Object error,
+  ApiException? mapped, {
+  required bool hasSession,
+  required String platform,
+}) {
+  if (!hasSession) return null;
+  final status = mapped?.statusCode ?? 500;
+  if (status != 403 && status < 500) return null;
+  final (source, code) = switch (error) {
+    sb.PostgrestException(:final code) => ('postgrest', code),
+    sb.AuthException(:final code) => ('auth', code),
+    sb.StorageException(:final statusCode) => ('storage', statusCode),
+    _ => ('lain', null),
+  };
+  return {
+    'status': status,
+    'code': code == null || code.length <= 64 ? code : code.substring(0, 64),
+    'source': source,
+    'app_version': AppConstants.appVersion,
+    'platform': platform,
+  };
+}
+
+String get _platform => kIsWeb
+    ? 'web'
+    : switch (defaultTargetPlatform) {
+        TargetPlatform.android => 'android',
+        TargetPlatform.iOS => 'ios',
+        _ => 'lain',
+      };
+
+/// Kirim-dan-lupakan: laporan yang gagal tidak boleh menggantikan galat
+/// aslinya, dan sengaja tidak lewat [runSupabase] supaya tidak pernah
+/// melaporkan dirinya sendiri. Kalau tabelnya belum ada (migrasi pemantauan
+/// belum diterapkan), permintaannya gagal diam-diam.
+void _reportAppError(Object error, ApiException? mapped) {
+  final row = reportableAppError(
+    error,
+    mapped,
+    hasSession: SupabaseBackend.hasSession,
+    platform: _platform,
+  );
+  if (row == null) return;
+  unawaited(Future(() async {
+    try {
+      await SupabaseBackend.client.from('app_errors').insert(row);
+    } catch (_) {}
+  }));
 }
 
 // ── Penerjemah galat ──────────────────────────────────────────────────────────
@@ -166,6 +232,9 @@ const _sessionEnded = ApiException(
 ApiException? supabaseException(Object error, {required bool hasSession}) {
   if (error is ApiException) return error;
   if (error is sb.AuthException) return _fromAuth(error);
+  if (error is sb.StorageException) {
+    return _fromStorage(error, hasSession: hasSession);
+  }
   if (error is sb.PostgrestException) {
     return _fromPostgrest(error, hasSession: hasSession);
   }
@@ -278,6 +347,55 @@ ApiException _fromAuth(sb.AuthException e) {
   return ApiException(statusCode: status ?? 500, message: e.message);
 }
 
+const _attachmentTooLarge = ApiException(
+  statusCode: 400,
+  message: 'Ukuran foto maksimal 5 MB.',
+  errors: {'file': 'Ukuran foto maksimal 5 MB.'},
+);
+
+const _attachmentWrongType = ApiException(
+  statusCode: 400,
+  message: 'Format foto harus JPEG, PNG, atau WebP.',
+  errors: {'file': 'Format foto harus JPEG, PNG, atau WebP.'},
+);
+
+/// Galat Storage (unggah/hapus lampiran struk, issue #59) → [ApiException].
+///
+/// `statusCode` di [sb.StorageException] adalah teks (mis. `'413'`), bukan
+/// `int`. Ukuran dan tipe berkas dicek dua kali — lewat `statusCode` KALAU
+/// server mengirimnya, ATAU lewat kata kunci di [sb.StorageException.message]
+/// kalau tidak — supaya galat yang sama tetap tampil sebagai pesan form untuk
+/// pengguna walau proxy di antara klien dan Storage tidak meneruskan status
+/// aslinya.
+ApiException _fromStorage(sb.StorageException e, {required bool hasSession}) {
+  final message = e.message.toLowerCase();
+  if (e.statusCode == '413' || message.contains('size')) {
+    return _attachmentTooLarge;
+  }
+  if (e.statusCode == '415' ||
+      message.contains('mime') ||
+      message.contains('type')) {
+    return _attachmentWrongType;
+  }
+  switch (e.statusCode) {
+    case '401':
+      return _sessionEnded;
+    case '403':
+      return hasSession
+          ? const ApiException(statusCode: 403, message: 'Akses ditolak.')
+          : _sessionEnded;
+    case '404':
+      return const ApiException(statusCode: 404, message: 'Data tidak ditemukan.');
+    case '409':
+      return const ApiException(
+        statusCode: 409,
+        message: 'Berkas yang sama sudah ada.',
+      );
+  }
+  _debugUnmapped(e);
+  return ApiException(statusCode: 500, message: e.message);
+}
+
 ApiException _fromPostgrest(
   sb.PostgrestException e, {
   required bool hasSession,
@@ -308,15 +426,175 @@ ApiException _fromPostgrest(
         errors: {'amount': 'Nominal terlalu besar.'},
       );
     case '23514': // check violation
-    case '23502': // not null violation
     case '23503': // foreign key violation
-    case '22P02': // format teks tidak valid, mis. UUID
+      return _constraintViolation(e) ??
+          const ApiException(statusCode: 400, message: 'Data tidak valid.');
+    case '23502': // not null violation
+      final column = _notNullColumn.firstMatch(e.message)?.group(1);
+      return column == null
+          ? const ApiException(statusCode: 400, message: 'Data tidak valid.')
+          : ApiException(
+              statusCode: 400,
+              message: 'Data tidak valid.',
+              errors: {column: 'Data wajib belum diisi.'},
+            );
     case '22007': // format tanggal tidak valid
-    case '22008': // tanggal di luar rentang
+    case '22008': // tanggal yang tidak ada, mis. 30 Februari
+      // Satu-satunya kolom tanggal yang ditulis klien: transactions.date.
+      return const ApiException(
+        statusCode: 400,
+        message: 'Tanggal tidak valid.',
+        errors: {'date': 'Tanggal tidak valid.'},
+      );
+    case '22P02': // format teks tidak valid, mis. UUID
       return const ApiException(statusCode: 400, message: 'Data tidak valid.');
   }
   _debugUnmapped(e);
   return ApiException(statusCode: 500, message: e.message);
+}
+
+/// Nama constraint di pesan Postgres, mis.
+/// `new row for relation "transactions" violates check constraint "transactions_amount_check"`.
+final _constraintName = RegExp(r'constraint "([^"]+)"');
+
+/// Kolom di pesan not-null, mis.
+/// `null value in column "business_name" of relation "business_profiles" violates not-null constraint`.
+final _notNullColumn = RegExp(r'column "([^"]+)"');
+
+/// Constraint skema → (field form, pesan untuk pengguna). Namanya berasal dari
+/// migrasi di `supabase/migrations/` dan dijaga persis oleh
+/// `supabase/tests/database/04_validasi_transaksi.test.sql` dan
+/// `07_pengerasan_validasi.test.sql`; mengganti nama constraint berarti
+/// mengganti peta ini juga.
+const _constraintFields = <String, (String, String)>{
+  'transactions_amount_check': ('amount', 'Nominal harus lebih dari 0.'),
+  'transactions_date_range_check': (
+    'date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'transactions_category_id_fkey': ('category_id', 'Kategori tidak ditemukan.'),
+  'transactions_category_type_fkey': (
+    'category_id',
+    'Kategori tidak cocok dengan jenis transaksi.',
+  ),
+  'transactions_type_check': (
+    'type',
+    'Jenis transaksi harus pemasukan atau pengeluaran.',
+  ),
+  'transactions_payment_method_check': (
+    'payment_method',
+    'Metode pembayaran tidak dikenal.',
+  ),
+  'transactions_business_id_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  // Lewat klien, usaha milik akun lain sudah ditolak RLS (42501) lebih dulu;
+  // FK komposit ini lapis kedua untuk jalur yang melewati RLS (#115).
+  'transactions_business_owner_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  'transactions_description_length_check': (
+    'description',
+    'Keterangan maksimal 500 karakter.',
+  ),
+  'transactions_receipt_note_length_check': (
+    'receipt_note',
+    'Catatan struk maksimal 500 karakter.',
+  ),
+  'business_profiles_business_name_check': (
+    'business_name',
+    'Nama usaha wajib diisi.',
+  ),
+  'business_profiles_business_name_length_check': (
+    'business_name',
+    'Nama usaha maksimal 100 karakter.',
+  ),
+  'business_profiles_owner_name_length_check': (
+    'owner_name',
+    'Nama pemilik maksimal 100 karakter.',
+  ),
+  'business_profiles_business_type_length_check': (
+    'business_type',
+    'Jenis usaha maksimal 100 karakter.',
+  ),
+  'business_profiles_npwp_format_check': (
+    'npwp',
+    'NPWP hanya boleh berisi angka, titik, dan tanda hubung.',
+  ),
+  'business_profiles_employee_count_check': (
+    'employee_count',
+    'Jumlah karyawan tidak boleh negatif.',
+  ),
+  'recurring_templates_type_check': (
+    'type',
+    'Jenis transaksi harus pemasukan atau pengeluaran.',
+  ),
+  'recurring_templates_amount_check': ('amount', 'Nominal harus lebih dari 0.'),
+  'recurring_templates_payment_method_check': (
+    'payment_method',
+    'Metode pembayaran tidak dikenal.',
+  ),
+  'recurring_templates_frequency_check': (
+    'frequency',
+    'Frekuensi harus mingguan atau bulanan.',
+  ),
+  'recurring_templates_start_date_check': (
+    'start_date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'recurring_templates_end_date_check': (
+    'end_date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'recurring_templates_end_after_start_check': (
+    'end_date',
+    'Tanggal berakhir tidak boleh sebelum tanggal mulai.',
+  ),
+  'recurring_templates_category_id_fkey': (
+    'category_id',
+    'Kategori tidak ditemukan.',
+  ),
+  'recurring_templates_category_type_fkey': (
+    'category_id',
+    'Kategori tidak cocok dengan jenis transaksi.',
+  ),
+  'recurring_templates_business_owner_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  'recurring_templates_description_length_check': (
+    'description',
+    'Keterangan maksimal 500 karakter.',
+  ),
+  'transaction_attachments_mime_type_check': (
+    'file',
+    'Format foto harus JPEG, PNG, atau WebP.',
+  ),
+  'transaction_attachments_size_bytes_check': (
+    'file',
+    'Ukuran foto maksimal 5 MB.',
+  ),
+  'transaction_attachments_file_name_check': (
+    'file',
+    'Nama berkas tidak valid.',
+  ),
+  'transaction_attachments_path_check': (
+    'file',
+    'Lokasi berkas tidak valid.',
+  ),
+};
+
+/// Galat 400 dengan pesan per field untuk constraint yang dikenal, supaya
+/// [ApiException.userMessage] menyebut apa yang salah — bukan sekadar
+/// "Data tidak valid.". `null` untuk constraint yang tidak ada di peta.
+ApiException? _constraintViolation(sb.PostgrestException e) {
+  final name = _constraintName.firstMatch(e.message)?.group(1);
+  final field = _constraintFields[name];
+  if (field == null) return null;
+  final (key, message) = field;
+  return ApiException(statusCode: 400, message: message, errors: {key: message});
 }
 
 /// Galat yang tidak dikenali jatuh ke pesan umum di UI; di mode debug pesan

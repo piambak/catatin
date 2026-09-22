@@ -21,4 +21,11 @@ class DashboardService {
   /// Riwayat bulanan untuk grafik KPI di dashboard.
   static Future<List<KpiPoint>> getKpiHistory(KpiMetric metric) =>
       Repos.dashboard.getKpiHistory(metric);
+
+  /// Ringkasan tutup bulan untuk kartu "Bulan ini" (#74).
+  static Future<MonthClose> getMonthClose({
+    required int month,
+    required int year,
+  }) =>
+      Repos.dashboard.getMonthClose(month: month, year: year);
 }

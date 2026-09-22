@@ -18,6 +18,113 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #103: pemantauan.** Migrasi `pemantauan`:
+  tabel `app_errors` (galat terstruktur dari klien, tanpa pesan bebas, hanya
+  bisa ditambah, dibatasi 30 laporan per 10 menit), cuplikan latensi
+  `monthly_totals` dari `pg_stat_statements` tiap 15 menit lewat pg_cron, dan
+  `catatin_health()` yang boleh dipanggil `anon`. Klien melaporkan 403 (bersesi),
+  5xx, dan galat tak dikenal dari `runSupabase`. Workflow `pemantauan.yml`
+  memanggilnya tiap 30 menit dengan publishable key — tanpa secret baru — dan
+  gagal kalau galat, latensi, atau job transaksi berulang melewati ambang.
+  Bagian khusus cloud (hak kolom, batas laju, `pg_stat_statements`, jadwal
+  pg_cron) dibuktikan di staging dengan pola rollback. Detail:
+  [Supabase §11](../arsitektur/supabase.md#11-pemantauan).
+
+- **2026-09-22** — Backend — **Issue #89: nilai awal Simulator
+  (`GET /simulator/inputs`).** `SimulatorRepository.getInputs` di keempat mode
+  dan fasad `SimulatorInputService`: rata-rata tiga bulan penuh sebelum bulan
+  acuan (dibagi bulan yang berdata), angka bulan acuan, omzet YTD, dan profil
+  usaha — tanpa hitungan pajak. Satu aturan (`simulatorInputsFrom`) dipakai mock
+  dan Supabase; Supabase memakai `monthly_totals` yang sudah ada, jadi tanpa
+  migrasi. Contoh kontrak diambil dari data contoh staging dan dikunci tes.
+  Siap untuk PR FE #35 (Simulator dari Pembukuan, 15 Okt).
+
+- **2026-09-22** — Backend — **Issue #75: uji beban ringan agregasi.**
+  `supabase/staging/uji_beban_agregasi.sql` (aman: digulung balik) dijalankan
+  di staging dengan 50 akun × 12 bulan × 200 transaksi = 120.000 baris.
+  p95 di database: `monthly_totals` 4,2 ms, satu bulan Pembukuan 1,1 ms,
+  setahun tiga halaman (jalur ekspor) 30,4 ms; indeks
+  `transactions_user_date_idx` terpakai dan isolasi RLS tetap benar. Hasil
+  lengkap dan batasannya di [Supabase §10](../arsitektur/supabase.md#10-uji-beban).
+  Bagian ekspor CSV diukur ulang setelah #72.
+
+- **2026-09-22** — Staging — migrasi `pengerasan_validasi` (#115) diterapkan
+  ke staging setelah PR #178 merge; staging kini sama dengan main (6 migrasi).
+
+- **2026-09-22** — Backend — **Issue #115: pengerasan validasi input, dan
+  staging disamakan dengan main.** Migrasi `pengerasan_validasi`: FK komposit
+  `(…, user_id)` membuat transaksi, templat berulang, dan lampiran mustahil
+  menempel ke data akun lain — juga untuk peran yang melewati RLS seperti
+  pg_cron; batas 500 karakter untuk keterangan/catatan struk dan 100 untuk
+  kolom profil usaha; NPWP hanya angka, titik, tanda hubung. Nominal dan
+  tanggal sudah dijaga sejak #40. Klien memetakan tiap constraint baru ke
+  pesan per field. Sebelum migrasi itu, tiga migrasi yang sudah merge
+  (`validasi_transaksi`, `transaksi_berulang`, `lampiran_struk`) diterapkan ke
+  staging lewat MCP dan versinya disamakan dengan nama berkas — secret deploy
+  staging belum dipasang. Migrasi #115 dibuktikan di staging dengan pola
+  rollback: 23 hasil sama persis dengan tes pgTAP-nya.
+
+- **2026-09-22** — Backend — **Issue #74: ringkasan tutup bulan.**
+  `DashboardRepository.getMonthClose(month, year)` dan model `MonthClose`
+  (pemasukan, pengeluaran, laba, HPP, jumlah transaksi, omzet YTD) di keempat
+  mode. Supabase memakai `rpc('monthly_totals')` yang sudah ada, jadi tanpa
+  migrasi dan angkanya identik dengan agregat tahunan serta ringkasan
+  dashboard. Mock dihitung dari agregat transaksi contoh, bukan angka tetap.
+  Bulan di luar 1–12 ditolak di klien dengan `400 validation_failed`
+  sebelum permintaan dikirim. Kartu "Bulan ini" di Dashboard (PR FE #29)
+  tinggal memanggil `DashboardService.getMonthClose`.
+
+- **2026-09-18** — Frontend — **Issue #9, #10, #12, #13, #14: hotfix tayang,
+  gerbang CI, skrip build aman, dan bug lapisan data.** Lima cabang, satu issue
+  masing-masing.
+  **#9 (T-17) — chip kepercayaan.** Panel hasil Simulator dan blok "Kewajiban
+  berikutnya" di Dashboard menampilkan angka sebagai fakta, padahal tarif TER
+  kategori B/C belum benar (T-1) dan persona usaha sendiri masih dihitung dengan
+  rezim PPh 21. Keduanya kini membawa `DsTrustChip`, dipasang **di atas** angka.
+  Levelnya dibaca dari `AppConstants.taxReviewStatus`, jadi saat sign-off pakar
+  turun cukup mengubah dua baris konstanta. Token baru `DS.warnBg/warnFg` +
+  varian `OnDark`; kontras teks terukur 6,75:1 terang, 8,44:1 gelap, 9,32:1 di
+  panel simulator. Nol perhitungan pajak diubah.
+  **#10 (T-42) — publikasi menunggu CI.** `publish-web.yml` dulu dipicu
+  `push: main`, pemicu yang sama dengan `ci.yml` dan tanpa hubungan di antara
+  keduanya, sehingga commit dengan tes merah tetap tayang. Kini `workflow_run`
+  setelah CI sukses, checkout memakai `workflow_run.head_sha` (commit yang
+  benar-benar diuji, bukan yang terbaru di branch), dan `git pull --rebase`
+  sebelum push.
+  **#12 (T-29) — skrip build berhenti menghapus berkas pengembang.**
+  `sync_build.sh` dan `build_web.ps1` menghapus semua isi root di luar daftar
+  `KEEP`, dan karena `dotglob`/`-Force` dotfile ikut. Kini hanya jejak build
+  sebelumnya (manifes `tool/.last_build_files`) yang dihapus, default dry-run,
+  butuh `--yes` (`CI=true` menyiratkannya). Diuji di root palsu: skrip lama
+  menghapus `.env`, `.vscode/settings.json`, dan `coretan/ide.md`; skrip baru
+  menyisakan ketiganya dan tetap membuang sisa build sungguhan.
+  **#13 (T-16, T-24, T-19, T-22) — bug frontend murni.** `_orFallback` di
+  `hybrid_repositories.dart` menangkap setiap `ApiException` lalu jatuh ke mock:
+  kata sandi salah (401) membuka sesi sebagai pengguna demo, dan penolakan
+  validasi backend (400/422) dilaporkan "berhasil" lalu hilang saat muat ulang.
+  Fallback kini hanya untuk statusCode 0/404/501, dan seluruh operasi auth
+  memakai `allowFallback: false`. Jumlah blok `try` tidak bertambah —
+  perbaikannya menangkap lebih sedikit, bukan menambah penanganan error.
+  Dashboard membuka rute penuh-layar dengan `context.push`, bukan `context.go`
+  (tab di dalam ShellRoute sengaja tetap `go`); layar Notifikasi mendapat tombol
+  kembali eksplisit. `accounting_screen` memakai `ErrorState` + Coba Lagi
+  alih-alih SnackBar sekilas di atas daftar kosong. Tes baru
+  `test/hybrid_fallback_test.dart`, 6 kasus, memeriksa juga bahwa jalur mock
+  **tidak** tersentuh. T-18 sudah selesai lebih dulu di `main`.
+  **#14 (P-12) — dokumen vs kenyataan.** Larangan `dart format` di
+  [Kontribusi](../panduan/kontribusi.md) ditandai sementara dengan kapan ia
+  terbalik (PR format Minggu 2); baris `core/theme/` di
+  [Arsitektur](../arsitektur/gambaran-umum.md) kini menyebut `design_tokens.dart`
+  dan `breakpoints.dart` sebagai sistem yang berlaku; header `breakpoints.dart`
+  berhenti mengklaim penggantian breakpoint literal sudah tuntas — belum, masih
+  ada di empat berkas. Versi Flutter di README sengaja **tidak** disamakan:
+  3.38.4 adalah lantai sungguhan (`fl_chart` 1.2.x butuh `vector_math` ^2.2.0),
+  dan 3.44.8 memang versi CI — keduanya sudah benar.
+  **Verifikasi** (Flutter 3.44.8, per cabang): `flutter analyze` 0 error di
+  kelimanya; #9/#10/#12/#14 tetap 40 info, #13 jadi 41 (satu info baru, bukan
+  error). `flutter test` 105 lulus + 1 di-skip di empat cabang, **111 + 1** di
+  #13 — tepat enam tes baru. `flutter build web --release` sukses.
+
 - **2026-09-18** — TAX — **Spesifikasi pajak Minggu 1 dikunci (#21–#27).**
   Folder baru `wiki/domain/pajak/` berisi
   [spek PPh 21 TER](../domain/pajak/spek-pph21-ter.md),

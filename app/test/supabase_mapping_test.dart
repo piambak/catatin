@@ -9,6 +9,7 @@
 
 import 'dart:async';
 
+import 'package:catatin/core/constants/app_constants.dart';
 import 'package:catatin/core/data/repositories.dart';
 import 'package:catatin/core/data/supabase_repositories.dart';
 import 'package:catatin/core/network/api_client.dart';
@@ -146,6 +147,231 @@ void main() {
 
     test('kode tak dikenal → 500', () {
       expect(map('PGRST205').statusCode, 500);
+    });
+  });
+
+  // Pesan persis seperti yang dikirim PostgREST — sama dengan yang dicocokkan
+  // supabase/tests/database/04_validasi_transaksi.test.sql.
+  group('supabaseException — validasi per field (#40)', () {
+    ApiException map(String code, String message) => supabaseException(
+          sb.PostgrestException(message: message, code: code),
+          hasSession: true,
+        )!;
+
+    String check(String table, String constraint) =>
+        'new row for relation "$table" violates check constraint "$constraint"';
+    String fk(String constraint) =>
+        'insert or update on table "transactions" violates foreign key '
+        'constraint "$constraint"';
+
+    test('nominal ≤ 0 → field amount', () {
+      final e = map('23514', check('transactions', 'transactions_amount_check'));
+      expect(e.statusCode, 400);
+      expect(e.errors, {'amount': 'Nominal harus lebih dari 0.'});
+      expect(e.userMessage, 'Nominal harus lebih dari 0.');
+    });
+
+    test('tanggal di luar 2000–2099 → field date', () {
+      final e =
+          map('23514', check('transactions', 'transactions_date_range_check'));
+      expect(e.errors?.keys, ['date']);
+      expect(e.userMessage, contains('2000'));
+    });
+
+    test('kategori tidak ada dan kategori salah jenis dibedakan', () {
+      final hilang = map('23503', fk('transactions_category_id_fkey'));
+      final salahJenis = map('23503', fk('transactions_category_type_fkey'));
+      expect(hilang.statusCode, 400);
+      expect(hilang.userMessage, 'Kategori tidak ditemukan.');
+      expect(salahJenis.statusCode, 400);
+      expect(salahJenis.userMessage,
+          'Kategori tidak cocok dengan jenis transaksi.');
+      expect(salahJenis.errors?.keys, ['category_id']);
+    });
+
+    test('metode pembayaran dan nama usaha', () {
+      expect(
+        map('23514',
+                check('transactions', 'transactions_payment_method_check'))
+            .errors
+            ?.keys,
+        ['payment_method'],
+      );
+      expect(
+        map('23514', check('business_profiles',
+                'business_profiles_business_name_check'))
+            .userMessage,
+        'Nama usaha wajib diisi.',
+      );
+    });
+
+    test('tanggal kalender yang tidak ada (22008) → field date', () {
+      final e =
+          map('22008', 'date/time field value out of range: "2026-02-30"');
+      expect(e.statusCode, 400);
+      expect(e.errors?.keys, ['date']);
+    });
+
+    test('not-null → kolomnya wajib diisi', () {
+      final e = map(
+        '23502',
+        'null value in column "business_name" of relation "business_profiles" '
+            'violates not-null constraint',
+      );
+      expect(e.errors, {'business_name': 'Data wajib belum diisi.'});
+    });
+
+    test('constraint tak dikenal tetap 400 umum, tanpa errors', () {
+      final e = map('23514', check('transactions', 'constraint_baru_lain'));
+      expect(e.statusCode, 400);
+      expect(e.userMessage, 'Data tidak valid.');
+      expect(e.errors, isNull);
+    });
+  });
+
+  group('reportableAppError — laporan galat untuk pemantauan (#103)', () {
+    Map<String, Object?>? lapor(Object error, ApiException? mapped,
+            {bool hasSession = true}) =>
+        reportableAppError(error, mapped,
+            hasSession: hasSession, platform: 'web');
+
+    const pg500 = sb.PostgrestException(message: 'rahasia', code: 'XX000');
+    const e500 = ApiException(statusCode: 500, message: 'x');
+
+    test('5xx dilaporkan: status, kode mesin, sumber, versi, platform', () {
+      expect(lapor(pg500, e500), {
+        'status': 500,
+        'code': 'XX000',
+        'source': 'postgrest',
+        'app_version': AppConstants.appVersion,
+        'platform': 'web',
+      });
+    });
+
+    test('pesan galat TIDAK pernah ikut — tanpa data pribadi', () {
+      final row = lapor(pg500, e500)!;
+      expect(row.keys,
+          unorderedEquals(['status', 'code', 'source', 'app_version', 'platform']));
+      expect(row.values, isNot(contains('rahasia')));
+    });
+
+    test('403 padahal sesi ada dilaporkan (RLS menolak — bug klien)', () {
+      final row = lapor(
+        const sb.PostgrestException(message: 'x', code: '42501'),
+        const ApiException(statusCode: 403, message: 'x'),
+      );
+      expect(row?['status'], 403);
+      expect(row?['code'], '42501');
+    });
+
+    test('galat yang tidak dikenali dilaporkan sebagai 500, sumber lain', () {
+      final row = lapor(StateError('x'), null);
+      expect(row?['status'], 500);
+      expect(row?['source'], 'lain');
+      expect(row?['code'], isNull);
+    });
+
+    test('sumber auth dan storage dibedakan', () {
+      expect(
+        lapor(const sb.AuthException('x', statusCode: '500', code: 'unexpected_failure'),
+                e500)?['source'],
+        'auth',
+      );
+      expect(
+        lapor(const sb.StorageException('x', statusCode: '503'), e500)?['source'],
+        'storage',
+      );
+    });
+
+    test('jalannya aplikasi yang normal tidak dilaporkan', () {
+      for (final status in [0, 400, 401, 404, 409, 422, 429]) {
+        expect(
+          lapor(pg500, ApiException(statusCode: status, message: 'x')),
+          isNull,
+          reason: 'status $status',
+        );
+      }
+    });
+
+    test('tanpa sesi tidak dilaporkan — tabelnya hanya menerima authenticated',
+        () {
+      expect(lapor(pg500, e500, hasSession: false), isNull);
+    });
+
+    test('kode lebih dari 64 karakter dipotong, sesuai constraint tabel', () {
+      final row = lapor(
+          sb.PostgrestException(message: 'x', code: 'K' * 100), e500);
+      expect((row?['code'] as String).length, 64);
+    });
+  });
+
+  // Pesan persis seperti di supabase/tests/database/07_pengerasan_validasi.test.sql.
+  group('supabaseException — pengerasan validasi (#115)', () {
+    ApiException map(String code, String message) => supabaseException(
+          sb.PostgrestException(message: message, code: code),
+          hasSession: true,
+        )!;
+
+    String check(String table, String constraint) =>
+        'new row for relation "$table" violates check constraint "$constraint"';
+
+    final panjang = {
+      ('transactions', 'transactions_description_length_check'): (
+        'description',
+        'Keterangan maksimal 500 karakter.',
+      ),
+      ('transactions', 'transactions_receipt_note_length_check'): (
+        'receipt_note',
+        'Catatan struk maksimal 500 karakter.',
+      ),
+      ('recurring_templates', 'recurring_templates_description_length_check'): (
+        'description',
+        'Keterangan maksimal 500 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_business_name_length_check'): (
+        'business_name',
+        'Nama usaha maksimal 100 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_owner_name_length_check'): (
+        'owner_name',
+        'Nama pemilik maksimal 100 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_business_type_length_check'): (
+        'business_type',
+        'Jenis usaha maksimal 100 karakter.',
+      ),
+    };
+
+    for (final MapEntry(key: (table, constraint), value: (field, pesan))
+        in panjang.entries) {
+      test('$constraint → field $field', () {
+        final e = map('23514', check(table, constraint));
+        expect(e.statusCode, 400);
+        expect(e.errors, {field: pesan});
+        expect(e.userMessage, pesan);
+      });
+    }
+
+    test('NPWP berkarakter asing → field npwp', () {
+      final e = map('23514',
+          check('business_profiles', 'business_profiles_npwp_format_check'));
+      expect(e.errors?.keys, ['npwp']);
+      expect(e.userMessage, contains('NPWP'));
+    });
+
+    test('usaha milik akun lain (FK komposit) → field business_id', () {
+      for (final (table, constraint) in [
+        ('transactions', 'transactions_business_owner_fkey'),
+        ('recurring_templates', 'recurring_templates_business_owner_fkey'),
+      ]) {
+        final e = map(
+          '23503',
+          'insert or update on table "$table" violates foreign key '
+              'constraint "$constraint"',
+        );
+        expect(e.statusCode, 400);
+        expect(e.errors?.keys, ['business_id']);
+      }
     });
   });
 

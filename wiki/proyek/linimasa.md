@@ -104,6 +104,10 @@ setelah ini, ubah spesifikasi berarti ubah jadwal. *(18 Sep: spesifikasi TAX
 dikunci dan diajukan untuk M0 sign-off; dua tugas audit Backend masih terbuka,
 jadi status Minggu 1 belum ✅.)*
 
+> Keputusan yang menahan pekerjaan orang lain dicatat di
+> [Log keputusan](log-keputusan.md), bukan di sini. Tenggat D-1…D-13 sudah
+> lewat, jadi default-nya berlaku sampai PO menimpanya.
+
 ---
 
 ## Minggu 2 — 21–25 Sep — Cabut Pustaka peraturan + fondasi backend
