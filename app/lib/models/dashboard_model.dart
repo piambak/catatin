@@ -1,6 +1,7 @@
 // lib/models/dashboard_model.dart
 
 import '../core/constants/app_constants.dart';
+import '../core/network/api_client.dart';
 
 // ── Ringkasan bulanan untuk dashboard ─────────────────────────────────────────
 
@@ -136,6 +137,83 @@ class YearAggregate {
   double get totalExpense => months.fold(0, (sum, m) => sum + m.expense);
   double get totalCogs => months.fold(0, (sum, m) => sum + m.cogs);
   int get totalTxCount => months.fold(0, (sum, m) => sum + m.txCount);
+}
+
+// ── Ringkasan tutup bulan (`GET /dashboard/close`, #74) ───────────────────────
+
+/// Angka satu bulan yang siap dipakai kartu "Bulan ini" di Dashboard dan
+/// Simulator.
+///
+/// Sengaja dibangun dari [MonthAggregate] — sumber yang sama dengan
+/// [YearAggregate] — jadi bulan yang sama selalu memberi angka yang sama di
+/// mana pun ditampilkan.
+class MonthClose {
+  /// 1 (Januari) sampai 12 (Desember).
+  final int month;
+  final int year;
+  final double income;
+  final double expense;
+
+  /// `income − expense`.
+  final double profit;
+
+  /// Bagian [expense] dari kategori HPP (`is_cogs`).
+  final double cogs;
+  final int txCount;
+
+  /// Pemasukan Januari sampai [month].
+  final double ytdOmzet;
+
+  const MonthClose({
+    required this.month,
+    required this.year,
+    required this.income,
+    required this.expense,
+    required this.profit,
+    required this.cogs,
+    required this.txCount,
+    required this.ytdOmzet,
+  });
+
+  factory MonthClose.fromAggregate(int year, MonthAggregate m) => MonthClose(
+        month: m.month,
+        year: year,
+        income: m.income,
+        expense: m.expense,
+        profit: m.profit,
+        cogs: m.cogs,
+        txCount: m.txCount,
+        ytdOmzet: m.ytdOmzet,
+      );
+
+  factory MonthClose.fromJson(Map<String, dynamic> j) {
+    final income = (j['income'] as num?)?.toDouble() ?? 0;
+    final expense = (j['expense'] as num?)?.toDouble() ?? 0;
+    return MonthClose(
+      month: (j['month'] as num).toInt(),
+      year: (j['year'] as num).toInt(),
+      income: income,
+      expense: expense,
+      profit: (j['profit'] as num?)?.toDouble() ?? income - expense,
+      cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
+      txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
+      ytdOmzet: (j['ytd_omzet'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+/// Menolak bulan di luar 1–12 SEBELUM permintaan dikirim, sama dengan balasan
+/// 400 `validation_failed` di kontrak `GET /dashboard/close`. Dipanggil setiap
+/// implementasi `DashboardRepository.getMonthClose`, jadi gagal di semua mode.
+void checkMonthClose({required int month}) {
+  if (month < 1 || month > 12) {
+    throw ApiException(
+      statusCode: 400,
+      message: 'Bulan harus 1–12.',
+      errors: const {'month': 'Bulan harus 1–12.'},
+      code: 'validation_failed',
+    );
+  }
 }
 
 /// Satu titik pada grafik riwayat KPI (`{month, value}`).

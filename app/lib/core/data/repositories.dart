@@ -186,6 +186,11 @@ abstract class DashboardRepository {
   Future<List<TaxDeadline>> getDeadlines({int limit = 3});
 
   Future<List<KpiPoint>> getKpiHistory(KpiMetric metric);
+
+  /// Ringkasan tutup bulan [month]/[year]: pemasukan, pengeluaran, laba, HPP,
+  /// jumlah transaksi, dan omzet YTD. Bulan tanpa transaksi bernilai nol.
+  /// Setiap implementasi memanggil [checkMonthClose] lebih dulu.
+  Future<MonthClose> getMonthClose({required int month, required int year});
 }
 
 // ── Pemilih implementasi ──────────────────────────────────────────────────────

@@ -321,4 +321,11 @@ class HybridDashboardRepository implements DashboardRepository {
         () => api.getKpiHistory(metric),
         () => mock.getKpiHistory(metric),
       );
+
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) =>
+      _orFallback(
+        () => api.getMonthClose(month: month, year: year),
+        () => mock.getMonthClose(month: month, year: year),
+      );
 }

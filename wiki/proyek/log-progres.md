@@ -18,6 +18,16 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #74: ringkasan tutup bulan.**
+  `DashboardRepository.getMonthClose(month, year)` dan model `MonthClose`
+  (pemasukan, pengeluaran, laba, HPP, jumlah transaksi, omzet YTD) di keempat
+  mode. Supabase memakai `rpc('monthly_totals')` yang sudah ada, jadi tanpa
+  migrasi dan angkanya identik dengan agregat tahunan serta ringkasan
+  dashboard. Mock dihitung dari agregat transaksi contoh, bukan angka tetap.
+  Bulan di luar 1–12 ditolak di klien dengan `400 validation_failed`
+  sebelum permintaan dikirim. Kartu "Bulan ini" di Dashboard (PR FE #29)
+  tinggal memanggil `DashboardService.getMonthClose`.
+
 - **2026-09-18** — Frontend — **Issue #9, #10, #12, #13, #14: hotfix tayang,
   gerbang CI, skrip build aman, dan bug lapisan data.** Lima cabang, satu issue
   masing-masing.

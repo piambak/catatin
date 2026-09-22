@@ -737,6 +737,17 @@ class SupabaseDashboardRepository implements DashboardRepository {
         final rows = await _monthlyTotals(now.year);
         return kpiFromMonthlyTotals(rows, metric, upToMonth: now.month);
       });
+
+  /// Tanpa migrasi baru: `monthly_totals` yang sama dengan agregat tahunan
+  /// dan ringkasan dashboard, jadi angkanya tidak mungkin berbeda.
+  @override
+  Future<MonthClose> getMonthClose({required int month, required int year}) {
+    checkMonthClose(month: month);
+    return runSupabase(() async {
+      final rows = await _monthlyTotals(year);
+      return monthCloseFromMonthlyTotals(rows, month: month, year: year);
+    });
+  }
 }
 
 /// Satu baris per bulan dari fungsi Postgres `monthly_totals`.
@@ -846,6 +857,17 @@ MonthlySummary summaryFromMonthlyTotals(
     'tx_count': m.txCount,
   });
 }
+
+/// Baris `monthly_totals` → ringkasan tutup bulan [month]/[year].
+MonthClose monthCloseFromMonthlyTotals(
+  List<Map<String, dynamic>> rows, {
+  required int month,
+  required int year,
+}) =>
+    MonthClose.fromAggregate(
+      year,
+      monthAggregates(monthTotalsFromRows(rows))[month - 1],
+    );
 
 /// Baris `monthly_totals` → titik grafik KPI Januari sampai [upToMonth],
 /// berlabel bulan pendek Bahasa Indonesia ("Jan", "Mei", "Agu", …).

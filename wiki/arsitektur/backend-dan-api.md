@@ -603,7 +603,8 @@ backend tidak perlu mengirimkannya.
 
 #### `GET /dashboard/close?month=8&year=2026`
 
-> **Status: kontrak Minggu 4 (#74).**
+> **Status: sudah dipakai mode `supabase`, `mock`, dan `hybrid` (#74).** Server
+> REST cukup mengikuti bentuk di bawah — klien `api` sudah memanggilnya.
 
 Ringkasan tutup bulan — angka satu bulan yang siap dipakai kartu ringkasan
 dashboard dan Simulator. `month` dan `year` wajib.
@@ -628,6 +629,8 @@ dashboard dan Simulator. `month` dan `year` wajib.
   bulan yang sama selalu memberi angka yang sama.
 * Bulan tanpa transaksi bernilai nol, bukan `404`.
 * Balas `400 validation_failed` kalau `month` bukan 1–12 atau `year` kosong.
+  Klien sudah menolak `month` di luar 1–12 sebelum mengirim permintaan
+  (`checkMonthClose`), dengan pesan di `details.month`.
 
 Contoh di atas adalah bulan Agustus data contoh staging, sama dengan contoh
 `GET /dashboard/summary` dan `GET /transactions/aggregate`.
