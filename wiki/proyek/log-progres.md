@@ -18,6 +18,18 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #75: uji beban ringan agregasi.**
+  `supabase/staging/uji_beban_agregasi.sql` (aman: digulung balik) dijalankan
+  di staging dengan 50 akun × 12 bulan × 200 transaksi = 120.000 baris.
+  p95 di database: `monthly_totals` 4,2 ms, satu bulan Pembukuan 1,1 ms,
+  setahun tiga halaman (jalur ekspor) 30,4 ms; indeks
+  `transactions_user_date_idx` terpakai dan isolasi RLS tetap benar. Hasil
+  lengkap dan batasannya di [Supabase §10](../arsitektur/supabase.md#10-uji-beban).
+  Bagian ekspor CSV diukur ulang setelah #72.
+
+- **2026-09-22** — Staging — migrasi `pengerasan_validasi` (#115) diterapkan
+  ke staging setelah PR #178 merge; staging kini sama dengan main (6 migrasi).
+
 - **2026-09-22** — Backend — **Issue #115: pengerasan validasi input, dan
   staging disamakan dengan main.** Migrasi `pengerasan_validasi`: FK komposit
   `(…, user_id)` membuat transaksi, templat berulang, dan lampiran mustahil
