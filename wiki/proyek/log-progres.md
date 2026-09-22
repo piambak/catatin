@@ -18,6 +18,19 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #115: pengerasan validasi input, dan
+  staging disamakan dengan main.** Migrasi `pengerasan_validasi`: FK komposit
+  `(…, user_id)` membuat transaksi, templat berulang, dan lampiran mustahil
+  menempel ke data akun lain — juga untuk peran yang melewati RLS seperti
+  pg_cron; batas 500 karakter untuk keterangan/catatan struk dan 100 untuk
+  kolom profil usaha; NPWP hanya angka, titik, tanda hubung. Nominal dan
+  tanggal sudah dijaga sejak #40. Klien memetakan tiap constraint baru ke
+  pesan per field. Sebelum migrasi itu, tiga migrasi yang sudah merge
+  (`validasi_transaksi`, `transaksi_berulang`, `lampiran_struk`) diterapkan ke
+  staging lewat MCP dan versinya disamakan dengan nama berkas — secret deploy
+  staging belum dipasang. Migrasi #115 dibuktikan di staging dengan pola
+  rollback: 23 hasil sama persis dengan tes pgTAP-nya.
+
 - **2026-09-22** — Backend — **Issue #74: ringkasan tutup bulan.**
   `DashboardRepository.getMonthClose(month, year)` dan model `MonthClose`
   (pemasukan, pengeluaran, laba, HPP, jumlah transaksi, omzet YTD) di keempat
