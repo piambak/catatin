@@ -18,6 +18,19 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Produksi — lima migrasi yang tertunda diterapkan ke
+  `catatin` atas izin pemilik tugas BE: `validasi_transaksi`,
+  `transaksi_berulang` (pg_cron dipasang), `lampiran_struk` (bucket privat
+  `receipts`), `pengerasan_validasi`, dan `pemantauan`. Sebelumnya dicek tidak
+  ada baris produksi yang melanggar constraint baru; versi riwayat disamakan
+  dengan nama berkas. Sidik katalog (constraint, kebijakan RLS, fungsi, hak
+  tabel/kolom/fungsi, job pg_cron, bucket) identik dengan staging, jadi
+  produksi = staging = main (7 migrasi). Workflow pemantauan kini mendapat
+  HTTP 200 dari `catatin_health()` produksi. Temuan advisor baru hanya yang
+  memang disengaja (`catatin_health` untuk `anon`, `latency_snapshots` tanpa
+  kebijakan). Job transaksi berulang produksi pertama kali jalan 00:05 WIB
+  23 Sep.
+
 - **2026-09-22** — Backend — **Issue #103: pemantauan.** Migrasi `pemantauan`:
   tabel `app_errors` (galat terstruktur dari klien, tanpa pesan bebas, hanya
   bisa ditambah, dibatasi 30 laporan per 10 menit), cuplikan latensi
