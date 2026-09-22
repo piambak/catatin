@@ -257,6 +257,19 @@ mengarahkannya ke layar onboarding.
 
 Balas `{ "profile": { …seperti di atas… } }`.
 
+Gagal validasi dibalas `400 validation_failed` dengan satu field di `details`:
+
+| Field | Aturan | Contoh `details` |
+| --- | --- | --- |
+| `business_name` | Wajib, 1–100 karakter | `{ "business_name": "Nama usaha maksimal 100 karakter." }` |
+| `owner_name` | Boleh kosong; paling banyak 100 karakter | `{ "owner_name": "Nama pemilik maksimal 100 karakter." }` |
+| `business_type` | Paling banyak 100 karakter | `{ "business_type": "Jenis usaha maksimal 100 karakter." }` |
+| `npwp` | `null` kalau belum punya; selain itu 1–30 karakter berisi angka, titik, dan tanda hubung saja. String kosong ditolak | `{ "npwp": "NPWP hanya boleh berisi angka, titik, dan tanda hubung." }` |
+| `employee_count` | 0 atau lebih | `{ "employee_count": "Jumlah karyawan tidak boleh negatif." }` |
+
+Jumlah digit NPWP (15 lama atau 16 berbasis NIK) sengaja tidak diperiksa —
+itu aturan domain pajak, bukan validasi input (#115).
+
 ---
 
 ### Transaksi
@@ -359,6 +372,9 @@ Aturan validasi yang sama berlaku untuk `POST` dan `PATCH`. Server membalas
 | `category_id` | Kategori sejenis dengan `type` — kategori pemasukan hanya untuk `INCOME`, pengeluaran hanya untuk `EXPENSE` | `{ "category_id": "Kategori tidak cocok dengan jenis transaksi." }` |
 | `type` | `INCOME` \| `EXPENSE` | `{ "type": "Jenis transaksi harus pemasukan atau pengeluaran." }` |
 | `payment_method` | Salah satu dari tujuh nilai di atas | `{ "payment_method": "Metode pembayaran tidak dikenal." }` |
+| `description` | Boleh kosong; paling banyak 500 karakter | `{ "description": "Keterangan maksimal 500 karakter." }` |
+| `receipt_note` | Boleh kosong; paling banyak 500 karakter | `{ "receipt_note": "Catatan struk maksimal 500 karakter." }` |
+| `business_id` | Usaha milik akun yang sama | `{ "business_id": "Profil usaha tidak ditemukan. Muat ulang halaman." }` |
 
 Di mode Supabase aturan ini dijaga constraint database, dan pesan per field
 yang sama dibentuk klien dari nama constraint-nya
@@ -375,7 +391,7 @@ klien tidak membaca isinya.
 
 | Status | Kapan |
 | --- | --- |
-| `400 validation_failed` | Melanggar aturan validasi di `POST /transactions` di atas: nominal ≤ 0, tanggal tidak valid atau di luar 2000–2099, `type` atau `payment_method` di luar daftar, kategori tidak ada, atau kategori tidak sejenis dengan `type` |
+| `400 validation_failed` | Melanggar aturan validasi di `POST /transactions` di atas: nominal ≤ 0, tanggal tidak valid atau di luar 2000–2099, `type` atau `payment_method` di luar daftar, kategori tidak ada, kategori tidak sejenis dengan `type`, atau keterangan/catatan struk lebih dari 500 karakter |
 | `401 unauthorized` | Sesi habis |
 | `404 not_found` | Transaksi tidak ada **atau milik akun lain** — sengaja tidak dibedakan |
 
@@ -441,9 +457,9 @@ Contoh di atas adalah data contoh staging ([Supabase §8](supabase.md#8-staging-
 
 ### Transaksi berulang
 
-> **Status: kontrak untuk sinkronisasi Rabu Minggu 3 (#60), belum
-> diimplementasikan.** Implementasinya #58. Ubah bagian ini dulu kalau FE butuh
-> bentuk lain — bukan kodenya.
+> **Status: sudah diimplementasikan (#58) di mode `supabase` dan `mock`;
+> klien `api` sudah memanggil bentuk di bawah.** Ubah bagian ini dulu kalau FE
+> butuh bentuk lain — bukan kodenya.
 
 Template yang menerbitkan transaksi biasa secara otomatis, mis. sewa kios tiap
 bulan atau gaji tiap minggu. Transaksi hasil terbitan adalah transaksi biasa:
@@ -527,7 +543,7 @@ ada. Menghentikan template yang sudah nonaktif tidak mengubah apa pun.
 
 **Galat** untuk `POST` dan `PATCH`: aturan validasi sama dengan
 [`POST /transactions`](#post-transactions) — nominal, kategori yang sejenis,
-`type`, `payment_method` — ditambah `frequency` di luar daftar, `start_date` di
+`type`, `payment_method`, `description` paling banyak 500 karakter — ditambah `frequency` di luar daftar, `start_date` di
 luar 2000–2099, atau `end_date` sebelum `start_date`, semuanya
 `400 validation_failed` dengan satu field di `details`. Template milik akun
 lain atau yang tidak ada balas `404 not_found`.
@@ -536,8 +552,8 @@ lain atau yang tidak ada balas `404 not_found`.
 
 ### Lampiran struk
 
-> **Status: kontrak untuk sinkronisasi Rabu Minggu 3 (#60), belum
-> diimplementasikan.** Implementasinya #59.
+> **Status: sudah diimplementasikan (#59) di mode `supabase` dan `mock`;
+> klien `api` sudah memanggil bentuk di bawah.**
 
 Foto struk yang menempel ke satu transaksi. Satu transaksi boleh punya lebih
 dari satu lampiran.

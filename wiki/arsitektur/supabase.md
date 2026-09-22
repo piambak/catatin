@@ -168,6 +168,23 @@ pemetaan tambahan.
   `ApiException.errors` — mis. "Kategori tidak cocok dengan jenis transaksi."
   — alih-alih "Data tidak valid." umum. Nama constraint karena itu bagian dari
   kontrak: mengganti namanya berarti mengganti peta di klien dan tesnya.
+- **Pengerasan validasi** (#115) menutup tiga celah sisa:
+
+  | Aturan | Constraint | Kode |
+  | --- | --- | --- |
+  | Transaksi dan templat hanya di usaha milik akun yang sama | `transactions_business_owner_fkey`, `recurring_templates_business_owner_fkey` — FK komposit `(business_id, user_id)` ke `business_profiles (id, user_id)` | `23503` |
+  | Transaksi hanya bertaut ke templat milik akun yang sama | `transactions_recurring_owner_fkey` — `on delete set null (recurring_template_id)`, jadi `user_id` tidak ikut dikosongkan | `23503` |
+  | Lampiran hanya di transaksi milik akun yang sama | `transaction_attachments_transaction_owner_fkey` | `23503` |
+  | Keterangan dan catatan struk ≤ 500 karakter | `transactions_description_length_check`, `transactions_receipt_note_length_check`, `recurring_templates_description_length_check` | `23514` |
+  | Nama usaha, nama pemilik, jenis usaha ≤ 100 karakter | `business_profiles_*_length_check` | `23514` |
+  | NPWP hanya angka, titik, dan tanda hubung (1–30 karakter) | `business_profiles_npwp_format_check` | `23514` |
+
+  Kepemilikan sebelumnya **hanya** dijaga RLS, dan RLS tidak berlaku bagi
+  pemilik tabel maupun fungsi `security definer` seperti
+  `issue_recurring_transactions()` yang dijalankan pg_cron. FK komposit
+  menjadikannya lapis kedua yang berlaku untuk peran apa pun; lewat PostgREST
+  pelanggaran tetap ditolak RLS lebih dulu (`42501`). Jumlah digit NPWP
+  sengaja tidak dikunci — itu aturan domain pajak.
 - **Transaksi berulang** (#58, kontrak di
   [Backend & API](backend-dan-api.md#transaksi-berulang)) — tabel
   `recurring_templates`, dibaca dan ditulis pemiliknya lewat RLS (tanpa hapus;
@@ -608,6 +625,10 @@ diturunkan dari template versi yang sama.
   dan transaksinya, tipe dan ukuran, isolasi antar-akun, cascade saat
   transaksi dihapus, dan kebijakan `storage.objects` (dilewati bila skema
   Storage tidak ada) (#59).
+- `07_pengerasan_validasi.test.sql` (23 tes) — FK komposit kepemilikan diuji
+  sebagai `postgres` (melewati RLS, seperti pg_cron), termasuk menghapus templat
+  yang hanya memutus tautan; batas panjang teks dan bentuk NPWP diuji sebagai
+  `authenticated` (#115).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 

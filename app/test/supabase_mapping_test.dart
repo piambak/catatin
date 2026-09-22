@@ -228,6 +228,76 @@ void main() {
     });
   });
 
+  // Pesan persis seperti di supabase/tests/database/07_pengerasan_validasi.test.sql.
+  group('supabaseException — pengerasan validasi (#115)', () {
+    ApiException map(String code, String message) => supabaseException(
+          sb.PostgrestException(message: message, code: code),
+          hasSession: true,
+        )!;
+
+    String check(String table, String constraint) =>
+        'new row for relation "$table" violates check constraint "$constraint"';
+
+    final panjang = {
+      ('transactions', 'transactions_description_length_check'): (
+        'description',
+        'Keterangan maksimal 500 karakter.',
+      ),
+      ('transactions', 'transactions_receipt_note_length_check'): (
+        'receipt_note',
+        'Catatan struk maksimal 500 karakter.',
+      ),
+      ('recurring_templates', 'recurring_templates_description_length_check'): (
+        'description',
+        'Keterangan maksimal 500 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_business_name_length_check'): (
+        'business_name',
+        'Nama usaha maksimal 100 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_owner_name_length_check'): (
+        'owner_name',
+        'Nama pemilik maksimal 100 karakter.',
+      ),
+      ('business_profiles', 'business_profiles_business_type_length_check'): (
+        'business_type',
+        'Jenis usaha maksimal 100 karakter.',
+      ),
+    };
+
+    for (final MapEntry(key: (table, constraint), value: (field, pesan))
+        in panjang.entries) {
+      test('$constraint → field $field', () {
+        final e = map('23514', check(table, constraint));
+        expect(e.statusCode, 400);
+        expect(e.errors, {field: pesan});
+        expect(e.userMessage, pesan);
+      });
+    }
+
+    test('NPWP berkarakter asing → field npwp', () {
+      final e = map('23514',
+          check('business_profiles', 'business_profiles_npwp_format_check'));
+      expect(e.errors?.keys, ['npwp']);
+      expect(e.userMessage, contains('NPWP'));
+    });
+
+    test('usaha milik akun lain (FK komposit) → field business_id', () {
+      for (final (table, constraint) in [
+        ('transactions', 'transactions_business_owner_fkey'),
+        ('recurring_templates', 'recurring_templates_business_owner_fkey'),
+      ]) {
+        final e = map(
+          '23503',
+          'insert or update on table "$table" violates foreign key '
+              'constraint "$constraint"',
+        );
+        expect(e.statusCode, 400);
+        expect(e.errors?.keys, ['business_id']);
+      }
+    });
+  });
+
   group('supabaseException — lain-lain', () {
     test('ClientException dan TimeoutException → gagal jaringan', () {
       expect(

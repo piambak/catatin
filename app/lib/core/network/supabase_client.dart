@@ -397,8 +397,9 @@ final _notNullColumn = RegExp(r'column "([^"]+)"');
 
 /// Constraint skema → (field form, pesan untuk pengguna). Namanya berasal dari
 /// migrasi di `supabase/migrations/` dan dijaga persis oleh
-/// `supabase/tests/database/04_validasi_transaksi.test.sql`; mengganti nama
-/// constraint berarti mengganti peta ini juga.
+/// `supabase/tests/database/04_validasi_transaksi.test.sql` dan
+/// `07_pengerasan_validasi.test.sql`; mengganti nama constraint berarti
+/// mengganti peta ini juga.
 const _constraintFields = <String, (String, String)>{
   'transactions_amount_check': ('amount', 'Nominal harus lebih dari 0.'),
   'transactions_date_range_check': (
@@ -422,9 +423,39 @@ const _constraintFields = <String, (String, String)>{
     'business_id',
     'Profil usaha tidak ditemukan. Muat ulang halaman.',
   ),
+  // Lewat klien, usaha milik akun lain sudah ditolak RLS (42501) lebih dulu;
+  // FK komposit ini lapis kedua untuk jalur yang melewati RLS (#115).
+  'transactions_business_owner_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  'transactions_description_length_check': (
+    'description',
+    'Keterangan maksimal 500 karakter.',
+  ),
+  'transactions_receipt_note_length_check': (
+    'receipt_note',
+    'Catatan struk maksimal 500 karakter.',
+  ),
   'business_profiles_business_name_check': (
     'business_name',
     'Nama usaha wajib diisi.',
+  ),
+  'business_profiles_business_name_length_check': (
+    'business_name',
+    'Nama usaha maksimal 100 karakter.',
+  ),
+  'business_profiles_owner_name_length_check': (
+    'owner_name',
+    'Nama pemilik maksimal 100 karakter.',
+  ),
+  'business_profiles_business_type_length_check': (
+    'business_type',
+    'Jenis usaha maksimal 100 karakter.',
+  ),
+  'business_profiles_npwp_format_check': (
+    'npwp',
+    'NPWP hanya boleh berisi angka, titik, dan tanda hubung.',
   ),
   'business_profiles_employee_count_check': (
     'employee_count',
@@ -462,6 +493,14 @@ const _constraintFields = <String, (String, String)>{
   'recurring_templates_category_type_fkey': (
     'category_id',
     'Kategori tidak cocok dengan jenis transaksi.',
+  ),
+  'recurring_templates_business_owner_fkey': (
+    'business_id',
+    'Profil usaha tidak ditemukan. Muat ulang halaman.',
+  ),
+  'recurring_templates_description_length_check': (
+    'description',
+    'Keterangan maksimal 500 karakter.',
   ),
   'transaction_attachments_mime_type_check': (
     'file',
