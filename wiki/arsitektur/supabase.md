@@ -140,7 +140,8 @@ pemetaan tambahan.
   pengeluaran, HPP, dan jumlah transaksi per bulan milik pemanggil. Berjalan
   dengan hak pemanggil (`security invoker`), jadi RLS tetap berlaku. Kolom HPP
   disiapkan untuk Simulator yang menarik data pembukuan asli.
-- **Peran `anon` tidak mendapat hak apa pun.** Hak tabel diberikan eksplisit
+- **Peran `anon` tidak mendapat hak apa pun** — kecuali memanggil
+  `catatin_health()` untuk pemantauan ([§11](#11-pemantauan)). Hak tabel diberikan eksplisit
   dengan `GRANT` karena Postgres memeriksa hak tabel lebih dulu, baru RLS:
   hak yang hilang menghasilkan galat izin, sedangkan kebijakan yang tidak cocok
   hanya mengembalikan hasil kosong ([sumber](../sumber/supabase-api-keys.md)).
@@ -220,8 +221,7 @@ pemetaan tambahan.
   yatim. Batas ukuran dan tipe dipasang di bucket hanya bila kolomnya ada —
   stack lokal CI memakai skema Storage minimal tanpa kolom itu.
 - **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
-  Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
-  tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
+  `security definer` karena `authenticated` tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
   `auth.uid()`, hanya mengembalikan boolean, dan tidak bisa dipanggil `anon`.
   Security Advisor karena itu sengaja dibiarkan melaporkan lint
   `authenticated_security_definer_function_executable` untuk fungsi ini.
@@ -229,9 +229,11 @@ pemetaan tambahan.
 Mengubah skema: `npx supabase migration new <nama>`, tulis SQL-nya, lalu
 `db push`. Migrasi yang sudah di-push jangan disunting — buat migrasi baru.
 
-Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak,
-`has_password()` satu-satunya security definer, isolasi data antar-akun, dan
-validasi transaksi — dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
+Semua sifat di atas — RLS menyala, kebijakan persis, `anon` tanpa hak (kecuali
+`catatin_health()`), daftar persis fungsi security definer (`has_password`,
+dua fungsi transaksi berulang, dan tiga fungsi pemantauan — lihat
+`01_skema`), isolasi data
+antar-akun, dan validasi transaksi — dites otomatis setiap kali `supabase/` berubah ([§9](#9-ci-database)). Kalau
 migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 
 ## 4. Pemetaan kontrak
@@ -603,8 +605,8 @@ diturunkan dari template versi yang sama.
 
 - `01_skema.test.sql` (64 tes) — tabel ada, RLS menyala, kebijakan persis
   sesuai migrasi, `anon` tanpa hak tabel maupun fungsi, hak `authenticated`,
-  dan `has_password()` satu-satunya security definer dengan `search_path`
-  kosong.
+  daftar persis fungsi security definer di skema `public`, dan
+  `has_password()` dengan `search_path` kosong.
 - `02_rls_isolasi.test.sql` (17 tes) — uji isolasi 13 Sep 2026 yang dulu manual
   ([log progres](../proyek/log-progres.md)): B tidak melihat, mengubah, atau
   menghapus data A, dan tidak bisa mencatat ke usaha A maupun menyamar sebagai
@@ -630,6 +632,10 @@ diturunkan dari template versi yang sama.
   sebagai `postgres` (melewati RLS, seperti pg_cron), termasuk menghapus templat
   yang hanya memutus tautan; batas panjang teks dan bentuk NPWP diuji sebagai
   `authenticated` (#115).
+- `08_pemantauan.test.sql` (34 tes) — `app_errors` hanya bisa ditambah per
+  kolom dan dibatasi 30 laporan per 10 menit, `catatin_health()` boleh
+  dipanggil `anon` dan menghitung galat serta latensi dengan benar (termasuk
+  saat `pg_stat_statements` direset), dan pembersihan berkala (#103).
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 
@@ -692,6 +698,55 @@ sendiri (#72) diformat di klien; ukur ulang langkah 3 setelah endpoint itu
 ada. Sisipan yang digulung balik meninggalkan ruang mati ± 8 MB di tabel
 `transactions` sampai autovacuum membersihkannya — aman untuk batas 500 MB
 paket Free, tapi jangan menjalankannya berkali-kali berturut-turut.
+
+## 11. Pemantauan
+
+Paket Free Supabase tidak punya peringatan bawaan, jadi database menyiapkan
+angka kesehatannya sendiri dan `.github/workflows/pemantauan.yml` memeriksanya
+tiap 30 menit (#103).
+
+| Bagian | Isi |
+| --- | --- |
+| `app_errors` | Galat terstruktur yang dilaporkan klien: status, kode mesin, sumber (`postgrest`/`auth`/`storage`/`lain`), versi aplikasi, platform. **Tanpa pesan bebas**, jadi tidak ada data pribadi. Klien hanya bisa menambah (hak `INSERT` per kolom — `user_id` dan `occurred_at` selalu default), tidak bisa membaca. Paling banyak 30 laporan per akun per 10 menit; disimpan 30 hari. |
+| `latency_snapshots` | Cuplikan `pg_stat_statements` tiap 15 menit untuk `monthly_totals` yang dijalankan peran `authenticated` (= permintaan PostgREST); blok `DO` dikecualikan. Selisih dua cuplikan = rata-rata latensi dalam jendela itu. Disimpan 7 hari. |
+| `catatin_pemantauan_berkala()` | Job pg_cron `catatin-pemantauan` (`*/15 * * * *`): cuplikan + pembersihan. |
+| `catatin_health(p_window_minutes)` | Ringkasan jendela 15–1440 menit (bawaan 60): `errors` (`total`, `server` = 5xx, `forbidden` = 403, `users`), `aggregation` (`calls`, `mean_ms`, `snapshots`), dan `recurring_cron` (`last_status`, `last_success_at`, `hours_since_success` job transaksi berulang). |
+
+**Yang dilaporkan klien** (`reportableAppError()` di `supabase_client.dart`,
+dipanggil `runSupabase`): 403 padahal sesi ada (RLS menolak — berarti bug di
+klien), 5xx, dan galat yang tidak dikenali. Validasi (400), tidak ditemukan
+(404), bentrok (409), sesi habis (401), dan jaringan putus (0) adalah jalannya
+aplikasi yang normal. Laporan dikirim tanpa ditunggu dan kegagalannya ditelan,
+jadi tidak pernah mengganti galat aslinya.
+
+**Satu-satunya pengecualian "anon tanpa hak".** `catatin_health()` boleh
+dipanggil `anon` supaya workflow cukup memakai publishable key dari
+`app/dart_define.*.json` — kunci yang memang publik — tanpa secret baru
+yang juga membuka produksi. Isinya hanya hitungan agregat, tidak ada baris
+milik siapa pun. Security Advisor karena itu akan melaporkan fungsi
+`security definer` yang bisa dipanggil `anon`; itu disengaja.
+
+**Kapan workflow gagal** (ambangnya di blok `env` workflow):
+
+| Kondisi | Ambang |
+| --- | --- |
+| Galat 5xx dari klien dalam 60 menit | ≥ 5 |
+| Galat 403 padahal sesi ada dalam 60 menit | ≥ 5 |
+| Rata-rata latensi `monthly_totals` | > 500 ms (uji beban: p95 4,2 ms, [§10](#10-uji-beban)) |
+| Job transaksi berulang gagal pada run terakhir, atau sukses terakhir | > 26 jam lalu |
+| Produksi tidak terjangkau | HTTP selain 200 |
+
+Staging yang tidak terjangkau — biasanya dijeda paket Free (T-19) — hanya
+peringatan; panggilan tiap 30 menit ini sekaligus menjaganya tetap aktif.
+Proyek yang belum punya `catatin_health()` (migrasi belum diterapkan) juga
+hanya peringatan. GitHub mengirim email kegagalan workflow terjadwal ke orang
+yang terakhir mengubah jadwal `cron`-nya.
+
+**Saat gagal:** buka ringkasan run (tabel angka per proyek), lalu Logs
+Explorer dashboard Supabase untuk jendela yang sama. Galat klien per kode:
+`select status, code, source, count(*) from app_errors where occurred_at >
+now() - interval '1 hour' group by 1, 2, 3 order by 4 desc;` (sebagai
+`postgres`, di SQL Editor).
 
 ## Halaman terkait
 

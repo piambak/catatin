@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../config/app_config.dart';
+import '../constants/app_constants.dart';
 import 'api_client.dart';
 import 'browser_url.dart';
 
@@ -138,9 +139,74 @@ Future<T> runSupabase<T>(Future<T> Function() call) async {
       error,
       hasSession: SupabaseBackend.hasSession,
     );
+    _reportAppError(error, mapped);
     if (mapped == null) rethrow;
     throw mapped;
   }
+}
+
+// ── Laporan galat untuk pemantauan (#103) ─────────────────────────────────────
+
+/// Baris untuk tabel `app_errors`, atau `null` kalau galat ini tidak perlu
+/// dilaporkan.
+///
+/// Hanya galat yang menandakan masalah di sisi kita: 403 padahal sesi ada
+/// (RLS menolak — bug klien), 5xx, dan galat yang tidak dikenali (dianggap
+/// 500). Validasi (400), tidak ditemukan (404), bentrok (409), sesi habis
+/// (401), dan jaringan putus (0 — laporannya pun tidak akan sampai) adalah
+/// jalannya aplikasi yang normal, bukan insiden.
+///
+/// SENGAJA tanpa pesan galat: hanya status, kode mesin, dan sumber, jadi
+/// tidak ada data pribadi yang ikut tersimpan.
+Map<String, Object?>? reportableAppError(
+  Object error,
+  ApiException? mapped, {
+  required bool hasSession,
+  required String platform,
+}) {
+  if (!hasSession) return null;
+  final status = mapped?.statusCode ?? 500;
+  if (status != 403 && status < 500) return null;
+  final (source, code) = switch (error) {
+    sb.PostgrestException(:final code) => ('postgrest', code),
+    sb.AuthException(:final code) => ('auth', code),
+    sb.StorageException(:final statusCode) => ('storage', statusCode),
+    _ => ('lain', null),
+  };
+  return {
+    'status': status,
+    'code': code == null || code.length <= 64 ? code : code.substring(0, 64),
+    'source': source,
+    'app_version': AppConstants.appVersion,
+    'platform': platform,
+  };
+}
+
+String get _platform => kIsWeb
+    ? 'web'
+    : switch (defaultTargetPlatform) {
+        TargetPlatform.android => 'android',
+        TargetPlatform.iOS => 'ios',
+        _ => 'lain',
+      };
+
+/// Kirim-dan-lupakan: laporan yang gagal tidak boleh menggantikan galat
+/// aslinya, dan sengaja tidak lewat [runSupabase] supaya tidak pernah
+/// melaporkan dirinya sendiri. Kalau tabelnya belum ada (migrasi pemantauan
+/// belum diterapkan), permintaannya gagal diam-diam.
+void _reportAppError(Object error, ApiException? mapped) {
+  final row = reportableAppError(
+    error,
+    mapped,
+    hasSession: SupabaseBackend.hasSession,
+    platform: _platform,
+  );
+  if (row == null) return;
+  unawaited(Future(() async {
+    try {
+      await SupabaseBackend.client.from('app_errors').insert(row);
+    } catch (_) {}
+  }));
 }
 
 // ── Penerjemah galat ──────────────────────────────────────────────────────────

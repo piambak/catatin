@@ -1,8 +1,9 @@
 -- supabase/tests/database/01_skema.test.sql
 --
 -- Bentuk skema dan hak akses yang keamanan Catatin bergantung padanya: tabel
--- ada, RLS menyala, `anon` tidak punya hak apa pun, `authenticated` hanya hak
--- yang diberikan migrasi, dan kebijakan RLS persis yang tertulis di migrasi.
+-- ada, RLS menyala, `anon` tidak punya hak apa pun (satu pengecualian:
+-- catatin_health(), dites 08_pemantauan), `authenticated` hanya hak yang
+-- diberikan migrasi, dan kebijakan RLS persis yang tertulis di migrasi.
 --
 -- Kalau tes ini gagal setelah migrasi baru, periksa dulu apakah perubahannya
 -- disengaja — lalu perbarui tes DAN wiki/arsitektur/supabase.md §3.
@@ -221,8 +222,11 @@ select is(
      from pg_proc p
      join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.prosecdef),
-  array['has_password', 'issue_recurring_transactions', 'recurring_templates_after_write'],
-  'tidak ada fungsi security definer lain di skema public'
+  array[
+    'app_errors_before_insert', 'catatin_health', 'catatin_pemantauan_berkala',
+    'has_password', 'issue_recurring_transactions', 'recurring_templates_after_write'
+  ],
+  'tidak ada fungsi security definer lain di skema public (tiga pemantauan: 08_pemantauan)'
 );
 
 select is(

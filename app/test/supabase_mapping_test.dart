@@ -9,6 +9,7 @@
 
 import 'dart:async';
 
+import 'package:catatin/core/constants/app_constants.dart';
 import 'package:catatin/core/data/repositories.dart';
 import 'package:catatin/core/data/supabase_repositories.dart';
 import 'package:catatin/core/network/api_client.dart';
@@ -225,6 +226,82 @@ void main() {
       expect(e.statusCode, 400);
       expect(e.userMessage, 'Data tidak valid.');
       expect(e.errors, isNull);
+    });
+  });
+
+  group('reportableAppError — laporan galat untuk pemantauan (#103)', () {
+    Map<String, Object?>? lapor(Object error, ApiException? mapped,
+            {bool hasSession = true}) =>
+        reportableAppError(error, mapped,
+            hasSession: hasSession, platform: 'web');
+
+    const pg500 = sb.PostgrestException(message: 'rahasia', code: 'XX000');
+    const e500 = ApiException(statusCode: 500, message: 'x');
+
+    test('5xx dilaporkan: status, kode mesin, sumber, versi, platform', () {
+      expect(lapor(pg500, e500), {
+        'status': 500,
+        'code': 'XX000',
+        'source': 'postgrest',
+        'app_version': AppConstants.appVersion,
+        'platform': 'web',
+      });
+    });
+
+    test('pesan galat TIDAK pernah ikut — tanpa data pribadi', () {
+      final row = lapor(pg500, e500)!;
+      expect(row.keys,
+          unorderedEquals(['status', 'code', 'source', 'app_version', 'platform']));
+      expect(row.values, isNot(contains('rahasia')));
+    });
+
+    test('403 padahal sesi ada dilaporkan (RLS menolak — bug klien)', () {
+      final row = lapor(
+        const sb.PostgrestException(message: 'x', code: '42501'),
+        const ApiException(statusCode: 403, message: 'x'),
+      );
+      expect(row?['status'], 403);
+      expect(row?['code'], '42501');
+    });
+
+    test('galat yang tidak dikenali dilaporkan sebagai 500, sumber lain', () {
+      final row = lapor(StateError('x'), null);
+      expect(row?['status'], 500);
+      expect(row?['source'], 'lain');
+      expect(row?['code'], isNull);
+    });
+
+    test('sumber auth dan storage dibedakan', () {
+      expect(
+        lapor(const sb.AuthException('x', statusCode: '500', code: 'unexpected_failure'),
+                e500)?['source'],
+        'auth',
+      );
+      expect(
+        lapor(const sb.StorageException('x', statusCode: '503'), e500)?['source'],
+        'storage',
+      );
+    });
+
+    test('jalannya aplikasi yang normal tidak dilaporkan', () {
+      for (final status in [0, 400, 401, 404, 409, 422, 429]) {
+        expect(
+          lapor(pg500, ApiException(statusCode: status, message: 'x')),
+          isNull,
+          reason: 'status $status',
+        );
+      }
+    });
+
+    test('tanpa sesi tidak dilaporkan — tabelnya hanya menerima authenticated',
+        () {
+      expect(lapor(pg500, e500, hasSession: false), isNull);
+    });
+
+    test('kode lebih dari 64 karakter dipotong, sesuai constraint tabel', () {
+      final row = lapor(
+          sb.PostgrestException(message: 'x', code: 'K' * 100), e500);
+      expect((row?['code'] as String).length, 64);
     });
   });
 
