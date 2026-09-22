@@ -329,3 +329,18 @@ class HybridDashboardRepository implements DashboardRepository {
         () => mock.getMonthClose(month: month, year: year),
       );
 }
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+class HybridSimulatorRepository implements SimulatorRepository {
+  final SimulatorRepository api;
+  final SimulatorRepository mock;
+
+  HybridSimulatorRepository(this.api, this.mock);
+
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) => _orFallback(
+        () => api.getInputs(month: month, year: year),
+        () => mock.getInputs(month: month, year: year),
+      );
+}

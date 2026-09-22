@@ -203,9 +203,11 @@ class MonthClose {
 }
 
 /// Menolak bulan di luar 1–12 SEBELUM permintaan dikirim, sama dengan balasan
-/// 400 `validation_failed` di kontrak `GET /dashboard/close`. Dipanggil setiap
-/// implementasi `DashboardRepository.getMonthClose`, jadi gagal di semua mode.
-void checkMonthClose({required int month}) {
+/// 400 `validation_failed` di kontrak `GET /dashboard/close` dan
+/// `GET /simulator/inputs`. Dipanggil setiap implementasi
+/// `DashboardRepository.getMonthClose` dan `SimulatorRepository.getInputs`,
+/// jadi gagal di semua mode.
+void checkMonthParam({required int month}) {
   if (month < 1 || month > 12) {
     throw ApiException(
       statusCode: 400,

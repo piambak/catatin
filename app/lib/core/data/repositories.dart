@@ -189,8 +189,15 @@ abstract class DashboardRepository {
 
   /// Ringkasan tutup bulan [month]/[year]: pemasukan, pengeluaran, laba, HPP,
   /// jumlah transaksi, dan omzet YTD. Bulan tanpa transaksi bernilai nol.
-  /// Setiap implementasi memanggil [checkMonthClose] lebih dulu.
+  /// Setiap implementasi memanggil [checkMonthParam] lebih dulu.
   Future<MonthClose> getMonthClose({required int month, required int year});
+}
+
+abstract class SimulatorRepository {
+  /// Nilai awal Simulator untuk bulan acuan [month]/[year] — keduanya
+  /// default bulan berjalan. Lihat [simulatorInputsFrom] untuk aturannya.
+  /// Setiap implementasi memanggil [checkMonthParam] lebih dulu.
+  Future<SimulatorInputs> getInputs({int? month, int? year});
 }
 
 // ── Pemilih implementasi ──────────────────────────────────────────────────────
@@ -217,6 +224,7 @@ class Repos {
   static DashboardRepository? _dashboard;
   static RecurringRepository? _recurring;
   static AttachmentRepository? _attachment;
+  static SimulatorRepository? _simulator;
 
   static bool _demo = false;
 
@@ -288,6 +296,15 @@ class Repos {
         DataSource.supabase => SupabaseAttachmentRepository(),
       };
 
+  static SimulatorRepository get simulator =>
+      _simulator ??= switch (_source) {
+        DataSource.mock => MockSimulatorRepository(),
+        DataSource.api => ApiSimulatorRepository(),
+        DataSource.hybrid => HybridSimulatorRepository(
+            ApiSimulatorRepository(), MockSimulatorRepository()),
+        DataSource.supabase => SupabaseSimulatorRepository(),
+      };
+
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 
   static set auth(AuthRepository value) => _auth = value;
@@ -296,6 +313,7 @@ class Repos {
   static set dashboard(DashboardRepository value) => _dashboard = value;
   static set recurring(RecurringRepository value) => _recurring = value;
   static set attachment(AttachmentRepository value) => _attachment = value;
+  static set simulator(SimulatorRepository value) => _simulator = value;
 
   /// Buang semua instance supaya dibangun ulang dari [AppConfig].
   static void reset() {
@@ -305,5 +323,6 @@ class Repos {
     _dashboard = null;
     _recurring = null;
     _attachment = null;
+    _simulator = null;
   }
 }

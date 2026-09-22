@@ -561,9 +561,36 @@ class MockDashboardRepository implements DashboardRepository {
   /// sama dengan tab Pembukuan, termasuk transaksi yang ditambah selama sesi.
   @override
   Future<MonthClose> getMonthClose({required int month, required int year}) async {
-    checkMonthClose(month: month);
+    checkMonthParam(month: month);
     final aggregate =
         await MockTransactionRepository().getAggregate(year: year);
     return MonthClose.fromAggregate(year, aggregate[month]);
+  }
+}
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+class MockSimulatorRepository implements SimulatorRepository {
+  /// Dari agregat transaksi contoh dan profil usaha lokal — sumber yang sama
+  /// dengan tab Pembukuan dan Pengaturan.
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) async {
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+    checkMonthParam(month: m);
+    final tx = MockTransactionRepository();
+    final (current, previous, business) = await (
+      tx.getAggregate(year: y),
+      m <= 3 ? tx.getAggregate(year: y - 1) : Future.value(null),
+      MockBusinessRepository().getCurrent(),
+    ).wait;
+    return simulatorInputsFrom(
+      month: m,
+      year: y,
+      current: current,
+      previous: previous,
+      business: business,
+    );
   }
 }

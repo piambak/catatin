@@ -253,6 +253,7 @@ migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 | `TransactionRepository.createTransaction` | insert; `business_id` diambil dari server, bukan dari perangkat |
 | `TransactionRepository.updateTransaction` / `deleteTransaction` | per id; tidak ada baris tersentuh → 404 |
 | `DashboardRepository.getSummary` / `getKpiHistory` | `rpc('monthly_totals')` |
+| `SimulatorRepository.getInputs` | `rpc('monthly_totals')` tahun acuan (dan tahun sebelumnya bila bulan acuan ≤ Maret) + `business_profiles`, serentak → `simulatorInputsFrom()`. Tanpa migrasi baru (#89) |
 | `DashboardRepository.getMonthClose` | `rpc('monthly_totals')` → `monthCloseFromMonthlyTotals()`; satu bulan dari 12 baris yang sama, jadi angkanya selalu sama dengan agregat tahunan. Tanpa migrasi baru (#74) |
 | `DashboardRepository.getRecentTransactions` | select + kategori, `limit` |
 | `DashboardRepository.getDeadlines` | `generateCalendar()` di aplikasi, memakai status PKP dan jumlah karyawan profil usaha |

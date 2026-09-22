@@ -18,6 +18,15 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-22** — Backend — **Issue #89: nilai awal Simulator
+  (`GET /simulator/inputs`).** `SimulatorRepository.getInputs` di keempat mode
+  dan fasad `SimulatorInputService`: rata-rata tiga bulan penuh sebelum bulan
+  acuan (dibagi bulan yang berdata), angka bulan acuan, omzet YTD, dan profil
+  usaha — tanpa hitungan pajak. Satu aturan (`simulatorInputsFrom`) dipakai mock
+  dan Supabase; Supabase memakai `monthly_totals` yang sudah ada, jadi tanpa
+  migrasi. Contoh kontrak diambil dari data contoh staging dan dikunci tes.
+  Siap untuk PR FE #35 (Simulator dari Pembukuan, 15 Okt).
+
 - **2026-09-22** — Backend — **Issue #75: uji beban ringan agregasi.**
   `supabase/staging/uji_beban_agregasi.sql` (aman: digulung balik) dijalankan
   di staging dengan 50 akun × 12 bulan × 200 transaksi = 120.000 baris.
