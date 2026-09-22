@@ -646,7 +646,7 @@ dashboard dan Simulator. `month` dan `year` wajib.
 * Bulan tanpa transaksi bernilai nol, bukan `404`.
 * Balas `400 validation_failed` kalau `month` bukan 1–12 atau `year` kosong.
   Klien sudah menolak `month` di luar 1–12 sebelum mengirim permintaan
-  (`checkMonthClose`), dengan pesan di `details.month`.
+  (`checkMonthParam`), dengan pesan di `details.month`.
 
 Contoh di atas adalah bulan Agustus data contoh staging, sama dengan contoh
 `GET /dashboard/summary` dan `GET /transactions/aggregate`.
@@ -673,6 +673,57 @@ label sumbu X.
 ```
 
 `tax_type`: `PPH_FINAL` | `PPH21` | `SPT` | `PPN`. `status`: `PENDING` | `PAID` | `LATE`.
+
+---
+
+### Simulator
+
+#### `GET /simulator/inputs?month=9&year=2026`
+
+> **Status: sudah dipakai mode `supabase`, `mock`, dan `hybrid` (#89).** Klien
+> `api` sudah memanggil bentuk di bawah.
+
+Nilai awal Simulator dari data Pembukuan — bahan mentah saja, **tanpa hitungan
+pajak** (tarif dan rumusnya tetap lokal, lihat [§4](#4-yang-tidak-butuh-backend)).
+`month`/`year` adalah bulan acuan; kalau kosong, bulan berjalan.
+
+```json
+{
+  "month": 9,
+  "year": 2026,
+  "average": {
+    "from_month": 6, "from_year": 2026,
+    "to_month": 8, "to_year": 2026,
+    "months_with_data": 3,
+    "tx_count": 24,
+    "income": 40333333,
+    "expense": 22333333,
+    "cogs": 11333333
+  },
+  "current_month": { "income": 15400000, "expense": 4750000, "cogs": 2600000, "tx_count": 6 },
+  "ytd_omzet": 300400000,
+  "business": { "pkp_status": false, "employee_count": 3, "business_type": "DAGANG" }
+}
+```
+
+* `average` adalah rata-rata per bulan dalam **tiga bulan penuh sebelum** bulan
+  acuan — bulan acuan sendiri belum tentu selesai, jadi angkanya terpisah di
+  `current_month`. Jendela Januari–Maret menyeberang ke tahun sebelumnya.
+* Pembaginya `months_with_data`, yaitu bulan di jendela yang punya paling
+  sedikit satu transaksi, bukan selalu 3: bulan kosong lebih mungkin "belum
+  dicatat" daripada "tidak ada penjualan", dan usaha yang baru mulai bulan lalu
+  tidak boleh tampak beromzet sepertiganya. `0` berarti belum ada data; semua
+  angka nol. Rata-rata dibulatkan ke rupiah terdekat.
+* `tx_count` di `average` adalah jumlah transaksi seluruh jendela — untuk
+  baris sumber "Dihitung dari 24 transaksi (Jun–Agu)".
+* `ytd_omzet` = pemasukan Januari sampai bulan acuan, tahun acuan saja.
+* `business` bernilai `null` kalau pengguna belum punya profil usaha.
+* Semua angka dari sumber yang sama dengan
+  [`GET /transactions/aggregate`](#get-transactionsaggregateyear2026).
+* Balas `400 validation_failed` kalau `month` bukan 1–12; klien sudah
+  menolaknya sebelum mengirim (`checkMonthParam`).
+
+Contoh di atas adalah data contoh staging bulan September.
 
 ---
 
@@ -729,7 +780,8 @@ Bentuk ini dijaga tes `app/test/kontrak_transaksi_test.dart` dan
 
 * **Simulator pajak** (`core/services/simulator_service.dart`) — murni hitungan
   lokal berdasarkan PP 23/2018 dan PMK 168/2023. Tarif dan tabel TER ada di
-  `AppConstants`.
+  `AppConstants`. Backend hanya menyiapkan nilai awalnya dari data Pembukuan
+  ([`GET /simulator/inputs`](#get-simulatorinputsmonth9year2026)).
 * **Preferensi tema** — lokal.
 
 ---

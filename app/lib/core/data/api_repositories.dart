@@ -413,13 +413,33 @@ class ApiDashboardRepository implements DashboardRepository {
 
   @override
   Future<MonthClose> getMonthClose({required int month, required int year}) async {
-    checkMonthClose(month: month);
+    checkMonthParam(month: month);
     try {
       final res = await ApiClient.get(ApiEndpoints.dashboardClose, params: {
         'month': month,
         'year': year,
       });
       return MonthClose.fromJson(res.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+}
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+class ApiSimulatorRepository implements SimulatorRepository {
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) async {
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    checkMonthParam(month: m);
+    try {
+      final res = await ApiClient.get(ApiEndpoints.simulatorInputs, params: {
+        'month': m,
+        'year': year ?? now.year,
+      });
+      return SimulatorInputs.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);
     }

@@ -152,11 +152,11 @@ void main() {
     });
   });
 
-  group('checkMonthClose', () {
+  group('checkMonthParam', () {
     for (final month in [0, 13, -1]) {
       test('bulan $month → 400 validation_failed dengan details.month', () {
         expect(
-          () => checkMonthClose(month: month),
+          () => checkMonthParam(month: month),
           throwsA(isA<ApiException>()
               .having((e) => e.statusCode, 'statusCode', 400)
               .having((e) => e.code, 'code', 'validation_failed')
@@ -166,8 +166,8 @@ void main() {
     }
 
     test('1 dan 12 diterima', () {
-      checkMonthClose(month: 1);
-      checkMonthClose(month: 12);
+      checkMonthParam(month: 1);
+      checkMonthParam(month: 12);
     });
   });
 

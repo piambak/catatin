@@ -152,5 +152,7 @@ class ApiEndpoints {
   static const dashboardKpiHistory = '/dashboard/kpi-history';
   static const taxCalendar = '/tax-calendar';
 
-  // Simulator pajak murni hitungan lokal — tidak butuh endpoint.
+  // Simulator: hitungan pajaknya lokal (simulator_service.dart); backend hanya
+  // menyiapkan nilai awalnya dari data Pembukuan.
+  static const simulatorInputs = '/simulator/inputs';
 }

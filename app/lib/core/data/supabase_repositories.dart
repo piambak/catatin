@@ -742,10 +742,38 @@ class SupabaseDashboardRepository implements DashboardRepository {
   /// dan ringkasan dashboard, jadi angkanya tidak mungkin berbeda.
   @override
   Future<MonthClose> getMonthClose({required int month, required int year}) {
-    checkMonthClose(month: month);
+    checkMonthParam(month: month);
     return runSupabase(() async {
       final rows = await _monthlyTotals(year);
       return monthCloseFromMonthlyTotals(rows, month: month, year: year);
+    });
+  }
+}
+
+// ── Simulator ─────────────────────────────────────────────────────────────────
+
+/// Tanpa migrasi: `monthly_totals` tahun acuan (plus tahun sebelumnya kalau
+/// jendela tiga bulan menyeberang tahun) dan profil usaha, diminta serentak.
+class SupabaseSimulatorRepository implements SimulatorRepository {
+  @override
+  Future<SimulatorInputs> getInputs({int? month, int? year}) {
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+    checkMonthParam(month: m);
+    return runSupabase(() async {
+      final (current, previous, business) = await (
+        _monthlyTotals(y),
+        m <= 3 ? _monthlyTotals(y - 1) : Future.value(null),
+        SupabaseBusinessRepository().getCurrent(),
+      ).wait;
+      return simulatorInputsFromMonthlyTotals(
+        month: m,
+        year: y,
+        current: current,
+        previous: previous,
+        business: business,
+      );
     });
   }
 }
@@ -867,6 +895,25 @@ MonthClose monthCloseFromMonthlyTotals(
     MonthClose.fromAggregate(
       year,
       monthAggregates(monthTotalsFromRows(rows))[month - 1],
+    );
+
+/// Baris `monthly_totals` tahun acuan (dan tahun sebelumnya, kalau ada) →
+/// nilai awal Simulator.
+SimulatorInputs simulatorInputsFromMonthlyTotals({
+  required int month,
+  required int year,
+  required List<Map<String, dynamic>> current,
+  List<Map<String, dynamic>>? previous,
+  BusinessProfile? business,
+}) =>
+    simulatorInputsFrom(
+      month: month,
+      year: year,
+      current: YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(current)),
+      previous: previous == null
+          ? null
+          : YearAggregate.fromMonthlyTotals(year - 1, monthTotalsFromRows(previous)),
+      business: business,
     );
 
 /// Baris `monthly_totals` → titik grafik KPI Januari sampai [upToMonth],
