@@ -236,6 +236,62 @@ class ApiTransactionRepository implements TransactionRepository {
   }
 }
 
+// ── Transaksi berulang ──────────────────────────────────────────────────────
+
+class ApiRecurringRepository implements RecurringRepository {
+  @override
+  Future<List<RecurringTemplate>> getTemplates() async {
+    try {
+      final res = await ApiClient.get(ApiEndpoints.recurring);
+      return (res.data['templates'] as List)
+          .map((e) => RecurringTemplate.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) async {
+    try {
+      final res =
+          await ApiClient.post(ApiEndpoints.recurring, data: draft.toJson());
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> updateTemplate(
+    String id,
+    RecurringDraft draft,
+  ) async {
+    try {
+      final res = await ApiClient.patch(
+        ApiEndpoints.recurringById(id),
+        data: draft.toJson(),
+      );
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+
+  @override
+  Future<RecurringTemplate> stopTemplate(String id) async {
+    try {
+      final res = await ApiClient.post(ApiEndpoints.recurringStop(id));
+      return RecurringTemplate.fromJson(
+          res.data['template'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw apiException(e);
+    }
+  }
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 class ApiDashboardRepository implements DashboardRepository {

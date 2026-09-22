@@ -378,6 +378,39 @@ const _constraintFields = <String, (String, String)>{
     'employee_count',
     'Jumlah karyawan tidak boleh negatif.',
   ),
+  'recurring_templates_type_check': (
+    'type',
+    'Jenis transaksi harus pemasukan atau pengeluaran.',
+  ),
+  'recurring_templates_amount_check': ('amount', 'Nominal harus lebih dari 0.'),
+  'recurring_templates_payment_method_check': (
+    'payment_method',
+    'Metode pembayaran tidak dikenal.',
+  ),
+  'recurring_templates_frequency_check': (
+    'frequency',
+    'Frekuensi harus mingguan atau bulanan.',
+  ),
+  'recurring_templates_start_date_check': (
+    'start_date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'recurring_templates_end_date_check': (
+    'end_date',
+    'Tanggal harus antara 1 Januari 2000 dan 31 Desember 2099.',
+  ),
+  'recurring_templates_end_after_start_check': (
+    'end_date',
+    'Tanggal berakhir tidak boleh sebelum tanggal mulai.',
+  ),
+  'recurring_templates_category_id_fkey': (
+    'category_id',
+    'Kategori tidak ditemukan.',
+  ),
+  'recurring_templates_category_type_fkey': (
+    'category_id',
+    'Kategori tidak cocok dengan jenis transaksi.',
+  ),
 };
 
 /// Galat 400 dengan pesan per field untuk constraint yang dikenal, supaya

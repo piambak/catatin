@@ -168,6 +168,23 @@ pemetaan tambahan.
   `ApiException.errors` — mis. "Kategori tidak cocok dengan jenis transaksi."
   — alih-alih "Data tidak valid." umum. Nama constraint karena itu bagian dari
   kontrak: mengganti namanya berarti mengganti peta di klien dan tesnya.
+- **Transaksi berulang** (#58, kontrak di
+  [Backend & API](backend-dan-api.md#transaksi-berulang)) — tabel
+  `recurring_templates`, dibaca dan ditulis pemiliknya lewat RLS (tanpa hapus;
+  berhenti = `is_active` jadi `false`). `next_date` dan `is_active` selalu
+  dihitung trigger, bukan klien: jadwal dihitung dari jangkar `start_date`
+  (`recurring_first_on_or_after`), tanpa pengisian mundur, dan template yang
+  sudah berhenti membeku. Penerbitnya `issue_recurring_transactions()` — tidak
+  bisa dipanggil pengguna — dijalankan **pg_cron** tiap hari pukul 17.05 UTC
+  (00.05 WIB, job `catatin-transaksi-berulang`) dan langsung saat template
+  dibuat atau diubah, untuk kemunculan yang jatuh hari itu. Transaksi terbitan
+  membawa `recurring_template_id`; indeks unik `(recurring_template_id, date)`
+  membuat penerbitan ulang tidak pernah ganda, dan trigger menolak klien
+  mengisi kolom itu sendiri. Pembeda "penerbit" dari "pengguna" adalah
+  `current_user`: permintaan PostgREST berjalan sebagai `authenticated`,
+  penerbit sebagai pemilik fungsinya (`postgres`). Proyek Free yang dijeda
+  (T-19) tidak menjalankan pg_cron; kemunculan yang tertinggal diterbitkan pada
+  penerbitan pertama setelah proyek dipulihkan.
 - **Fungsi `has_password()`** menjawab apakah akun pemanggil punya kata sandi.
   Satu-satunya fungsi `security definer` di skema ini, karena `authenticated`
   tidak boleh membaca `auth.users`: tanpa parameter, hanya membaca baris
@@ -548,7 +565,7 @@ diturunkan dari template versi yang sama.
 
 **Isi tes pgTAP:**
 
-- `01_skema.test.sql` (26 tes) — tabel ada, RLS menyala, kebijakan persis
+- `01_skema.test.sql` (59 tes) — tabel ada, RLS menyala, kebijakan persis
   sesuai migrasi, `anon` tanpa hak tabel maupun fungsi, hak `authenticated`,
   dan `has_password()` satu-satunya security definer dengan `search_path`
   kosong.
@@ -563,6 +580,12 @@ diturunkan dari template versi yang sama.
 - `04_validasi_transaksi.test.sql` (14 tes) — semua aturan validasi di
   [§3](#3-skema), dijalankan sebagai `authenticated`, dengan pesan galat yang
   dicocokkan persis karena nama constraint di dalamnya dibaca klien (#40).
+- `05_transaksi_berulang.test.sql` (51 tes) — jadwal (jangkar akhir bulan,
+  mingguan), tanpa pengisian mundur, penerbitan kejar-ketinggalan yang tidak
+  pernah ganda, `end_date` inklusif, berhenti permanen, tautan
+  `recurring_template_id` yang tidak bisa dipalsukan, validasi, dan isolasi
+  antar-akun (#58). Tanggal "hari ini" dipatok lewat setelan
+  `catatin.hari_ini`.
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 

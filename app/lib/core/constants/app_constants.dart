@@ -135,6 +135,11 @@ class ApiEndpoints {
   static String transactionById(String id) => '/transactions/$id';
   static const txCategories = '/tx-categories';
 
+  // Transaksi berulang
+  static const recurring = '/recurring';
+  static String recurringById(String id) => '/recurring/$id';
+  static String recurringStop(String id) => '/recurring/$id/stop';
+
   // Dashboard
   static const dashboardSummary = '/dashboard/summary';
   static const dashboardKpiHistory = '/dashboard/kpi-history';
