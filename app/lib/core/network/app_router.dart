@@ -1,4 +1,4 @@
-// lib/core/network/app_router.dart — FINAL (Settings + Onboarding wired)
+// lib/core/network/app_router.dart
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +20,7 @@ import '../services/theme_notifier.dart';
 import '../theme/breakpoints.dart';
 import '../theme/design_tokens.dart';
 import '../../widgets/common/app_nav.dart';
+import '../../widgets/common/ds_widgets.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
@@ -63,30 +64,78 @@ final appRouter = GoRouter(
       builder: (_, __) => _themed(() => NotificationScreen()),
     ),
 
-    // ── Main shell with bottom nav ─────────────────────────
-    ShellRoute(
-      builder: (context, state, child) => MainShell(
-        location: state.matchedLocation, child: child),
-      routes: [
-        GoRoute(
-          path: AppRoutes.dashboard,
-          pageBuilder: (_, __) => _fade(_themed(() => DashboardScreen())),
-        ),
-        GoRoute(
-          path: AppRoutes.accounting,
-          pageBuilder: (_, __) => _fade(_themed(() => AccountingScreen())),
-        ),
-        GoRoute(
-          path: AppRoutes.simulator,
-          pageBuilder: (_, __) => _fade(_themed(() => SimulatorScreen())),
-        ),
-        GoRoute(
-          path: AppRoutes.settings,
-          pageBuilder: (_, __) => _fade(_themed(() => SettingsScreen())),
-        ),
+    // ── Shell utama: satu cabang per tab ──────────────────
+    //
+    // StatefulShellRoute (T-27) menggantikan IndexedStack buatan sendiri yang
+    // membangun keempat tab sekaligus saat boot — Dashboard, Pencatatan, dan
+    // Pengaturan menembak request bersamaan sebelum pengguna membuka apa pun,
+    // dan itulah yang memicu balapan 401 di T-23. Di sini cabang baru dibangun
+    // saat pertama dibuka, lalu tetap hidup (posisi gulir & isian tidak
+    // hilang saat pindah tab).
+    //
+    // Urutan cabang = urutan tujuan navigasi di MainShell.
+    StatefulShellRoute.indexedStack(
+      builder: (_, __, shell) =>
+          _themed(() => MainShell(navigationShell: shell)),
+      branches: [
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: AppRoutes.dashboard,
+            pageBuilder: (_, __) => _fade(_themed(() => DashboardScreen())),
+          ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: AppRoutes.simulator,
+            pageBuilder: (_, __) => _fade(_themed(() => SimulatorScreen())),
+          ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: AppRoutes.accounting,
+            pageBuilder: (_, __) => _fade(_themed(() => AccountingScreen())),
+          ),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: AppRoutes.settings,
+            pageBuilder: (_, __) => _fade(_themed(() => SettingsScreen())),
+          ),
+        ]),
       ],
     ),
   ],
+  // Alamat yang tidak cocok rute mana pun — dulu layar kosong (T-27).
+  errorBuilder: (context, state) => _themed(
+    () => Scaffold(
+      backgroundColor: DS.surface,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.explore_off_rounded, size: 34, color: DS.faint),
+                const SizedBox(height: 16),
+                Text('Halaman tidak ditemukan',
+                    textAlign: TextAlign.center, style: Typo.serif(24)),
+                const SizedBox(height: 8),
+                Text('Alamat ${state.uri.path} tidak ada di Catatin.',
+                    textAlign: TextAlign.center,
+                    style: Typo.sans(15, color: DS.body)),
+                const SizedBox(height: 20),
+                DsButton(
+                  label: 'Kembali ke Dashboard',
+                  onPressed: () => context.go(AppRoutes.dashboard),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  ),
 );
 
 /// Membangun ulang subtree saat mode terang/gelap berganti.
@@ -149,12 +198,11 @@ CustomTransitionPage _fade(Widget child) => CustomTransitionPage(
 
 // ── Main Shell ────────────────────────────────────────────────────────────────
 
-// ── Main Shell — IndexedStack keeps all tabs alive in memory ─────────────────
-
+/// Kerangka navigasi: rail di layar lebar, pil navigasi mengambang di ponsel.
+/// Isi tab datang dari [navigationShell] — satu Navigator per cabang.
 class MainShell extends StatefulWidget {
-  final String location;
-  final Widget child;
-  const MainShell({super.key, required this.location, required this.child});
+  final StatefulNavigationShell navigationShell;
+  const MainShell({super.key, required this.navigationShell});
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -162,7 +210,8 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   // Urutan mengikuti mockup Claude Design: Dashboard · Simulator ·
-  // Pencatatan · Pengaturan. Rutenya sendiri tidak berubah.
+  // Pencatatan · Pengaturan — dan harus sama dengan urutan cabang
+  // StatefulShellRoute di atas.
   static const _destinations = [
     NavDestination(
       label: 'Dashboard',
@@ -186,20 +235,6 @@ class _MainShellState extends State<MainShell> {
     ),
   ];
 
-  // Tiap tab tetap hidup di IndexedStack. Daftarnya sengaja TIDAK const:
-  // instance baru per rebuild diperlukan supaya pergantian mode gelap benar
-  // benar sampai ke isi tab (lihat catatan di `_themed`). Tipe dan urutannya
-  // tetap sama, jadi State masing-masing tab tidak hilang.
-  // Elemennya sengaja TIDAK const. Flutter melewati rebuild kalau widget lama
-  // dan baru adalah instance yang identik — dan `const` membuatnya identik,
-  // sehingga pergantian mode gelap tidak pernah sampai ke isi tab.
-  List<Widget> get _screens => [
-        _DashboardTab(),
-        _SimulatorTab(),
-        _AccountingTab(),
-        _SettingsTab(),
-      ];
-
   bool _railExpanded = true;
   String? _userName;
 
@@ -211,22 +246,15 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  int get _idx {
-    final i = _destinations
-        .indexWhere((d) => widget.location.startsWith(d.route));
-    return i >= 0 ? i : 0;
-  }
+  int get _idx => widget.navigationShell.currentIndex;
 
-  void _select(int i) => context.go(_destinations[i].route);
+  /// Mengetuk tab yang sedang aktif membawanya kembali ke awal cabangnya.
+  void _select(int i) =>
+      widget.navigationShell.goBranch(i, initialLocation: i == _idx);
 
   @override
   Widget build(BuildContext context) {
-    // IndexedStack menjaga semua tab tetap hidup, hanya menyembunyikan
-    // yang tidak aktif. Dibungkus _themed supaya isinya ikut dibangun ulang
-    // saat mode gelap dinyalakan, bukan hanya kerangkanya.
-    final content = _themed(
-      () => IndexedStack(index: _idx, children: _screens),
-    );
+    final content = widget.navigationShell;
 
     return Scaffold(
       backgroundColor: DS.surface,
@@ -272,31 +300,4 @@ class _MainShellState extends State<MainShell> {
       ),
     );
   }
-}
-
-// ── Tab wrapper widgets — these stay alive via IndexedStack ──────────────────
-// They import their real screen but wrap it so GoRouter child is not needed
-
-class _DashboardTab extends StatelessWidget {
-  const _DashboardTab();
-  @override
-  Widget build(BuildContext context) => DashboardScreen();
-}
-
-class _AccountingTab extends StatelessWidget {
-  const _AccountingTab();
-  @override
-  Widget build(BuildContext context) => AccountingScreen();
-}
-
-class _SimulatorTab extends StatelessWidget {
-  const _SimulatorTab();
-  @override
-  Widget build(BuildContext context) => SimulatorScreen();
-}
-
-class _SettingsTab extends StatelessWidget {
-  const _SettingsTab();
-  @override
-  Widget build(BuildContext context) => SettingsScreen();
 }

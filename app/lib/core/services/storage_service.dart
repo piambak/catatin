@@ -7,6 +7,7 @@
 // SharedPreferences — `localStorage` di web) dan diperbarui otomatis. Token
 // di sini hanya salinan penanda "sudah masuk" untuk penjaga rute.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,6 +15,24 @@ import '../constants/app_constants.dart';
 
 class StorageService {
   StorageService._();
+
+  // ── Salinan di memori untuk penjaga rute ──────────────────
+  //
+  // Penjaga rute membaca status masuk & onboarding di SETIAP navigasi; di web
+  // status masuk berarti mendekripsi token lewat WebCrypto. Karena semua
+  // penulisan kunci ini lewat kelas ini, salinan di memori selalu bisa
+  // diperbarui bersamaan dengan penulisannya (write-through) — tidak pernah
+  // basi selama prosesnya sama (T-27). `null` = belum pernah dibaca.
+  static bool? _loggedIn;
+  static bool? _onboarded;
+
+  /// Lupakan salinan di memori. Untuk tes yang mengganti isi penyimpanan
+  /// tiruan di antara kasus.
+  @visibleForTesting
+  static void resetCache() {
+    _loggedIn = null;
+    _onboarded = null;
+  }
 
   static const _secure = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -33,6 +52,7 @@ class StorageService {
     // melempar GoException dan login pertama macet di layar masuk.
     await _secure.write(key: StorageKeys.accessToken, value: accessToken);
     await _secure.write(key: StorageKeys.refreshToken, value: refreshToken);
+    _loggedIn = accessToken.isNotEmpty;
   }
 
   static Future<String?> getAccessToken() =>
@@ -42,6 +62,7 @@ class StorageService {
       _secure.read(key: StorageKeys.refreshToken);
 
   static Future<void> clearTokens() async {
+    _loggedIn = false;
     await Future.wait([
       _secure.delete(key: StorageKeys.accessToken),
       _secure.delete(key: StorageKeys.refreshToken),
@@ -87,6 +108,7 @@ class StorageService {
   /// yang sama tidak ikut terbawa.
   static Future<void> clearBusiness() async {
     final prefs = await SharedPreferences.getInstance();
+    _onboarded = false;
     await Future.wait([
       prefs.remove(StorageKeys.businessId),
       prefs.remove(StorageKeys.onboarded),
@@ -95,11 +117,19 @@ class StorageService {
 
   // ── Onboarding & sesi ─────────────────────────────────────
 
-  static Future<bool> isOnboarded() async =>
-      (await SharedPreferences.getInstance()).getBool(StorageKeys.onboarded) ??
-      false;
+  static Future<bool> isOnboarded() async {
+    final cached = _onboarded;
+    if (cached != null) return cached;
+    final stored =
+        (await SharedPreferences.getInstance()).getBool(StorageKeys.onboarded) ??
+            false;
+    // `??=`, bukan `=`: penulisan yang terjadi selama pembacaan di atas lebih
+    // baru dari hasil baca ini dan tidak boleh tertimpa.
+    return _onboarded ??= stored;
+  }
 
   static Future<void> setOnboarded() async {
+    _onboarded = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(StorageKeys.onboarded, true);
   }
@@ -115,9 +145,12 @@ class StorageService {
   }
 
   static Future<bool> isLoggedIn() async {
+    final cached = _loggedIn;
+    if (cached != null) return cached;
     try {
       final token = await getAccessToken();
-      return token != null && token.isNotEmpty;
+      // `??=` — lihat catatan di [isOnboarded].
+      return _loggedIn ??= token != null && token.isNotEmpty;
     } catch (_) {
       // Token yang tidak bisa didekripsi — mis. tersimpan build lama yang
       // masih menulis serentak (lihat saveTokens) — sama saja dengan tidak
@@ -146,6 +179,7 @@ class StorageService {
       for (final key in _deviceKeys)
         if (prefs.getString(key) case final value?) key: value,
     };
+    _onboarded = false;
     await Future.wait([clearTokens(), prefs.clear()]);
     for (final entry in kept.entries) {
       await prefs.setString(entry.key, entry.value);
