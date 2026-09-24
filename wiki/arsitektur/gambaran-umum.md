@@ -94,6 +94,16 @@ Aturan yang dijaga:
 | Simulator pajak | `screens/simulator/` | **Tidak** — murni hitungan lokal |
 | Profil usaha & pengaturan | `screens/settings/` | Ya (dengan cadangan lokal) |
 
+## Bahasa & orientasi
+
+- **Satu bahasa: Bahasa Indonesia** ([D-15](../proyek/log-keputusan.md)).
+  Teks UI ditulis langsung di widget, tanpa lapisan terjemahan (`intl`
+  dipakai untuk format rupiah & tanggal, bukan untuk string). Multi-bahasa
+  masuk backlog Fase Tiga (T-12); kalau jadi, pekerjaan pertamanya
+  memindahkan string ke ARB.
+- **Kunci orientasi potret hanya untuk ponsel** ([D-16](../proyek/log-keputusan.md)).
+  Web dan tablet bebas berputar; penerapannya di `main.dart` (issue #37).
+
 ## Tema
 
 `AppColors` memakai *getter*, bukan konstanta, sehingga seluruh aplikasi ikut
