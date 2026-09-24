@@ -87,7 +87,6 @@ class StorageKeys {
   static const businessId = 'business_id';
   static const onboarded = 'onboarded';
   static const demoMode = 'demo_mode';
-  static const bookmarks = 'bookmarks';
   static const themeMode = 'theme_mode';
 }
 

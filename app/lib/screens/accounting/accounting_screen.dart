@@ -8,7 +8,7 @@ import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../widgets/accounting/tx_add_sheet.dart';
-import '../../widgets/accounting/month_picker.dart' show TxListTile;
+import '../../widgets/accounting/tx_list_tile.dart';
 import '../../widgets/common/app_widgets.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -93,62 +93,6 @@ class _AccountingScreenState extends State<AccountingScreen>
     );
   }
 
-  void _showFavorites() {
-    final favs = _allTx.where((t) => t.isFavorite).toList();
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize:     0.9,
-        minChildSize:     0.35,
-        builder: (ctx, scroll) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(ctx).cardColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(16))),
-          child: Column(children: [
-            Container(margin: const EdgeInsets.only(top: 10, bottom: 4),
-              width: 36, height: 4,
-              decoration: BoxDecoration(color: DS.hairline,
-                borderRadius: BorderRadius.circular(2))),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-              child: Row(children: [
-                Icon(Icons.star_rounded, size: 18, color: DS.brand),
-                const SizedBox(width: 8),
-                Text('Transaksi Favorit',
-                  style: Typo.serif(15)),
-                const Spacer(),
-                Text('${favs.length} transaksi',
-                  style: Typo.sans(12, color: DS.faint)),
-              ])),
-            Divider(height: 0.5, color: DS.hairline),
-            if (favs.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: EmptyState(
-                  icon: Icons.star_border_rounded,
-                  title: 'Belum ada favorit',
-                  subtitle: 'Tandai transaksi sebagai favorit\ndari halaman detail transaksi'))
-            else
-              Expanded(child: ListView.separated(
-                controller: scroll,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: favs.length,
-                separatorBuilder: (_, __) =>
-                  Divider(height: 0.5, color: DS.hairline),
-                itemBuilder: (_, i) => TxListTile(
-                  tx:    favs[i],
-                  onTap: () {},
-                ),
-              )),
-          ]),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bp = Bp.of(context);
@@ -168,11 +112,6 @@ class _AccountingScreenState extends State<AccountingScreen>
                 Expanded(
                   child: Text('Pencatatan',
                       style: Typo.serif(bp.isExpanded ? 34 : 25)),
-                ),
-                IconButton(
-                  icon: Icon(Icons.star_border_rounded, color: DS.body),
-                  tooltip: 'Transaksi favorit',
-                  onPressed: _showFavorites,
                 ),
               ]),
             ),

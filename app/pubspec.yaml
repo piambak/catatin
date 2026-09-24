@@ -32,7 +32,6 @@ dependencies:
 
   # ── UI ──────────────────────────────────────────────────────
   fl_chart: ^1.2.0 # grafik dashboard & simulator
-  percent_indicator: ^4.2.3 # progress bar ambang PKP
   shimmer: ^3.0.0 # skeleton saat memuat
   intl: ^0.20.2 # format rupiah & tanggal
 

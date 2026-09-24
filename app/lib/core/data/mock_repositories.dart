@@ -253,7 +253,6 @@ class MockTransactionRepository implements TransactionRepository {
         paymentMethod: draft.paymentMethod,
         receiptNote: draft.receiptNote,
         createdAt: old.createdAt,
-        isFavorite: old.isFavorite,
       ));
     _deleted.add(id);
     return true;

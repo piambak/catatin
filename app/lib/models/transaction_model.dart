@@ -57,7 +57,6 @@ class TxData {
   final String paymentMethod;
   final String? receiptNote;
   final DateTime createdAt;
-  final bool isFavorite;
 
   /// Id template transaksi berulang yang menerbitkan transaksi ini, atau
   /// `null` kalau dicatat manual. Lihat `models/recurring_model.dart`.
@@ -74,13 +73,12 @@ class TxData {
     required this.paymentMethod,
     this.receiptNote,
     required this.createdAt,
-    this.isFavorite = false,
     this.recurringTemplateId,
   });
 
   bool get isIncome => type == 'INCOME';
 
-  TxData copyWith({double? amount, bool? isFavorite}) => TxData(
+  TxData copyWith({double? amount}) => TxData(
         id: id,
         businessId: businessId,
         date: date,
@@ -91,7 +89,6 @@ class TxData {
         paymentMethod: paymentMethod,
         receiptNote: receiptNote,
         createdAt: createdAt,
-        isFavorite: isFavorite ?? this.isFavorite,
         recurringTemplateId: recurringTemplateId,
       );
 
