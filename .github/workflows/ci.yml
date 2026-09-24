@@ -39,7 +39,9 @@ jobs:
           cache: true
 
       - name: Ambil dependensi
-        run: flutter pub get
+        # --enforce-lockfile: versi paket di CI = versi di pubspec.lock yang
+        # di-commit, bukan hasil resolusi ulang hari ini (T-9).
+        run: flutter pub get --enforce-lockfile
 
       - name: Analisis statis
         # Info dibiarkan lolos supaya PR kecil tidak tertahan urusan gaya;
@@ -47,11 +49,20 @@ jobs:
         run: flutter analyze --no-fatal-infos
 
       - name: Tes
-        run: flutter test
+        # --coverage menulis coverage/lcov.info (T-10). Belum ada ambang
+        # minimum — angkanya dibuat terlihat dulu, ambang ditetapkan Minggu 7.
+        run: flutter test --coverage
 
       - name: Build web (memastikan rilis tetap bisa dibangun)
         # Konfigurasi yang sama persis dengan publish-web.yml.
         run: flutter build web --release --base-href "/catatin/" --dart-define-from-file=dart_define.pages.json
+
+      - name: Format kode
+        # Blocking sejak issue #33 (T-9): PR yang belum diformat gagal di sini.
+        # Perbaikannya satu perintah: `cd app && dart format .`
+        # Sengaja SESUDAH analisis, tes, dan build, supaya hasil ketiganya tetap
+        # kelihatan walau yang kurang hanya format.
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Skor PRD redesain UI
         # Non-blocking dulu: mencetak angka, tidak menggagalkan build. Tugasnya
@@ -73,6 +84,13 @@ jobs:
         # 3.684 baris sempat menumpuk karena tidak ada yang memeriksa.
         working-directory: .
         run: bash tool/find_orphans.sh --strict
+
+      - name: Simpan coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: app/coverage/lcov.info
+          retention-days: 14
 
       - name: Simpan hasil build untuk ditinjau
         uses: actions/upload-artifact@v4
