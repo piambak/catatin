@@ -18,6 +18,12 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-24** — Backend — **Umur access token 900 detik di staging dan
+  produksi** (D-14, #39). Dicek langsung di dashboard *Authentication →
+  Sessions*: keduanya ternyata masih 3600 detik, termasuk staging yang di PR
+  #184 disebut "sudah". Keduanya kini 900; refresh reuse tetap 10 detik.
+  Sisa #39: memastikan `expires_in: 900` dari login sungguhan saat QA.
+
 - **2026-09-24** — Frontend + PO — **Minggu 2 diajukan sebagai tujuh PR**,
   masing-masing untuk satu issue: #29 (D-14, D-15, D-16 diputus mengikuti
   default — lihat [log keputusan](log-keputusan.md)), #32 (T-32: 11 berkas

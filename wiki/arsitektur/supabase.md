@@ -414,8 +414,12 @@ dibalas `400 refresh_token_not_found`
 
 **Setelan remote.** `config.toml` hanya berlaku untuk stack lokal dan CI
 ([§2](#2-menyiapkan-dari-nol)), jadi 900 detik dipasang di dashboard
-masing-masing proyek: staging lebih dulu, produksi setelah D-14 diputus atau
-tenggatnya lewat tanpa keputusan lain.
+masing-masing proyek. Keduanya **terpasang 24 Sep 2026**, setelah D-14 diputus.
+Sebelumnya staging dan produksi sama-sama masih 3600 detik: nilai itu dibaca di
+dashboard, dan jarak refresh sesi produksi 16 Sep (3562–3600 detik) cocok
+dengan nilai itu. Sesi yang sedang berjalan tidak ter-logout; hanya token yang
+terbit sesudahnya yang berumur 15 menit. Sisa verifikasi: `expires_in: 900`
+pada respons login sungguhan ([#39](https://github.com/piambak/catatin/issues/39)).
 
 ### CORS
 
