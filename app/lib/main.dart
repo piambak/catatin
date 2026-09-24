@@ -22,17 +22,23 @@ void main() async {
     if (problem != null) debugPrint('[Catatin] $problem');
   }
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // D-16: potret hanya dikunci di ponsel. Web dan tablet bebas berputar —
+  // di layar lebar, tata letak rail + konten memang dirancang mendatar.
+  if (!kIsWeb && _isPhone()) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   await initializeDateFormatting('id_ID', null);
 
   // Backend dan sesi siap sebelum frame pertama: klien Supabase wajib
   // terinisialisasi sebelum repository pertama dibuat, dan penjaga rute
   // langsung membaca status masuk yang sudah dibersihkan dari sisa sesi lama.
-  // Dijalankan sebelum tema karena pembersihan itu ikut menghapus preferensi.
+  // Dijalankan sebelum tema supaya tema dibaca dari penyimpanan yang sudah
+  // dibersihkan (pembersihan sesi mempertahankan tema — lihat
+  // StorageService.clearSession).
   if (AppConfig.dataSource == DataSource.supabase) {
     await SupabaseBackend.init();
   }
@@ -42,6 +48,18 @@ void main() async {
   await themeNotifier.init();
 
   runApp(const MyApp());
+}
+
+/// Ponsel = sisi terpendek layar di bawah 600 dp, ambang tablet yang dipakai
+/// Material. Dibaca dari view pertama karena belum ada `MediaQuery` sebelum
+/// `runApp`. Ukuran yang belum diketahui (0) dianggap ponsel: perilakunya sama
+/// dengan sebelum D-16, bukan membuka kunci tanpa alasan.
+bool _isPhone() {
+  final views = WidgetsBinding.instance.platformDispatcher.views;
+  if (views.isEmpty) return true;
+  final view = views.first;
+  final logical = view.physicalSize / view.devicePixelRatio;
+  return logical.shortestSide < 600;
 }
 
 class MyApp extends StatelessWidget {
