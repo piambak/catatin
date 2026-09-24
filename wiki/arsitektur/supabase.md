@@ -249,7 +249,7 @@ migrasi baru sengaja mengubahnya, perbarui tesnya bersama bagian ini.
 | `BusinessRepository.getCurrent` | select `business_profiles` (paling banyak satu baris) |
 | `BusinessRepository.create` / `update` | upsert pada `user_id` / update per id |
 | `TransactionRepository.getCategories` | select `tx_categories` urut `sort_order` |
-| `TransactionRepository.getTransactions` | select + `category:tx_categories(*)`, diambil per halaman 1000 baris. Filter `month`/`year` atau `from`/`to` diubah `dateRangeFor` menjadi `date >= from` dan `date < until`; ujung yang kosong tidak difilter |
+| `TransactionRepository.getTransactions` | select + `category:tx_categories!transactions_category_id_fkey(*)` (nama FK wajib; lihat tes `09_relasi_embed`), diambil per halaman 1000 baris. Filter `month`/`year` atau `from`/`to` diubah `dateRangeFor` menjadi `date >= from` dan `date < until`; ujung yang kosong tidak difilter |
 | `TransactionRepository.getAggregate` | `rpc('monthly_totals')` → `YearAggregate`; kolom `hpp` menjadi `cogs`, omzet YTD dijumlahkan `monthAggregates()` |
 | `TransactionRepository.getTransaction` | per id; id non-UUID (sisa data contoh) → `null` |
 | `TransactionRepository.createTransaction` | insert; `business_id` diambil dari server, bukan dari perangkat |
@@ -640,6 +640,12 @@ diturunkan dari template versi yang sama.
   kolom dan dibatasi 30 laporan per 10 menit, `catatin_health()` boleh
   dipanggil `anon` dan menghitung galat serta latensi dengan benar (termasuk
   saat `pg_stat_statements` direset), dan pembersihan berkala (#103).
+- `09_relasi_embed.test.sql` (2 tes) — FK satu kolom
+  `transactions_category_id_fkey` dan `recurring_templates_category_id_fkey`
+  tetap ada dengan nama itu. `transactions` dan `recurring_templates` punya dua
+  relasi ke `tx_categories` (FK biasa dan FK komposit `(category_id, type)`),
+  jadi klien menyebut nama FK ini di embed kategori; tanpa petunjuk itu
+  PostgREST membalas `300 PGRST201`.
 - `supabase/staging/data_contoh.test.sql` (10 tes) — skrip data contoh
   menghasilkan angka contoh kontrak.
 

@@ -41,10 +41,21 @@ const _attachmentTable = 'transaction_attachments';
 /// `supabase/migrations/…_lampiran_struk.sql`.
 const _receiptsBucket = 'receipts';
 
-/// Transaksi (atau template berulang) beserta kategorinya, disematkan dengan
-/// nama kunci `category` seperti yang diharapkan `TxData.fromJson`,
-/// `RecentTx.fromJson`, dan `RecurringTemplate.fromJson`.
-const _txWithCategory = '*, category:tx_categories(*)';
+/// Transaksi beserta kategorinya, disematkan dengan nama kunci `category`
+/// seperti yang diharapkan `TxData.fromJson` dan `RecentTx.fromJson`.
+///
+/// Nama FK wajib disebut: sejak migrasi `validasi_transaksi` (#40) ada dua
+/// relasi ke `tx_categories` — `category_id` dan komposit
+/// `(category_id, type)` — dan tanpa petunjuk PostgREST menolak embed-nya
+/// dengan `300 PGRST201`. Nama ini dijaga tes
+/// `supabase/tests/database/09_relasi_embed.test.sql`.
+const _txWithCategory =
+    '*, category:tx_categories!transactions_category_id_fkey(*)';
+
+/// Sama dengan [_txWithCategory] untuk template berulang, yang juga punya dua
+/// relasi ke `tx_categories` (migrasi `transaksi_berulang`, #58).
+const _recurringWithCategory =
+    '*, category:tx_categories!recurring_templates_category_id_fkey(*)';
 
 /// Id profil usaha milik pengguna yang sedang masuk. Dipakai
 /// [SupabaseTransactionRepository] dan [SupabaseRecurringRepository] karena
@@ -461,7 +472,7 @@ class SupabaseRecurringRepository implements RecurringRepository {
   Future<List<RecurringTemplate>> getTemplates() => runSupabase(() async {
     final rows = await _db
         .from(_recurringTable)
-        .select(_txWithCategory)
+        .select(_recurringWithCategory)
         .order('is_active', ascending: false)
         // Bawaan `nullsFirst: false` sudah menaruh `next_date` kosong
         // (template nonaktif) di akhir.
@@ -478,7 +489,7 @@ class SupabaseRecurringRepository implements RecurringRepository {
         final row = await _db
             .from(_recurringTable)
             .insert({...draft.toJson(), 'business_id': businessId})
-            .select(_txWithCategory)
+            .select(_recurringWithCategory)
             .single();
         return RecurringTemplate.fromJson(row);
       });
@@ -498,7 +509,7 @@ class SupabaseRecurringRepository implements RecurringRepository {
           .update(draft.toJson())
           .eq('id', id)
           .eq('is_active', true)
-          .select(_txWithCategory)
+          .select(_recurringWithCategory)
           .maybeSingle();
       if (row != null) return RecurringTemplate.fromJson(row);
       final existing = await _db
@@ -521,7 +532,7 @@ class SupabaseRecurringRepository implements RecurringRepository {
           .from(_recurringTable)
           .update({'is_active': false})
           .eq('id', id)
-          .select(_txWithCategory)
+          .select(_recurringWithCategory)
           .maybeSingle();
       if (row == null) throw _notFound;
       return RecurringTemplate.fromJson(row);
