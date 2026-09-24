@@ -15,6 +15,7 @@ import '../../core/services/accounting_service.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
+import '../../widgets/accounting/tx_add_sheet.dart';
 import '../../widgets/common/ds_widgets.dart';
 
 const _paymentLabels = {
@@ -61,6 +62,28 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Membuka form sunting (T-20b). Formnya menyimpan lewat
+  /// [AccountingService.updateTransaction] dan menutup dirinya sendiri saat
+  /// berhasil; sesudah itu detail dimuat ulang supaya angka di layar ini ikut
+  /// berubah.
+  Future<void> _edit(TxData tx) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Theme.of(ctx).cardColor,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Radii.lg)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: TxEditSheet(tx: tx),
+        ),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   Future<void> _delete() async {
@@ -164,7 +187,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
               const SizedBox(height: 32),
               _details(tx),
               const SizedBox(height: 30),
-              _actions(),
+              _actions(tx),
             ],
           ),
         ),
@@ -253,7 +276,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
 
   // ── Aksi ───────────────────────────────────────────────────────────────────
 
-  Widget _actions() {
+  Widget _actions(TxData tx) {
     if (_confirmDelete) {
       return Container(
         padding: const EdgeInsets.all(14),
@@ -314,8 +337,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
         Expanded(
           child: DsButton(
             label: 'Sunting',
-            // Penyuntingan belum tersambung — sama seperti sebelum redesain.
-            onPressed: null,
+            onPressed: () => _edit(tx),
             kind: DsButtonKind.outlined,
             expand: true,
             minHeight: 48,

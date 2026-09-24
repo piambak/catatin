@@ -388,8 +388,7 @@ class _DayGroup extends StatelessWidget {
               itemCount: txs.length,
               separatorBuilder: (_, __) =>
                 Divider(height: 0.5, indent: 56, color: DS.hairline),
-              itemBuilder: (_, i) => TxListTile(
-                tx: txs[i], onTap: () {}),
+              itemBuilder: (_, i) => TxListTile(tx: txs[i]),
             ),
           ),
         ],
@@ -576,7 +575,7 @@ class _CalendarTabState extends State<_CalendarTab> {
               shrinkWrap:true,
               itemCount:txs.length,
               separatorBuilder:(_,__)=>Divider(height:.5,color:DS.hairline),
-              itemBuilder:(_,i)=>TxListTile(tx:txs[i],onTap:(){}),
+              itemBuilder:(_,i)=>TxListTile(tx:txs[i]),
             ),
           ),
         ])),
@@ -1699,9 +1698,10 @@ class _FrequentList extends StatelessWidget {
           .fold(0.0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
         return Column(children: [
           if (e.key > 0) Divider(height: 0.5, color: DS.hairline),
+          // Ringkasan per keterangan, bukan satu transaksi — tidak punya detail.
           TxListTile(
             tx: tx.copyWith(amount: amtTotal.abs()),
-            onTap: () {}),
+            interactive: false),
         ]);
       }).toList(),
     );
