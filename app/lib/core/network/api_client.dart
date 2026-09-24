@@ -7,7 +7,6 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/app_config.dart';
 import '../constants/app_constants.dart';
@@ -45,7 +44,10 @@ class ApiException implements Exception {
   String get userMessage {
     switch (statusCode) {
       case 400:
-        return errors?.values.first?.toString() ?? 'Data tidak valid.';
+        // firstOrNull: `errors` boleh kosong — dulu `.first` melempar
+        // StateError di sini, jadi penanganan galatnya sendiri yang crash
+        // (T-37).
+        return errors?.values.firstOrNull?.toString() ?? 'Data tidak valid.';
       case 401:
         return 'Sesi Anda telah berakhir. Silakan masuk kembali.';
       case 403:
@@ -99,22 +101,18 @@ class ApiClient {
       },
     ));
 
+    // Hanya build debug (lihat AppConfig.apiLogEnabled, T-28). Dipasang
+    // SEBELUM AuthInterceptor supaya galat dan respons terlihat sebelum
+    // interceptor itu menanganinya.
+    if (AppConfig.apiLogEnabled) {
+      dio.interceptors.add(_RedactingLogger());
+    }
+
     dio.interceptors.add(AuthInterceptor(
       dio,
       onSessionEnded: () =>
           (ApiClient.onSessionEnded ?? StorageService.clearSession)(),
     ));
-
-    if (AppConfig.enableApiLog) {
-      dio.interceptors.add(PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        compact: true,
-        maxWidth: 90,
-      ));
-    }
 
     return dio;
   }
@@ -347,6 +345,74 @@ enum _Refresh {
 
   /// Server tidak terjangkau atau sedang bermasalah; sesi dibiarkan.
   offline,
+}
+
+// ── Log request tersamarkan ─────────────────────────────────────────────────
+
+/// Kunci yang nilainya tidak pernah boleh tercetak, di header maupun body.
+const _sensitiveKeys = {
+  'authorization',
+  'password',
+  'current_password',
+  'new_password',
+  'access_token',
+  'refresh_token',
+};
+
+/// Menyamarkan nilai sensitif di [value] secara rekursif (map & list).
+@visibleForTesting
+Object? redactForLog(Object? value) {
+  if (value is Map) {
+    return {
+      for (final entry in value.entries)
+        entry.key: _sensitiveKeys.contains(entry.key.toString().toLowerCase())
+            ? '***'
+            : redactForLog(entry.value),
+    };
+  }
+  if (value is List) return [for (final item in value) redactForLog(item)];
+  return value;
+}
+
+/// Mencetak request & respons untuk debugging, dengan nilai sensitif
+/// disamarkan. Yang disamarkan hanya salinan untuk dicetak; request yang
+/// dikirim ke server tetap utuh.
+///
+/// Menggantikan `PrettyDioLogger`, yang mencetak header `Authorization`, kata
+/// sandi, dan refresh token apa adanya (T-28).
+class _RedactingLogger extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    debugPrint('[api] → ${options.method} ${options.uri}');
+    debugPrint('[api]   header ${redactForLog(options.headers)}');
+    if (options.data != null) {
+      debugPrint('[api]   body ${redactForLog(options.data)}');
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
+    final req = response.requestOptions;
+    debugPrint('[api] ← ${response.statusCode} ${req.method} ${req.uri}');
+    debugPrint('[api]   body ${redactForLog(response.data)}');
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final req = err.requestOptions;
+    final response = err.response;
+    debugPrint('[api] ✗ ${response?.statusCode ?? err.type.name} '
+        '${req.method} ${req.uri}');
+    if (response != null) {
+      debugPrint('[api]   body ${redactForLog(response.data)}');
+    }
+    handler.next(err);
+  }
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────────
