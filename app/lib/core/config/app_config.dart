@@ -23,6 +23,8 @@
 // Catatan: `String.fromEnvironment` hanya bisa dibaca sebagai `const`, jadi
 // semua field di bawah wajib `static const`.
 
+import 'package:flutter/foundation.dart';
+
 /// Dari mana aplikasi mengambil data.
 enum DataSource {
   /// Semua data dari seed lokal. Tidak ada request jaringan sama sekali.
@@ -79,8 +81,14 @@ class AppConfig {
   static const String oauthRedirectMobile =
       'com.catatin.catatin://login-callback';
 
-  /// Cetak request/response HTTP ke konsol. Jangan diaktifkan di rilis publik.
+  /// Nilai mentah `ENABLE_API_LOG`. Jangan dibaca langsung — pakai
+  /// [apiLogEnabled], yang juga memeriksa mode build.
   static const bool enableApiLog = bool.fromEnvironment('ENABLE_API_LOG');
+
+  /// Cetak request/response HTTP ke konsol — HANYA di build debug. Build rilis
+  /// tidak pernah mencetak, walau `ENABLE_API_LOG=true` salah pasang di
+  /// workflow: log jaringan memuat token dan kata sandi (T-28).
+  static bool get apiLogEnabled => enableApiLog && kDebugMode;
 
   static const int connectTimeoutMs =
       int.fromEnvironment('API_CONNECT_TIMEOUT_MS', defaultValue: 15000);

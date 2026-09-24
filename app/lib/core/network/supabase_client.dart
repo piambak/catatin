@@ -48,7 +48,7 @@ class SupabaseBackend {
         // ditukar saat aplikasi menerimanya.
         detectSessionInUri: true,
       ),
-      debug: AppConfig.enableApiLog,
+      debug: AppConfig.apiLogEnabled,
     );
 
     if (kIsWeb) {
