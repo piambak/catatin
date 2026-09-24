@@ -548,6 +548,17 @@ luar 2000–2099, atau `end_date` sebelum `start_date`, semuanya
 `400 validation_failed` dengan satu field di `details`. Template milik akun
 lain atau yang tidak ada balas `404 not_found`.
 
+**Dibuktikan di staging (24 Sep 2026, #43).** `POST /recurring` dengan body
+contoh di atas, pada hari WIB 24 Sep, menghasilkan `next_date` `2026-10-01`
+dan `is_active: true` dari trigger, kategori `ec4` persis contoh, dan **nol**
+transaksi yang langsung terbit karena 24 Sep bukan tanggal kemunculan.
+`POST /recurring/{id}/stop` lalu menjadikan `is_active: false` dan
+`next_date: null`. Di mode Supabase barisnya juga memuat `user_id`,
+`category_id`, `updated_at`, dan `category.sort_order`, serta `amount` sebagai
+`1500000.00`; klien mengabaikan field tambahan itu. Uji dijalankan sebagai
+pengguna `authenticated` dalam satu transaksi yang dibatalkan, jadi staging
+tidak berubah.
+
 ---
 
 ### Lampiran struk
