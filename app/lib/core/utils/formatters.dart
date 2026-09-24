@@ -78,11 +78,11 @@ class Pct {
   static final _formats = <int, NumberFormat>{};
 
   static NumberFormat _fixed(int decimals) => _formats.putIfAbsent(
-        decimals,
-        () => NumberFormat.decimalPattern('id_ID')
-          ..minimumFractionDigits = decimals
-          ..maximumFractionDigits = decimals,
-      );
+    decimals,
+    () => NumberFormat.decimalPattern('id_ID')
+      ..minimumFractionDigits = decimals
+      ..maximumFractionDigits = decimals,
+  );
 }
 
 // ── Date ──────────────────────────────────────────────────────────────────────
@@ -90,9 +90,9 @@ class Pct {
 class Tanggal {
   Tanggal._();
 
-  static final _long  = DateFormat('d MMMM yyyy', 'id_ID');
+  static final _long = DateFormat('d MMMM yyyy', 'id_ID');
   static final _short = DateFormat('d MMM', 'id_ID');
-  static final _api   = DateFormat('yyyy-MM-dd');
+  static final _api = DateFormat('yyyy-MM-dd');
   static final _month = DateFormat('MMMM yyyy', 'id_ID');
 
   /// 14 Oktober 2025
@@ -111,8 +111,7 @@ class Tanggal {
   static DateTime fromApi(String s) => DateTime.parse(s).toLocal();
 
   /// Days remaining from today
-  static int daysUntil(DateTime date) =>
-      date.difference(DateTime.now()).inDays;
+  static int daysUntil(DateTime date) => date.difference(DateTime.now()).inDays;
 }
 
 // ── Number ────────────────────────────────────────────────────────────────────
@@ -120,6 +119,5 @@ class Tanggal {
 class Num {
   Num._();
 
-  static String format(num n) =>
-      NumberFormat('#,###', 'id_ID').format(n);
+  static String format(num n) => NumberFormat('#,###', 'id_ID').format(n);
 }

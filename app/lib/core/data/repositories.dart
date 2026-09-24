@@ -41,10 +41,7 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<AuthResponse> login({
-    required String email,
-    required String password,
-  });
+  Future<AuthResponse> login({required String email, required String password});
 
   /// Profil pengguna yang sedang login.
   Future<UserModel> me();
@@ -129,7 +126,9 @@ void checkTransactionFilter({
   DateTime? to,
 }) {
   if ((from != null || to != null) && (month != null || year != null)) {
-    throw ArgumentError('Filter from/to tidak boleh dicampur dengan month/year.');
+    throw ArgumentError(
+      'Filter from/to tidak boleh dicampur dengan month/year.',
+    );
   }
   if (from != null && to != null && dateOnly(to).isBefore(dateOnly(from))) {
     throw ArgumentError.value(to, 'to', 'harus sama dengan atau setelah from');
@@ -241,69 +240,80 @@ class Repos {
     reset();
   }
 
-  static DataSource get _source => _demo ? DataSource.mock : AppConfig.dataSource;
+  static DataSource get _source =>
+      _demo ? DataSource.mock : AppConfig.dataSource;
 
   static AuthRepository get auth => _auth ??= switch (_source) {
-        DataSource.mock => MockAuthRepository(),
-        DataSource.api => ApiAuthRepository(),
-        DataSource.hybrid =>
-          HybridAuthRepository(ApiAuthRepository(), MockAuthRepository()),
-        DataSource.supabase => SupabaseAuthRepository(),
-      };
+    DataSource.mock => MockAuthRepository(),
+    DataSource.api => ApiAuthRepository(),
+    DataSource.hybrid => HybridAuthRepository(
+      ApiAuthRepository(),
+      MockAuthRepository(),
+    ),
+    DataSource.supabase => SupabaseAuthRepository(),
+  };
 
-  static BusinessRepository get business =>
-      _business ??= switch (_source) {
-        DataSource.mock => MockBusinessRepository(),
-        DataSource.api => ApiBusinessRepository(),
-        DataSource.hybrid => HybridBusinessRepository(
-            ApiBusinessRepository(), MockBusinessRepository()),
-        DataSource.supabase => SupabaseBusinessRepository(),
-      };
+  static BusinessRepository get business => _business ??= switch (_source) {
+    DataSource.mock => MockBusinessRepository(),
+    DataSource.api => ApiBusinessRepository(),
+    DataSource.hybrid => HybridBusinessRepository(
+      ApiBusinessRepository(),
+      MockBusinessRepository(),
+    ),
+    DataSource.supabase => SupabaseBusinessRepository(),
+  };
 
   static TransactionRepository get transaction =>
       _transaction ??= switch (_source) {
         DataSource.mock => MockTransactionRepository(),
         DataSource.api => ApiTransactionRepository(),
         DataSource.hybrid => HybridTransactionRepository(
-            ApiTransactionRepository(), MockTransactionRepository()),
+          ApiTransactionRepository(),
+          MockTransactionRepository(),
+        ),
         DataSource.supabase => SupabaseTransactionRepository(),
       };
 
-  static DashboardRepository get dashboard =>
-      _dashboard ??= switch (_source) {
-        DataSource.mock => MockDashboardRepository(),
-        DataSource.api => ApiDashboardRepository(),
-        DataSource.hybrid => HybridDashboardRepository(
-            ApiDashboardRepository(), MockDashboardRepository()),
-        DataSource.supabase => SupabaseDashboardRepository(),
-      };
+  static DashboardRepository get dashboard => _dashboard ??= switch (_source) {
+    DataSource.mock => MockDashboardRepository(),
+    DataSource.api => ApiDashboardRepository(),
+    DataSource.hybrid => HybridDashboardRepository(
+      ApiDashboardRepository(),
+      MockDashboardRepository(),
+    ),
+    DataSource.supabase => SupabaseDashboardRepository(),
+  };
 
-  static RecurringRepository get recurring =>
-      _recurring ??= switch (_source) {
-        DataSource.mock => MockRecurringRepository(),
-        DataSource.api => ApiRecurringRepository(),
-        DataSource.hybrid => HybridRecurringRepository(
-            ApiRecurringRepository(), MockRecurringRepository()),
-        DataSource.supabase => SupabaseRecurringRepository(),
-      };
+  static RecurringRepository get recurring => _recurring ??= switch (_source) {
+    DataSource.mock => MockRecurringRepository(),
+    DataSource.api => ApiRecurringRepository(),
+    DataSource.hybrid => HybridRecurringRepository(
+      ApiRecurringRepository(),
+      MockRecurringRepository(),
+    ),
+    DataSource.supabase => SupabaseRecurringRepository(),
+  };
 
   static AttachmentRepository get attachment =>
       _attachment ??= switch (_source) {
         DataSource.mock => MockAttachmentRepository(),
         DataSource.api => ApiAttachmentRepository(),
         DataSource.hybrid => HybridAttachmentRepository(
-            ApiAttachmentRepository(), MockAttachmentRepository()),
+          ApiAttachmentRepository(),
+          MockAttachmentRepository(),
+        ),
         DataSource.supabase => SupabaseAttachmentRepository(),
       };
 
-  static SimulatorRepository get simulator =>
-      _simulator ??= switch (_source) {
-        DataSource.mock => MockSimulatorRepository(),
-        DataSource.api => ApiSimulatorRepository(),
-        DataSource.hybrid => HybridSimulatorRepository(
-            ApiSimulatorRepository(), MockSimulatorRepository()),
-        DataSource.supabase => SupabaseSimulatorRepository(),
-      };
+  static SimulatorRepository get simulator => _simulator ??= switch (_source) {
+    DataSource.mock => MockSimulatorRepository(),
+    DataSource.api => ApiSimulatorRepository(),
+    DataSource.hybrid => HybridSimulatorRepository(
+      ApiSimulatorRepository(),
+      MockSimulatorRepository(),
+    ),
+    DataSource.supabase => SupabaseSimulatorRepository(),
+  };
 
   // ── Injeksi untuk tes ───────────────────────────────────────────────────────
 

@@ -48,11 +48,11 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
 
   @override
   Widget build(BuildContext context) => DsButton(
-        label: _opening ? 'Membuka Google…' : widget.label,
-        onPressed: _opening ? null : _start,
-        kind: DsButtonKind.outlined,
-        leading: const GoogleLogo(size: 18),
-        expand: true,
-        minHeight: 50,
-      );
+    label: _opening ? 'Membuka Google…' : widget.label,
+    onPressed: _opening ? null : _start,
+    kind: DsButtonKind.outlined,
+    leading: const GoogleLogo(size: 18),
+    expand: true,
+    minHeight: 50,
+  );
 }

@@ -72,7 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           builder: (context, bp) => Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                  horizontal: Bp.pagePadding(bp), vertical: 32),
+                horizontal: Bp.pagePadding(bp),
+                vertical: 32,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Form(
@@ -87,22 +89,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Text('Sudah punya akun?',
-                              style: Typo.sans(13.5, color: DS.muted)),
+                          Text(
+                            'Sudah punya akun?',
+                            style: Typo.sans(13.5, color: DS.muted),
+                          ),
                           const SizedBox(width: 5),
                           Semantics(
                             button: true,
                             child: InkWell(
                               onTap: () => context.go(AppRoutes.login),
-                              borderRadius:
-                                  BorderRadius.circular(Radii.sm),
+                              borderRadius: BorderRadius.circular(Radii.sm),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 2, vertical: 4),
-                                child: Text('Masuk',
-                                    style: Typo.sans(13.5,
-                                        weight: FontWeight.w600,
-                                        color: DS.link)),
+                                  horizontal: 2,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  'Masuk',
+                                  style: Typo.sans(
+                                    13.5,
+                                    weight: FontWeight.w600,
+                                    color: DS.link,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -151,8 +160,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Email wajib diisi';
-                            if (!v.contains('@')) return 'Format email tidak valid';
+                            if (v == null || v.isEmpty)
+                              return 'Email wajib diisi';
+                            if (!v.contains('@'))
+                              return 'Format email tidak valid';
                             return null;
                           },
                         ),
@@ -174,7 +185,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               size: 19,
                               color: DS.faint,
                             ),
-                            onPressed: () => setState(() => _obscure = !_obscure),
+                            onPressed: () =>
+                                setState(() => _obscure = !_obscure),
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) {

@@ -95,9 +95,9 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
   }
 
   void _pickProfession(String p) => setState(() {
-        _profession = p;
-        _step = _Step.income;
-      });
+    _profession = p;
+    _step = _Step.income;
+  });
 
   void _submitIncome() {
     if (_income <= 0) return;
@@ -195,129 +195,136 @@ class _TaxConversationTabState extends State<TaxConversationTab> {
     final rows = <Widget>[];
 
     void add(String label, String value, VoidCallback onEdit) {
-      rows.add(Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: DsAnsweredRow(label: label, value: value, onEdit: onEdit),
-      ));
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: DsAnsweredRow(label: label, value: value, onEdit: onEdit),
+        ),
+      );
     }
 
     if (_profession != null) {
-      add('Pekerjaan', _profession!,
-          () => setState(() => _step = _Step.profession));
+      add(
+        'Pekerjaan',
+        _profession!,
+        () => setState(() => _step = _Step.profession),
+      );
     }
     if (_income > 0 && _step != _Step.income) {
-      add('Penghasilan per bulan', Rupiah.format(_income),
-          () => setState(() => _step = _Step.income));
+      add(
+        'Penghasilan per bulan',
+        Rupiah.format(_income),
+        () => setState(() => _step = _Step.income),
+      );
     }
     if (_ptkp != null) {
-      add('Status keluarga', _ptkpLabels[_ptkp]!,
-          () => setState(() {
-                _ptkp = null;
-                _step = _Step.ptkp;
-              }));
+      add(
+        'Status keluarga',
+        _ptkpLabels[_ptkp]!,
+        () => setState(() {
+          _ptkp = null;
+          _step = _Step.ptkp;
+        }),
+      );
     }
     return rows;
   }
 
   Widget _professionCard(bool wide) => _StepShell(
-        wide: wide,
-        step: 'Langkah 1 dari 3',
-        question: 'Anda bekerja sebagai apa?',
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final p in _professions)
-              DsChoiceChip(label: p, onTap: () => _pickProfession(p)),
-          ],
-        ),
-      );
+    wide: wide,
+    step: 'Langkah 1 dari 3',
+    question: 'Anda bekerja sebagai apa?',
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final p in _professions)
+          DsChoiceChip(label: p, onTap: () => _pickProfession(p)),
+      ],
+    ),
+  );
 
   Widget _incomeCard(bool wide) => _StepShell(
-        wide: wide,
-        step: 'Langkah 2 dari 3',
-        question: 'Berapa penghasilan Anda dalam sebulan?',
-        hint: 'Rata-rata saja, tidak harus persis.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: wide ? 340 : double.infinity),
-              child: Container(
-                padding: const EdgeInsets.only(bottom: 10),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: DS.brand, width: 2),
+    wide: wide,
+    step: 'Langkah 2 dari 3',
+    question: 'Berapa penghasilan Anda dalam sebulan?',
+    hint: 'Rata-rata saja, tidak harus persis.',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: wide ? 340 : double.infinity),
+          child: Container(
+            padding: const EdgeInsets.only(bottom: 10),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: DS.brand, width: 2)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Rp', style: Typo.mono(18, color: DS.faint)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _incomeCtrl,
+                    onChanged: _onIncomeChanged,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    autofocus: true,
+                    style: Typo.mono(wide ? 32 : 30, color: DS.ink),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      hintText: '0',
+                      hintStyle: Typo.mono(wide ? 32 : 30, color: DS.hairline),
+                    ),
                   ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('Rp', style: Typo.mono(18, color: DS.faint)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _incomeCtrl,
-                        onChanged: _onIncomeChanged,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        autofocus: true,
-                        style: Typo.mono(wide ? 32 : 30, color: DS.ink),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: '0',
-                          hintStyle: Typo.mono(wide ? 32 : 30, color: DS.hairline),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              _income > 0
-                  ? 'Ketuk kolomnya untuk mengubah.'
-                  : 'Ketik nominal tanpa titik — pemisah ribuan ditambahkan otomatis.',
-              style: Typo.sans(12.5, color: DS.faint),
-            ),
-            const SizedBox(height: 14),
-            DsButton(
-              label: _income > 0
-                  ? 'Lanjut · ${Rupiah.format(_income)}'
-                  : 'Masukkan penghasilan dulu',
-              onPressed: _income > 0 ? _submitIncome : null,
-              expand: !wide,
-              minHeight: 50,
-            ),
-          ],
+          ),
         ),
-      );
+        const SizedBox(height: 10),
+        Text(
+          _income > 0
+              ? 'Ketuk kolomnya untuk mengubah.'
+              : 'Ketik nominal tanpa titik — pemisah ribuan ditambahkan otomatis.',
+          style: Typo.sans(12.5, color: DS.faint),
+        ),
+        const SizedBox(height: 14),
+        DsButton(
+          label: _income > 0
+              ? 'Lanjut · ${Rupiah.format(_income)}'
+              : 'Masukkan penghasilan dulu',
+          onPressed: _income > 0 ? _submitIncome : null,
+          expand: !wide,
+          minHeight: 50,
+        ),
+      ],
+    ),
+  );
 
   Widget _ptkpCard(bool wide) => _StepShell(
-        wide: wide,
-        step: 'Langkah 3 dari 3',
-        question: 'Bagaimana status keluarga Anda?',
-        hint: 'Ini menentukan penghasilan tidak kena pajak (PTKP).',
-        child: Column(
-          children: [
-            for (final entry in _ptkpLabels.entries)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: DsChoiceChip(
-                  label: entry.value,
-                  trailing: entry.key.shortLabel,
-                  expand: true,
-                  onTap: () => _pickPtkp(entry.key),
-                ),
-              ),
-          ],
-        ),
-      );
+    wide: wide,
+    step: 'Langkah 3 dari 3',
+    question: 'Bagaimana status keluarga Anda?',
+    hint: 'Ini menentukan penghasilan tidak kena pajak (PTKP).',
+    child: Column(
+      children: [
+        for (final entry in _ptkpLabels.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: DsChoiceChip(
+              label: entry.value,
+              trailing: entry.key.shortLabel,
+              expand: true,
+              onTap: () => _pickPtkp(entry.key),
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 /// Bungkus kartu langkah. Di web mockup memakai bidang polos tanpa border;
@@ -342,13 +349,16 @@ class _StepShell extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!wide) ...[
-          DsLabel(step, size: 11),
-          const SizedBox(height: 8),
-        ],
-        Text(question,
-            style: Typo.sans(wide ? 20 : 19,
-                weight: FontWeight.w600, color: DS.ink, height: 1.35)),
+        if (!wide) ...[DsLabel(step, size: 11), const SizedBox(height: 8)],
+        Text(
+          question,
+          style: Typo.sans(
+            wide ? 20 : 19,
+            weight: FontWeight.w600,
+            color: DS.ink,
+            height: 1.35,
+          ),
+        ),
         if (hint != null) ...[
           const SizedBox(height: 6),
           Text(hint!, style: Typo.sans(13.5, color: DS.muted)),
@@ -448,13 +458,20 @@ class _ResultPanel extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(_taxText,
-                        style: Typo.serif(expanded ? 40 : 34,
-                            color: DS.invInk, height: 1.1)),
+                    child: Text(
+                      _taxText,
+                      style: Typo.serif(
+                        expanded ? 40 : 34,
+                        color: DS.invInk,
+                        height: 1.1,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
-                  Text(_subText,
-                      style: Typo.sans(expanded ? 14.5 : 13.5, color: DS.soft)),
+                  Text(
+                    _subText,
+                    style: Typo.sans(expanded ? 14.5 : 13.5, color: DS.soft),
+                  ),
                 ],
               ),
             ),
@@ -472,11 +489,17 @@ class _ResultPanel extends StatelessWidget {
           if (explainOpen) ...[
             const SizedBox(height: 14),
             ConstrainedBox(
-              constraints:
-                  BoxConstraints(maxWidth: expanded ? 560 : double.infinity),
-              child: Text(_explainText,
-                  style: Typo.sans(expanded ? 15 : 14.5,
-                      color: DS.invBody, height: 1.6)),
+              constraints: BoxConstraints(
+                maxWidth: expanded ? 560 : double.infinity,
+              ),
+              child: Text(
+                _explainText,
+                style: Typo.sans(
+                  expanded ? 15 : 14.5,
+                  color: DS.invBody,
+                  height: 1.6,
+                ),
+              ),
             ),
           ],
         ],

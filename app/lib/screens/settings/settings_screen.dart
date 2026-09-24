@@ -35,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _name;
   String? _email;
   BusinessProfile? _business;
+
   /// Cara masuk akun ini; `null` kalau gagal dimuat.
   Set<String>? _providers = const {};
   bool _loading = true;
@@ -61,10 +62,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Pengaturan tetap bisa dibuka — terutama tombol Keluar — walau profil
       // usaha gagal dimuat.
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.userMessage),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.userMessage),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
     Set<String>? providers = const {};
@@ -108,13 +111,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     if (!mounted) return;
     setState(() => _providers = providers);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(hadPassword
-          ? 'Kata sandi diganti.'
-          : 'Kata sandi terpasang. Sekarang Anda juga bisa masuk dengan email '
-              'dan kata sandi.'),
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          hadPassword
+              ? 'Kata sandi diganti.'
+              : 'Kata sandi terpasang. Sekarang Anda juga bisa masuk dengan email '
+                    'dan kata sandi.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -123,7 +130,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: DS.surface,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.lg)),
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
         title: Text('Keluar dari akun?', style: Typo.serif(20)),
         content: Text(
           'Anda perlu masuk lagi untuk melihat catatan dan simulasi pajak.',
@@ -136,8 +144,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Ya, keluar',
-                style: Typo.sans(14, weight: FontWeight.w600, color: DS.expense)),
+            child: Text(
+              'Ya, keluar',
+              style: Typo.sans(14, weight: FontWeight.w600, color: DS.expense),
+            ),
           ),
         ],
       ),
@@ -215,8 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.only(left: 30),
                         decoration: BoxDecoration(
-                          border:
-                              Border(left: BorderSide(color: DS.hairline)),
+                          border: Border(left: BorderSide(color: DS.hairline)),
                         ),
                         child: SingleChildScrollView(
                           child: switch (_section) {
@@ -224,17 +233,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             1 => _appearanceSection(topBorder: false),
                             2 => _aboutSection(topBorder: false),
                             _ => Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _identity(),
-                                  if (AuthService.signInMethodsEditable) ...[
-                                    const SizedBox(height: 30),
-                                    _signInSection(),
-                                  ],
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _identity(),
+                                if (AuthService.signInMethodsEditable) ...[
                                   const SizedBox(height: 30),
-                                  _logoutButton(),
+                                  _signInSection(),
                                 ],
-                              ),
+                                const SizedBox(height: 30),
+                                _logoutButton(),
+                              ],
+                            ),
                           },
                         ),
                       ),
@@ -250,45 +259,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionList() => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < _sections.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Semantics(
-                selected: _section == i,
-                button: true,
-                child: Material(
-                  color: _section == i ? DS.sunken : Colors.transparent,
-                  borderRadius: BorderRadius.circular(Radii.pill),
-                  child: InkWell(
-                    onTap: () => setState(() => _section = i),
-                    borderRadius: BorderRadius.circular(Radii.pill),
-                    child: Container(
-                      constraints: const BoxConstraints(minHeight: 48),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _sections[i],
-                        style: Typo.sans(14.5,
-                            weight: _section == i
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: _section == i ? DS.ink : DS.body),
-                      ),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (var i = 0; i < _sections.length; i++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Semantics(
+            selected: _section == i,
+            button: true,
+            child: Material(
+              color: _section == i ? DS.sunken : Colors.transparent,
+              borderRadius: BorderRadius.circular(Radii.pill),
+              child: InkWell(
+                onTap: () => setState(() => _section = i),
+                borderRadius: BorderRadius.circular(Radii.pill),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _sections[i],
+                    style: Typo.sans(
+                      14.5,
+                      weight: _section == i ? FontWeight.w600 : FontWeight.w400,
+                      color: _section == i ? DS.ink : DS.body,
                     ),
                   ),
                 ),
               ),
             ),
-        ],
-      );
+          ),
+        ),
+    ],
+  );
 
   // ── Bagian-bagian ─────────────────────────────────────────────────────────
 
   Widget _identity() {
-    final initial =
-        (_name?.trim().isNotEmpty ?? false) ? _name!.trim()[0].toUpperCase() : 'U';
+    final initial = (_name?.trim().isNotEmpty ?? false)
+        ? _name!.trim()[0].toUpperCase()
+        : 'U';
     return Row(
       children: [
         Container(
@@ -296,8 +306,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           height: 52,
           decoration: BoxDecoration(color: DS.wordmark, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: Text(initial,
-              style: Typo.sans(20, weight: FontWeight.w600, color: Colors.white)),
+          child: Text(
+            initial,
+            style: Typo.sans(20, weight: FontWeight.w600, color: Colors.white),
+          ),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -305,8 +317,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_name ?? '—',
-                  style: Typo.sans(16, weight: FontWeight.w600, color: DS.ink)),
+              Text(
+                _name ?? '—',
+                style: Typo.sans(16, weight: FontWeight.w600, color: DS.ink),
+              ),
               const SizedBox(height: 2),
               Text(_email ?? '—', style: Typo.sans(13, color: DS.muted)),
             ],
@@ -332,14 +346,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 DsListRow(title: 'Jenis usaha', trailing: b.businessType),
                 if (b.npwp != null) DsListRow(title: 'NPWP', trailing: b.npwp!),
                 DsListRow(
-                    title: 'Karyawan',
-                    trailing: '${b.employeeCount} orang'),
+                  title: 'Karyawan',
+                  trailing: '${b.employeeCount} orang',
+                ),
                 DsListRow(
                   title: 'Status PKP',
                   trailing: b.pkpStatus ? 'PKP' : 'Non-PKP',
-                  trailingStyle: Typo.sans(14,
-                      weight: FontWeight.w600,
-                      color: b.pkpStatus ? DS.brandDeep : DS.income),
+                  trailingStyle: Typo.sans(
+                    14,
+                    weight: FontWeight.w600,
+                    color: b.pkpStatus ? DS.brandDeep : DS.income,
+                  ),
                   showDivider: false,
                 ),
               ],
@@ -362,8 +379,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Mode gelap',
-                        style: Typo.sans(15, color: DS.body, height: 1.3)),
+                    Text(
+                      'Mode gelap',
+                      style: Typo.sans(15, color: DS.body, height: 1.3),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       dark
@@ -405,7 +424,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (hasGoogle) const DsListRow(title: 'Google', trailing: 'Terhubung'),
+          if (hasGoogle)
+            const DsListRow(title: 'Google', trailing: 'Terhubung'),
           DsListRow(
             title: 'Email & kata sandi',
             trailing: providers == null
@@ -420,9 +440,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             hasPassword
                 ? 'Masuk dengan $email dan kata sandi'
-                    '${hasGoogle ? ', atau dengan Google' : ''}.'
+                      '${hasGoogle ? ', atau dengan Google' : ''}.'
                 : 'Pasang kata sandi supaya akun ini juga bisa dibuka dengan '
-                    '$email dan kata sandi — tanpa membuat akun baru.',
+                      '$email dan kata sandi — tanpa membuat akun baru.',
             style: Typo.sans(13, color: DS.muted, height: 1.5),
           ),
           const SizedBox(height: 14),
@@ -446,22 +466,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           DsListRow(title: 'Basis hukum PPh Final', trailing: 'PP 23/2018'),
           DsListRow(title: 'Basis hukum PPh 21', trailing: 'PMK 168/2023'),
           DsListRow(
-              title: 'Basis hukum PPN',
-              trailing: 'UU HPP 2021',
-              showDivider: false),
+            title: 'Basis hukum PPN',
+            trailing: 'UU HPP 2021',
+            showDivider: false,
+          ),
         ],
       ),
     );
   }
 
   Widget _logoutButton() => DsButton(
-        label: 'Keluar dari akun',
-        onPressed: _logout,
-        kind: DsButtonKind.outlined,
-        expand: true,
-        minHeight: 50,
-        foreground: DS.expense,
-      );
+    label: 'Keluar dari akun',
+    onPressed: _logout,
+    kind: DsButtonKind.outlined,
+    expand: true,
+    minHeight: 50,
+    foreground: DS.expense,
+  );
 }
 
 // ── Elemen kecil ─────────────────────────────────────────────────────────────
@@ -473,17 +494,18 @@ class _EditLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text('Ubah',
-                style:
-                    Typo.sans(13.5, weight: FontWeight.w500, color: DS.link)),
-          ),
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Text(
+          'Ubah',
+          style: Typo.sans(13.5, weight: FontWeight.w500, color: DS.link),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _SetupPrompt extends StatelessWidget {
@@ -514,14 +536,14 @@ class _SettingsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: DS.hairline,
-            borderRadius: BorderRadius.circular(Radii.sm),
-          ),
-        );
+      width: w,
+      height: h,
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: DS.hairline,
+        borderRadius: BorderRadius.circular(Radii.sm),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),

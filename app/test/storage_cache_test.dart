@@ -34,40 +34,45 @@ void main() {
     expect(await StorageService.isLoggedIn(), isFalse);
   });
 
-  test('onboarding mengikuti setOnboarded, clearBusiness, clearSession',
-      () async {
-    expect(await StorageService.isOnboarded(), isFalse);
+  test(
+    'onboarding mengikuti setOnboarded, clearBusiness, clearSession',
+    () async {
+      expect(await StorageService.isOnboarded(), isFalse);
 
-    await StorageService.setOnboarded();
-    expect(await StorageService.isOnboarded(), isTrue);
+      await StorageService.setOnboarded();
+      expect(await StorageService.isOnboarded(), isTrue);
 
-    await StorageService.clearBusiness();
-    expect(await StorageService.isOnboarded(), isFalse);
+      await StorageService.clearBusiness();
+      expect(await StorageService.isOnboarded(), isFalse);
 
-    await StorageService.setOnboarded();
-    await StorageService.clearSession();
-    expect(await StorageService.isOnboarded(), isFalse);
-  });
+      await StorageService.setOnboarded();
+      await StorageService.clearSession();
+      expect(await StorageService.isOnboarded(), isFalse);
+    },
+  );
 
   test('bacaan pertama tetap dari penyimpanan', () async {
     SharedPreferences.setMockInitialValues({StorageKeys.onboarded: true});
-    FlutterSecureStorage.setMockInitialValues(
-        {StorageKeys.accessToken: 'tersimpan'});
+    FlutterSecureStorage.setMockInitialValues({
+      StorageKeys.accessToken: 'tersimpan',
+    });
     StorageService.resetCache();
 
     expect(await StorageService.isOnboarded(), isTrue);
     expect(await StorageService.isLoggedIn(), isTrue);
   });
 
-  test('penulisan selama pembacaan pertama tidak tertimpa hasil baca lama',
-      () async {
-    // Baca pertama dimulai sebelum masuk berhasil. Apa pun urutan selesainya,
-    // hasil bacanya ("belum masuk") lebih tua dari penulisan token dan tidak
-    // boleh menang.
-    final reading = StorageService.isLoggedIn();
-    await StorageService.saveTokens(accessToken: 'a', refreshToken: 'r');
-    await reading;
+  test(
+    'penulisan selama pembacaan pertama tidak tertimpa hasil baca lama',
+    () async {
+      // Baca pertama dimulai sebelum masuk berhasil. Apa pun urutan selesainya,
+      // hasil bacanya ("belum masuk") lebih tua dari penulisan token dan tidak
+      // boleh menang.
+      final reading = StorageService.isLoggedIn();
+      await StorageService.saveTokens(accessToken: 'a', refreshToken: 'r');
+      await reading;
 
-    expect(await StorageService.isLoggedIn(), isTrue);
-  });
+      expect(await StorageService.isLoggedIn(), isTrue);
+    },
+  );
 }

@@ -64,10 +64,10 @@ class Bp {
 
   /// Margin tepi halaman per rentang.
   static double pagePadding(Breakpoint bp) => switch (bp) {
-        Breakpoint.compact => 22,
-        Breakpoint.medium => 32,
-        Breakpoint.expanded => 44,
-      };
+    Breakpoint.compact => 22,
+    Breakpoint.medium => 32,
+    Breakpoint.expanded => 44,
+  };
 }
 
 /// Membangun ulang subtree saat rentang breakpoint berubah.
@@ -81,7 +81,7 @@ class BreakpointBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) =>
-            builder(context, Bp.fromWidth(constraints.maxWidth)),
-      );
+    builder: (context, constraints) =>
+        builder(context, Bp.fromWidth(constraints.maxWidth)),
+  );
 }

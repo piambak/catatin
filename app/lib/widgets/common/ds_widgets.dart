@@ -23,8 +23,10 @@ class DsLabel extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) =>
-      Text(text.toUpperCase(), style: Typo.label(size: size, color: color));
+  Widget build(BuildContext context) => Text(
+    text.toUpperCase(),
+    style: Typo.label(size: size, color: color),
+  );
 }
 
 /// Pil status dengan titik di kiri — dipakai untuk "8 hari lagi".
@@ -64,8 +66,11 @@ class DsStatusPill extends StatelessWidget {
           const SizedBox(width: 7),
           Text(
             text,
-            style: Typo.sans(12.5,
-                weight: FontWeight.w600, color: foreground ?? DS.brandInk),
+            style: Typo.sans(
+              12.5,
+              weight: FontWeight.w600,
+              color: foreground ?? DS.brandInk,
+            ),
           ),
         ],
       ),
@@ -121,10 +126,11 @@ class DsButton extends StatelessWidget {
     final text = Text(
       label,
       textAlign: TextAlign.center,
-      style: Typo.sans(15,
-          weight:
-              kind == DsButtonKind.filled ? FontWeight.w600 : FontWeight.w500,
-          color: fg),
+      style: Typo.sans(
+        15,
+        weight: kind == DsButtonKind.filled ? FontWeight.w600 : FontWeight.w500,
+        color: fg,
+      ),
     );
 
     final button = Material(
@@ -191,8 +197,7 @@ class DsChoiceChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: DS.surface,
         border: Border.all(color: DS.border),
-        borderRadius:
-            BorderRadius.circular(expand ? Radii.md : Radii.pill),
+        borderRadius: BorderRadius.circular(expand ? Radii.md : Radii.pill),
       ),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -254,19 +259,28 @@ class DsAnsweredRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label, style: Typo.sans(12, color: DS.faint, height: 1.3)),
+                    Text(
+                      label,
+                      style: Typo.sans(12, color: DS.faint, height: 1.3),
+                    ),
                     const SizedBox(height: 2),
-                    Text(value,
-                        style: Typo.sans(15,
-                            weight: FontWeight.w500,
-                            color: DS.ink,
-                            height: 1.3)),
+                    Text(
+                      value,
+                      style: Typo.sans(
+                        15,
+                        weight: FontWeight.w500,
+                        color: DS.ink,
+                        height: 1.3,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              Text('Ubah',
-                  style: Typo.sans(13, weight: FontWeight.w500, color: DS.link)),
+              Text(
+                'Ubah',
+                style: Typo.sans(13, weight: FontWeight.w500, color: DS.link),
+              ),
             ],
           ),
         ),
@@ -286,8 +300,8 @@ class DsStepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ??
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
         color: DS.surface,
         border: Border.all(color: DS.border),
@@ -345,19 +359,23 @@ class DsListRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title,
-                    style: Typo.sans(15, color: DS.body, height: 1.3)),
+                Text(title, style: Typo.sans(15, color: DS.body, height: 1.3)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
-                  Text(subtitle!,
-                      style: Typo.sans(12.5, color: DS.faint, height: 1.3)),
+                  Text(
+                    subtitle!,
+                    style: Typo.sans(12.5, color: DS.faint, height: 1.3),
+                  ),
                 ],
               ],
             ),
           ),
           if (trailing != null) ...[
             const SizedBox(width: 12),
-            Text(trailing!, style: trailingStyle ?? Typo.mono(14, color: DS.muted)),
+            Text(
+              trailing!,
+              style: trailingStyle ?? Typo.mono(14, color: DS.muted),
+            ),
           ],
         ],
       ),
@@ -394,9 +412,7 @@ class DsSection extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.only(top: topBorder ? 22 : 0),
       decoration: BoxDecoration(
-        border: topBorder
-            ? Border(top: BorderSide(color: DS.hairline))
-            : null,
+        border: topBorder ? Border(top: BorderSide(color: DS.hairline)) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,14 +470,15 @@ class DsTimelineNode extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           title,
-          style: Typo.sans(15,
-              weight: active ? FontWeight.w600 : FontWeight.w500,
-              color: active ? DS.ink : DS.body,
-              height: 1.3),
+          style: Typo.sans(
+            15,
+            weight: active ? FontWeight.w600 : FontWeight.w500,
+            color: active ? DS.ink : DS.body,
+            height: 1.3,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(amount,
-            style: Typo.mono(14, color: active ? DS.body : DS.muted)),
+        Text(amount, style: Typo.mono(14, color: active ? DS.body : DS.muted)),
       ],
     );
   }
@@ -484,7 +501,10 @@ class DsWordmark extends StatelessWidget {
             style: Typo.serif(size, color: color ?? DS.wordmark),
             children: [
               const TextSpan(text: 'Catat'),
-              TextSpan(text: 'in', style: Typo.serif(size, color: DS.brand)),
+              TextSpan(
+                text: 'in',
+                style: Typo.serif(size, color: DS.brand),
+              ),
             ],
           ),
         ),
@@ -532,8 +552,10 @@ class DsField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          label,
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
@@ -552,8 +574,10 @@ class DsField extends StatelessWidget {
             filled: true,
             fillColor: enabled ? DS.surface : DS.sunken,
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 15,
+            ),
             border: _border(DS.border),
             enabledBorder: _border(DS.border),
             focusedBorder: _border(DS.brand, width: 1.5),
@@ -585,15 +609,15 @@ class DsLabeledDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(child: Divider(color: DS.hairline)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(label, style: Typo.sans(12, color: DS.faint)),
-          ),
-          Expanded(child: Divider(color: DS.hairline)),
-        ],
-      );
+    children: [
+      Expanded(child: Divider(color: DS.hairline)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text(label, style: Typo.sans(12, color: DS.faint)),
+      ),
+      Expanded(child: Divider(color: DS.hairline)),
+    ],
+  );
 }
 
 /// Banner galat inline — dipakai di form auth.
@@ -618,8 +642,10 @@ class DsErrorBanner extends StatelessWidget {
           Icon(Icons.error_outline_rounded, color: DS.expense, size: 17),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message,
-                style: Typo.sans(13, color: DS.expense, height: 1.4)),
+            child: Text(
+              message,
+              style: Typo.sans(13, color: DS.expense, height: 1.4),
+            ),
           ),
         ],
       ),
@@ -629,11 +655,7 @@ class DsErrorBanner extends StatelessWidget {
 
 /// Bar progres tipis — ambang PKP.
 class DsProgressBar extends StatelessWidget {
-  const DsProgressBar({
-    super.key,
-    required this.value,
-    this.semanticLabel,
-  });
+  const DsProgressBar({super.key, required this.value, this.semanticLabel});
 
   /// 0..1
   final double value;
@@ -664,7 +686,6 @@ class DsProgressBar extends StatelessWidget {
     );
   }
 }
-
 
 /// Tingkat kepercayaan angka pajak yang sedang ditampilkan.
 enum TrustLevel {
@@ -722,7 +743,9 @@ class DsTrustChip extends StatelessWidget {
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: Space.x3, vertical: Space.x1 + 2),
+            horizontal: Space.x3,
+            vertical: Space.x1 + 2,
+          ),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(Radii.pill),

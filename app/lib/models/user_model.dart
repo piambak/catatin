@@ -16,20 +16,20 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        image: json['image'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    email: json['email'] as String,
+    image: json['image'] as String?,
+    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'image': image,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'image': image,
+    'created_at': createdAt.toIso8601String(),
+  };
 
   String get initials {
     final parts = name.trim().split(' ');
@@ -52,8 +52,8 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) => AuthResponse(
-        accessToken: json['access_token'] as String,
-        refreshToken: json['refresh_token'] as String,
-        user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
-      );
+    accessToken: json['access_token'] as String,
+    refreshToken: json['refresh_token'] as String,
+    user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+  );
 }

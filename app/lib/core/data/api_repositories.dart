@@ -90,11 +90,10 @@ class ApiAuthRepository implements AuthRepository {
   Future<void> setPassword({
     required String newPassword,
     String? currentPassword,
-  }) async =>
-      throw const ApiException(
-        statusCode: 409,
-        message: 'Mengganti kata sandi belum tersedia.',
-      );
+  }) async => throw const ApiException(
+    statusCode: 409,
+    message: 'Mengganti kata sandi belum tersedia.',
+  );
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -115,10 +114,13 @@ class ApiBusinessRepository implements BusinessRepository {
   @override
   Future<BusinessProfile> create(BusinessDraft draft) async {
     try {
-      final res =
-          await ApiClient.post(ApiEndpoints.business, data: draft.toJson());
+      final res = await ApiClient.post(
+        ApiEndpoints.business,
+        data: draft.toJson(),
+      );
       return BusinessProfile.fromJson(
-          res.data['profile'] as Map<String, dynamic>);
+        res.data['profile'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -132,7 +134,8 @@ class ApiBusinessRepository implements BusinessRepository {
         data: draft.toJson(),
       );
       return BusinessProfile.fromJson(
-          res.data['profile'] as Map<String, dynamic>);
+        res.data['profile'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -166,13 +169,16 @@ class ApiTransactionRepository implements TransactionRepository {
   }) async {
     checkTransactionFilter(month: month, year: year, from: from, to: to);
     try {
-      final res = await ApiClient.get(ApiEndpoints.transactions, params: {
-        'month': ?month,
-        'year': ?year,
-        if (from != null) 'from': Tanggal.api(from),
-        if (to != null) 'to': Tanggal.api(to),
-        'business_id': ?businessId,
-      });
+      final res = await ApiClient.get(
+        ApiEndpoints.transactions,
+        params: {
+          'month': ?month,
+          'year': ?year,
+          if (from != null) 'from': Tanggal.api(from),
+          if (to != null) 'to': Tanggal.api(to),
+          'business_id': ?businessId,
+        },
+      );
       return (res.data['transactions'] as List)
           .map((e) => TxData.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -256,10 +262,13 @@ class ApiRecurringRepository implements RecurringRepository {
   @override
   Future<RecurringTemplate> createTemplate(RecurringDraft draft) async {
     try {
-      final res =
-          await ApiClient.post(ApiEndpoints.recurring, data: draft.toJson());
+      final res = await ApiClient.post(
+        ApiEndpoints.recurring,
+        data: draft.toJson(),
+      );
       return RecurringTemplate.fromJson(
-          res.data['template'] as Map<String, dynamic>);
+        res.data['template'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -276,7 +285,8 @@ class ApiRecurringRepository implements RecurringRepository {
         data: draft.toJson(),
       );
       return RecurringTemplate.fromJson(
-          res.data['template'] as Map<String, dynamic>);
+        res.data['template'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -287,7 +297,8 @@ class ApiRecurringRepository implements RecurringRepository {
     try {
       final res = await ApiClient.post(ApiEndpoints.recurringStop(id));
       return RecurringTemplate.fromJson(
-          res.data['template'] as Map<String, dynamic>);
+        res.data['template'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -332,17 +343,22 @@ class ApiAttachmentRepository implements AttachmentRepository {
         data: form,
       );
       return TxAttachment.fromJson(
-          res.data['attachment'] as Map<String, dynamic>);
+        res.data['attachment'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
   }
 
   @override
-  Future<void> deleteAttachment(String transactionId, String attachmentId) async {
+  Future<void> deleteAttachment(
+    String transactionId,
+    String attachmentId,
+  ) async {
     try {
       await ApiClient.delete(
-          ApiEndpoints.attachmentById(transactionId, attachmentId));
+        ApiEndpoints.attachmentById(transactionId, attachmentId),
+      );
     } on DioException catch (e) {
       throw apiException(e);
     }
@@ -356,10 +372,10 @@ class ApiDashboardRepository implements DashboardRepository {
   Future<MonthlySummary> getSummary({int? month, int? year}) async {
     try {
       final now = DateTime.now();
-      final res = await ApiClient.get(ApiEndpoints.dashboardSummary, params: {
-        'month': month ?? now.month,
-        'year': year ?? now.year,
-      });
+      final res = await ApiClient.get(
+        ApiEndpoints.dashboardSummary,
+        params: {'month': month ?? now.month, 'year': year ?? now.year},
+      );
       return MonthlySummary.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);
@@ -412,13 +428,16 @@ class ApiDashboardRepository implements DashboardRepository {
   }
 
   @override
-  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+  Future<MonthClose> getMonthClose({
+    required int month,
+    required int year,
+  }) async {
     checkMonthParam(month: month);
     try {
-      final res = await ApiClient.get(ApiEndpoints.dashboardClose, params: {
-        'month': month,
-        'year': year,
-      });
+      final res = await ApiClient.get(
+        ApiEndpoints.dashboardClose,
+        params: {'month': month, 'year': year},
+      );
       return MonthClose.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);
@@ -435,10 +454,10 @@ class ApiSimulatorRepository implements SimulatorRepository {
     final m = month ?? now.month;
     checkMonthParam(month: m);
     try {
-      final res = await ApiClient.get(ApiEndpoints.simulatorInputs, params: {
-        'month': m,
-        'year': year ?? now.year,
-      });
+      final res = await ApiClient.get(
+        ApiEndpoints.simulatorInputs,
+        params: {'month': m, 'year': year ?? now.year},
+      );
       return SimulatorInputs.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw apiException(e);

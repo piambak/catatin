@@ -24,15 +24,69 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Baris `monthly_totals` data contoh staging (supabase/staging/data_contoh.sql)
 /// Januari–September 2026 — dicek langsung di staging 22 Sep 2026.
 const _baris2026 = <Map<String, dynamic>>[
-  {'month': 1, 'income': 19200000, 'expense': 16300000, 'hpp': 5800000, 'tx_count': 6},
-  {'month': 2, 'income': 21500000, 'expense': 17000000, 'hpp': 6500000, 'tx_count': 6},
-  {'month': 3, 'income': 38000000, 'expense': 21900000, 'hpp': 11400000, 'tx_count': 6},
-  {'month': 4, 'income': 41300000, 'expense': 22900000, 'hpp': 12400000, 'tx_count': 6},
-  {'month': 5, 'income': 44000000, 'expense': 23700000, 'hpp': 13200000, 'tx_count': 6},
-  {'month': 6, 'income': 45500000, 'expense': 24200000, 'hpp': 13700000, 'tx_count': 6},
-  {'month': 7, 'income': 47000000, 'expense': 24600000, 'hpp': 14100000, 'tx_count': 6},
-  {'month': 8, 'income': 28500000, 'expense': 18200000, 'hpp': 6200000, 'tx_count': 12},
-  {'month': 9, 'income': 15400000, 'expense': 4750000, 'hpp': 2600000, 'tx_count': 6},
+  {
+    'month': 1,
+    'income': 19200000,
+    'expense': 16300000,
+    'hpp': 5800000,
+    'tx_count': 6,
+  },
+  {
+    'month': 2,
+    'income': 21500000,
+    'expense': 17000000,
+    'hpp': 6500000,
+    'tx_count': 6,
+  },
+  {
+    'month': 3,
+    'income': 38000000,
+    'expense': 21900000,
+    'hpp': 11400000,
+    'tx_count': 6,
+  },
+  {
+    'month': 4,
+    'income': 41300000,
+    'expense': 22900000,
+    'hpp': 12400000,
+    'tx_count': 6,
+  },
+  {
+    'month': 5,
+    'income': 44000000,
+    'expense': 23700000,
+    'hpp': 13200000,
+    'tx_count': 6,
+  },
+  {
+    'month': 6,
+    'income': 45500000,
+    'expense': 24200000,
+    'hpp': 13700000,
+    'tx_count': 6,
+  },
+  {
+    'month': 7,
+    'income': 47000000,
+    'expense': 24600000,
+    'hpp': 14100000,
+    'tx_count': 6,
+  },
+  {
+    'month': 8,
+    'income': 28500000,
+    'expense': 18200000,
+    'hpp': 6200000,
+    'tx_count': 12,
+  },
+  {
+    'month': 9,
+    'income': 15400000,
+    'expense': 4750000,
+    'hpp': 2600000,
+    'tx_count': 6,
+  },
 ];
 
 /// Contoh balasan di wiki/arsitektur/backend-dan-api.md — hasil aturan di atas
@@ -89,9 +143,13 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -149,7 +207,10 @@ void main() {
       expect(s.business?.pkpStatus, isFalse);
       expect(s.business?.businessType, 'DAGANG');
       final tanpa = simulatorInputsFromMonthlyTotals(
-          month: 9, year: 2026, current: _baris2026);
+        month: 9,
+        year: 2026,
+        current: _baris2026,
+      );
       expect(tanpa.business, isNull);
     });
 
@@ -182,7 +243,11 @@ void main() {
     });
 
     test('belum ada data sama sekali → semua nol, bukan galat', () {
-      final s = simulatorInputsFrom(month: 9, year: 2026, current: agg(2026, []));
+      final s = simulatorInputsFrom(
+        month: 9,
+        year: 2026,
+        current: agg(2026, []),
+      );
       expect(s.average.monthsWithData, 0);
       expect(s.average.income, 0);
       expect(s.currentMonth.txCount, 0);
@@ -205,7 +270,10 @@ void main() {
       );
       expect((s.average.fromMonth, s.average.fromYear), (11, 2026));
       expect((s.average.toMonth, s.average.toYear), (1, 2027));
-      expect(s.average.income, 2000000); // (1 + 2 + 3) juta / 3; Oktober tidak ikut
+      expect(
+        s.average.income,
+        2000000,
+      ); // (1 + 2 + 3) juta / 3; Oktober tidak ikut
       expect(s.average.txCount, 3);
       expect(s.ytdOmzet, 3500000); // YTD hanya tahun acuan
     });
@@ -224,13 +292,16 @@ void main() {
       expect(s.average.income, 3000000);
     });
 
-    test('jendela menyeberang tahun tanpa agregat tahun lalu → ArgumentError',
-        () {
-      expect(
-        () => simulatorInputsFrom(month: 3, year: 2027, current: agg(2027, [])),
-        throwsArgumentError,
-      );
-    });
+    test(
+      'jendela menyeberang tahun tanpa agregat tahun lalu → ArgumentError',
+      () {
+        expect(
+          () =>
+              simulatorInputsFrom(month: 3, year: 2027, current: agg(2027, [])),
+          throwsArgumentError,
+        );
+      },
+    );
   });
 
   group('MockSimulatorRepository', () {
@@ -239,41 +310,49 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('dari agregat transaksi contoh, termasuk transaksi baru sesi ini',
-        () async {
-      final income =
-          MockData.txCategories.firstWhere((c) => c.type == 'INCOME');
-      final tx = MockTransactionRepository();
-      for (final (date, amount) in [
-        ('2032-11-10', 1000000.0),
-        ('2032-12-10', 2000000.0),
-        ('2033-01-10', 3000000.0),
-        ('2033-02-05', 500000.0),
-      ]) {
-        await tx.createTransaction(TransactionDraft(
-          businessId: 'biz',
-          date: date,
-          type: 'INCOME',
-          amount: amount,
-          categoryId: income.id,
-          paymentMethod: 'CASH',
-        ));
-      }
+    test(
+      'dari agregat transaksi contoh, termasuk transaksi baru sesi ini',
+      () async {
+        final income = MockData.txCategories.firstWhere(
+          (c) => c.type == 'INCOME',
+        );
+        final tx = MockTransactionRepository();
+        for (final (date, amount) in [
+          ('2032-11-10', 1000000.0),
+          ('2032-12-10', 2000000.0),
+          ('2033-01-10', 3000000.0),
+          ('2033-02-05', 500000.0),
+        ]) {
+          await tx.createTransaction(
+            TransactionDraft(
+              businessId: 'biz',
+              date: date,
+              type: 'INCOME',
+              amount: amount,
+              categoryId: income.id,
+              paymentMethod: 'CASH',
+            ),
+          );
+        }
 
-      final s =
-          await MockSimulatorRepository().getInputs(month: 2, year: 2033);
-      expect(s.average.income, 2000000);
-      expect(s.average.monthsWithData, 3);
-      expect(s.currentMonth.income, 500000);
-      expect(s.ytdOmzet, 3500000);
-      expect(s.business, isNull); // belum ada profil di SharedPreferences
-    });
+        final s = await MockSimulatorRepository().getInputs(
+          month: 2,
+          year: 2033,
+        );
+        expect(s.average.income, 2000000);
+        expect(s.average.monthsWithData, 3);
+        expect(s.currentMonth.income, 500000);
+        expect(s.ytdOmzet, 3500000);
+        expect(s.business, isNull); // belum ada profil di SharedPreferences
+      },
+    );
 
     test('bulan tidak valid ditolak juga di mode mock', () {
       expect(
         MockSimulatorRepository().getInputs(month: 0, year: 2026),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400),
+        ),
       );
     });
   });
@@ -291,8 +370,7 @@ void main() {
 
     test('GET /simulator/inputs?month&year membaca contoh kontrak', () async {
       useFakeServer(_contoh);
-      final s =
-          await ApiSimulatorRepository().getInputs(month: 9, year: 2026);
+      final s = await ApiSimulatorRepository().getInputs(month: 9, year: 2026);
       final req = adapter.requests.single;
       expect(req.method, 'GET');
       expect(req.uri.path, '/api/v1/simulator/inputs');
@@ -305,8 +383,7 @@ void main() {
 
     test('business null dibaca sebagai belum punya profil', () async {
       useFakeServer({..._contoh, 'business': null});
-      final s =
-          await ApiSimulatorRepository().getInputs(month: 9, year: 2026);
+      final s = await ApiSimulatorRepository().getInputs(month: 9, year: 2026);
       expect(s.business, isNull);
     });
 
@@ -323,16 +400,21 @@ void main() {
   group('HybridSimulatorRepository', () {
     test('404 (endpoint belum ada) → jatuh ke mock', () async {
       final api = _FakeSimulator(
-          galat: const ApiException(statusCode: 404, message: 'x'));
+        galat: const ApiException(statusCode: 404, message: 'x'),
+      );
       final mock = _FakeSimulator();
-      await HybridSimulatorRepository(api, mock).getInputs(month: 9, year: 2026);
+      await HybridSimulatorRepository(
+        api,
+        mock,
+      ).getInputs(month: 9, year: 2026);
       expect(api.dipanggil, 1);
       expect(mock.dipanggil, 1);
     });
 
     test('400 (jawaban backend) → naik, mock tidak tersentuh', () async {
       final api = _FakeSimulator(
-          galat: const ApiException(statusCode: 400, message: 'x'));
+        galat: const ApiException(statusCode: 400, message: 'x'),
+      );
       final mock = _FakeSimulator();
       await expectLater(
         HybridSimulatorRepository(api, mock).getInputs(month: 9, year: 2026),

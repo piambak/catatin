@@ -24,8 +24,9 @@ class RecurringService {
     required String frequency,
     required String startDate,
     String? endDate,
-  }) =>
-      _notify(Repos.recurring.createTemplate(RecurringDraft(
+  }) => _notify(
+    Repos.recurring.createTemplate(
+      RecurringDraft(
         type: type,
         amount: amount,
         categoryId: categoryId,
@@ -34,7 +35,9 @@ class RecurringService {
         frequency: frequency,
         startDate: startDate,
         endDate: endDate,
-      )));
+      ),
+    ),
+  );
 
   static Future<RecurringTemplate> updateTemplate({
     required String id,
@@ -46,20 +49,21 @@ class RecurringService {
     required String frequency,
     required String startDate,
     String? endDate,
-  }) =>
-      _notify(Repos.recurring.updateTemplate(
-        id,
-        RecurringDraft(
-          type: type,
-          amount: amount,
-          categoryId: categoryId,
-          description: description,
-          paymentMethod: paymentMethod,
-          frequency: frequency,
-          startDate: startDate,
-          endDate: endDate,
-        ),
-      ));
+  }) => _notify(
+    Repos.recurring.updateTemplate(
+      id,
+      RecurringDraft(
+        type: type,
+        amount: amount,
+        categoryId: categoryId,
+        description: description,
+        paymentMethod: paymentMethod,
+        frequency: frequency,
+        startDate: startDate,
+        endDate: endDate,
+      ),
+    ),
+  );
 
   static Future<RecurringTemplate> stopTemplate(String id) =>
       _notify(Repos.recurring.stopTemplate(id));

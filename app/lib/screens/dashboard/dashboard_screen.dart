@@ -100,8 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'Selamat malam';
   }
 
-  String get _greetingLine =>
-      '$_greeting, ${_name.isEmpty ? 'Anda' : _name}.';
+  String get _greetingLine => '$_greeting, ${_name.isEmpty ? 'Anda' : _name}.';
 
   @override
   Widget build(BuildContext context) {
@@ -264,9 +263,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Tenggat kedua memakai estimasi dari omzet berjalan; sisanya belum bisa
   /// dihitung tanpa data periode berikutnya.
-  String _followUpAmount(int index) => index == 1
-      ? '≈ ${Rupiah.format(_obligationAmount)}'
-      : 'Belum dihitung';
+  String _followUpAmount(int index) =>
+      index == 1 ? '≈ ${Rupiah.format(_obligationAmount)}' : 'Belum dihitung';
 
   // T-19: rute penuh-layar di LUAR ShellRoute dibuka dengan `push` supaya
   // tumpukan navigasi punya sesuatu untuk di-`pop`. Dengan `go` tumpukan
@@ -310,7 +308,10 @@ class _Header extends StatelessWidget {
             children: [
               DsLabel(Tanggal.long(DateTime.now()), size: compact ? 10.5 : 11),
               const SizedBox(height: 8),
-              Text(greeting, style: Typo.serif(compact ? 25 : 34, spacing: -0.2)),
+              Text(
+                greeting,
+                style: Typo.serif(compact ? 25 : 34, spacing: -0.2),
+              ),
             ],
           ),
         ),
@@ -352,11 +353,15 @@ class _NextObligation extends StatelessWidget {
         children: [
           const DsLabel('Kewajiban berikutnya'),
           const SizedBox(height: 14),
-          Text('Tidak ada tenggat terdekat',
-              style: Typo.serif(compact ? 28 : 38)),
+          Text(
+            'Tidak ada tenggat terdekat',
+            style: Typo.serif(compact ? 28 : 38),
+          ),
           const SizedBox(height: 12),
-          Text('Semua kewajiban pajak Anda sudah tercatat aman.',
-              style: Typo.sans(15, color: DS.body)),
+          Text(
+            'Semua kewajiban pajak Anda sudah tercatat aman.',
+            style: Typo.sans(15, color: DS.body),
+          ),
         ],
       );
     }
@@ -365,8 +370,8 @@ class _NextObligation extends StatelessWidget {
     final pillText = days < 0
         ? 'Terlambat ${days.abs()} hari'
         : days == 0
-            ? 'Jatuh tempo hari ini'
-            : '$days hari lagi${compact ? ' · ${Tanggal.short(d.deadline)}' : ''}';
+        ? 'Jatuh tempo hari ini'
+        : '$days hari lagi${compact ? ' · ${Tanggal.short(d.deadline)}' : ''}';
     final amountText = Rupiah.format(amount);
 
     final headline = compact
@@ -376,8 +381,10 @@ class _NextObligation extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
-                child: Text(amountText,
-                    style: Typo.serif(44, height: 1, spacing: -1)),
+                child: Text(
+                  amountText,
+                  style: Typo.serif(44, height: 1, spacing: -1),
+                ),
               ),
               const SizedBox(height: 14),
               DsStatusPill(text: pillText),
@@ -407,14 +414,15 @@ class _NextObligation extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         ConstrainedBox(
-          constraints:
-              BoxConstraints(maxWidth: compact ? double.infinity : 560),
+          constraints: BoxConstraints(
+            maxWidth: compact ? double.infinity : 560,
+          ),
           child: Text(
             compact
                 ? '${d.label}, dari omzet ${Rupiah.format(income)} × ${Pct.format(AppConstants.pphFinalRate)}.'
                 : '${d.label} — jatuh tempo ${Tanggal.long(d.deadline)}. '
-                    'Dihitung dari omzet ${Rupiah.format(income)} dengan tarif '
-                    '${Pct.format(AppConstants.pphFinalRate)} (PP 23/2018).',
+                      'Dihitung dari omzet ${Rupiah.format(income)} dengan tarif '
+                      '${Pct.format(AppConstants.pphFinalRate)} (PP 23/2018).',
             style: Typo.sans(compact ? 15.5 : 16, color: DS.body, height: 1.55),
           ),
         ),
@@ -512,14 +520,18 @@ class _MonthTotals extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label,
-                        style: Typo.sans(12.5, color: DS.muted, height: 1.3)),
+                    Text(
+                      label,
+                      style: Typo.sans(12.5, color: DS.muted, height: 1.3),
+                    ),
                     const SizedBox(height: 4),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text(Rupiah.plain(value),
-                          style: Typo.mono(17, color: color)),
+                      child: Text(
+                        Rupiah.plain(value),
+                        style: Typo.mono(17, color: color),
+                      ),
                     ),
                   ],
                 ),
@@ -550,8 +562,10 @@ class _MonthTotals extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(Rupiah.format(items[i].$2),
-                        style: Typo.mono(20, color: items[i].$3)),
+                    child: Text(
+                      Rupiah.format(items[i].$2),
+                      style: Typo.mono(20, color: items[i].$3),
+                    ),
                   ),
                 ],
               ),
@@ -603,8 +617,10 @@ class _RecentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return Text('Belum ada transaksi bulan ini.',
-          style: Typo.sans(14, color: DS.muted));
+      return Text(
+        'Belum ada transaksi bulan ini.',
+        style: Typo.sans(14, color: DS.muted),
+      );
     }
     return Column(
       children: [
@@ -622,8 +638,7 @@ class _RecentList extends StatelessWidget {
     return DsListRow(
       title: title,
       trailing: '${isIncome ? '+' : '−'}${Rupiah.plain(tx.amount)}',
-      trailingStyle:
-          Typo.mono(13.5, color: isIncome ? DS.income : DS.muted),
+      trailingStyle: Typo.mono(13.5, color: isIncome ? DS.income : DS.muted),
       showDivider: showDivider,
       onTap: () => onTap(tx),
     );
@@ -652,8 +667,11 @@ class _TextLink extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Text(
             label,
-            style: Typo.sans(block ? 14.5 : 13.5,
-                weight: FontWeight.w500, color: DS.link),
+            style: Typo.sans(
+              block ? 14.5 : 13.5,
+              weight: FontWeight.w500,
+              color: DS.link,
+            ),
           ),
         ),
       ),
@@ -725,14 +743,14 @@ class _DashboardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: DS.hairline,
-            borderRadius: BorderRadius.circular(Radii.sm),
-          ),
-        );
+      width: w,
+      height: h,
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: DS.hairline,
+        borderRadius: BorderRadius.circular(Radii.sm),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
@@ -768,9 +786,11 @@ class _DashboardError extends StatelessWidget {
           children: [
             Icon(Icons.cloud_off_rounded, size: 34, color: DS.faint),
             const SizedBox(height: 16),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: Typo.sans(15, color: DS.body)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Typo.sans(15, color: DS.body),
+            ),
             const SizedBox(height: 20),
             DsButton(label: 'Coba lagi', onPressed: onRetry),
           ],

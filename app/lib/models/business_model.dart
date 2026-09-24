@@ -25,7 +25,8 @@ class BusinessProfile {
     required this.createdAt,
   });
 
-  factory BusinessProfile.fromJson(Map<String, dynamic> json) => BusinessProfile(
+  factory BusinessProfile.fromJson(Map<String, dynamic> json) =>
+      BusinessProfile(
         id: json['id'] as String,
         userId: json['user_id'] as String? ?? '',
         businessName: json['business_name'] as String,
@@ -41,13 +42,13 @@ class BusinessProfile {
       );
 
   Map<String, dynamic> toJson() => {
-        'business_name': businessName,
-        'owner_name': ownerName,
-        'npwp': npwp,
-        'business_type': businessType,
-        'pkp_status': pkpStatus,
-        'employee_count': employeeCount,
-      };
+    'business_name': businessName,
+    'owner_name': ownerName,
+    'npwp': npwp,
+    'business_type': businessType,
+    'pkp_status': pkpStatus,
+    'employee_count': employeeCount,
+  };
 }
 
 // ── Input profil usaha ────────────────────────────────────────────────────────
@@ -74,11 +75,11 @@ class BusinessDraft {
   });
 
   Map<String, dynamic> toJson() => {
-        'business_name': businessName,
-        'owner_name': ownerName,
-        'npwp': npwp,
-        'business_type': businessType,
-        'pkp_status': pkpStatus,
-        'employee_count': employeeCount,
-      };
+    'business_name': businessName,
+    'owner_name': ownerName,
+    'npwp': npwp,
+    'business_type': businessType,
+    'pkp_status': pkpStatus,
+    'employee_count': employeeCount,
+  };
 }

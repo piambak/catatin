@@ -79,26 +79,26 @@ class TxAttachment {
   });
 
   factory TxAttachment.fromJson(Map<String, dynamic> j) => TxAttachment(
-        id: j['id'] as String,
-        transactionId: j['transaction_id'] as String,
-        fileName: j['file_name'] as String,
-        mimeType: j['mime_type'] as String,
-        sizeBytes: (j['size_bytes'] as num).toInt(),
-        url: j['url'] as String,
-        // Server mengirim UTC; disamakan dengan `TxData.createdAt` supaya jam
-        // yang tampil ke pengguna sesuai zona waktu perangkat.
-        urlExpiresAt: DateTime.parse(j['url_expires_at'] as String).toLocal(),
-        createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
-      );
+    id: j['id'] as String,
+    transactionId: j['transaction_id'] as String,
+    fileName: j['file_name'] as String,
+    mimeType: j['mime_type'] as String,
+    sizeBytes: (j['size_bytes'] as num).toInt(),
+    url: j['url'] as String,
+    // Server mengirim UTC; disamakan dengan `TxData.createdAt` supaya jam
+    // yang tampil ke pengguna sesuai zona waktu perangkat.
+    urlExpiresAt: DateTime.parse(j['url_expires_at'] as String).toLocal(),
+    createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'transaction_id': transactionId,
-        'file_name': fileName,
-        'mime_type': mimeType,
-        'size_bytes': sizeBytes,
-        'url': url,
-        'url_expires_at': urlExpiresAt.toUtc().toIso8601String(),
-        'created_at': createdAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'transaction_id': transactionId,
+    'file_name': fileName,
+    'mime_type': mimeType,
+    'size_bytes': sizeBytes,
+    'url': url,
+    'url_expires_at': urlExpiresAt.toUtc().toIso8601String(),
+    'created_at': createdAt.toUtc().toIso8601String(),
+  };
 }

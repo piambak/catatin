@@ -41,30 +41,28 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-  }) =>
-      _withSigningIn(() async {
-        final auth = await Repos.auth.register(
-          name: name,
-          email: email,
-          password: password,
-        );
-        await _persist(auth);
-        await _syncBusiness();
-        sessionChanges.notify();
-        return auth;
-      });
+  }) => _withSigningIn(() async {
+    final auth = await Repos.auth.register(
+      name: name,
+      email: email,
+      password: password,
+    );
+    await _persist(auth);
+    await _syncBusiness();
+    sessionChanges.notify();
+    return auth;
+  });
 
   static Future<AuthResponse> login({
     required String email,
     required String password,
-  }) =>
-      _withSigningIn(() async {
-        final auth = await Repos.auth.login(email: email, password: password);
-        await _persist(auth);
-        await _syncBusiness();
-        sessionChanges.notify();
-        return auth;
-      });
+  }) => _withSigningIn(() async {
+    final auth = await Repos.auth.login(email: email, password: password);
+    await _persist(auth);
+    await _syncBusiness();
+    sessionChanges.notify();
+    return auth;
+  });
 
   /// Membuka halaman masuk Google. Di web halaman ini ditinggalkan; hasilnya
   /// diadopsi [restoreSession] saat aplikasi dimuat ulang. Di Android hasilnya
@@ -121,11 +119,10 @@ class AuthService {
   static Future<void> setPassword({
     required String newPassword,
     String? currentPassword,
-  }) =>
-      Repos.auth.setPassword(
-        newPassword: newPassword,
-        currentPassword: currentPassword,
-      );
+  }) => Repos.auth.setPassword(
+    newPassword: newPassword,
+    currentPassword: currentPassword,
+  );
 
   static Future<void> logout() async {
     if (!Repos.isDemo) {
@@ -217,16 +214,16 @@ class AuthService {
   }
 
   static Future<void> _persist(AuthResponse auth) => Future.wait([
-        StorageService.saveTokens(
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
-        ),
-        StorageService.saveUserInfo(
-          id: auth.user.id,
-          name: auth.user.name,
-          email: auth.user.email,
-        ),
-      ]);
+    StorageService.saveTokens(
+      accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken,
+    ),
+    StorageService.saveUserInfo(
+      id: auth.user.id,
+      name: auth.user.name,
+      email: auth.user.email,
+    ),
+  ]);
 
   /// Menyamakan status onboarding dengan profil usaha di backend.
   ///

@@ -63,8 +63,9 @@ class RecurringTemplate {
         businessId: j['business_id'] as String,
         type: j['type'] as String,
         amount: (j['amount'] as num).toDouble(),
-        category:
-            TxCategoryData.fromJson(j['category'] as Map<String, dynamic>),
+        category: TxCategoryData.fromJson(
+          j['category'] as Map<String, dynamic>,
+        ),
         description: j['description'] as String?,
         paymentMethod: j['payment_method'] as String? ?? 'CASH',
         frequency: j['frequency'] as String,
@@ -76,28 +77,28 @@ class RecurringTemplate {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'business_id': businessId,
-        'type': type,
-        'amount': amount,
-        'category': {
-          'id': category.id,
-          'name': category.name,
-          'type': category.type,
-          'tax_relevant': category.taxRelevant,
-          'is_cogs': category.isCogs,
-          'icon': category.icon,
-          'color': category.color,
-        },
-        'description': description,
-        'payment_method': paymentMethod,
-        'frequency': frequency,
-        'start_date': startDate,
-        'end_date': endDate,
-        'next_date': nextDate,
-        'is_active': isActive,
-        'created_at': createdAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'business_id': businessId,
+    'type': type,
+    'amount': amount,
+    'category': {
+      'id': category.id,
+      'name': category.name,
+      'type': category.type,
+      'tax_relevant': category.taxRelevant,
+      'is_cogs': category.isCogs,
+      'icon': category.icon,
+      'color': category.color,
+    },
+    'description': description,
+    'payment_method': paymentMethod,
+    'frequency': frequency,
+    'start_date': startDate,
+    'end_date': endDate,
+    'next_date': nextDate,
+    'is_active': isActive,
+    'created_at': createdAt.toUtc().toIso8601String(),
+  };
 }
 
 // ── Input template ────────────────────────────────────────────────────────────
@@ -131,15 +132,15 @@ class RecurringDraft {
   });
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'amount': amount,
-        'category_id': categoryId,
-        'description': description,
-        'payment_method': paymentMethod,
-        'frequency': frequency,
-        'start_date': startDate,
-        'end_date': endDate,
-      };
+    'type': type,
+    'amount': amount,
+    'category_id': categoryId,
+    'description': description,
+    'payment_method': paymentMethod,
+    'frequency': frequency,
+    'start_date': startDate,
+    'end_date': endDate,
+  };
 }
 
 // ── Jadwal pengulangan (murni, tanpa jaringan) ─────────────────────────────────

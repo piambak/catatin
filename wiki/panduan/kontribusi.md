@@ -74,14 +74,16 @@ Cakupan (`dashboard`, `accounting`, `simulator`, `settings`, `auth`, `data`,
 ## 4. Gaya kode
 
 * Jalankan `flutter analyze` sebelum push — CI menggagalkan warning dan error.
-* Kode lama memakai perataan kolom manual (`title:      'Catatin',`). Sampai PR
-  format menyeluruh digabung, **jangan** menjalankan `dart format` pada berkas
-  yang tidak kamu sentuh: hasilnya diff ratusan baris yang menenggelamkan
-  perubahan aslimu.
-* PR format itu dijadwalkan Minggu 2 (issue #33, temuan T-9): satu kali
-  `dart format .` di seluruh repo sebagai PR tersendiri, lalu
-  `dart format --set-exit-if-changed` ditegakkan di CI. Sesudah itu aturan di
-  atas terbalik — setiap PR wajib terformat.
+* **Setiap PR wajib terformat.** Sejak issue #33 (T-9) seluruh `app/` sudah
+  diformat sekali dengan `dart format .`, dan CI menjalankan
+  `dart format --set-exit-if-changed` — PR yang belum diformat gagal. Jalankan
+  `cd app && dart format .` sebelum commit, atau aktifkan *format on save* di
+  editor.
+* `pubspec.lock` wajib ikut di-commit setiap kali dependensi berubah: CI
+  memakai `flutter pub get --enforce-lockfile`, jadi lockfile yang tertinggal
+  menggagalkan build.
+* `flutter test --coverage` di CI mengunggah `coverage/lcov.info` sebagai
+  artifact. Belum ada ambang minimum (ditetapkan Minggu 7).
 * Komentar dan teks yang dilihat pengguna dalam Bahasa Indonesia. Nama variabel,
   kelas, dan fungsi dalam Bahasa Inggris.
 * Widget baru yang dipakai lebih dari satu layar → taruh di

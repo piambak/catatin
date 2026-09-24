@@ -70,42 +70,44 @@ class SupabaseAuthRepository implements AuthRepository {
     required String name,
     required String email,
     required String password,
-  }) =>
-      runSupabase(() async {
-        final res = await _db.auth.signUp(
-          email: email,
-          password: password,
-          data: {'name': name},
-        );
-        final session = res.session;
-        if (session == null) {
-          // "Confirm email" menyala di dashboard Supabase: akunnya dibuat,
-          // tapi sesi baru ada setelah tautan di email diklik.
-          throw const ApiException(
-            statusCode: 409,
-            message: 'Akun dibuat. Buka tautan konfirmasi di email Anda, '
-                'lalu masuk.',
-          );
-        }
-        return _authResponse(session);
-      });
+  }) => runSupabase(() async {
+    final res = await _db.auth.signUp(
+      email: email,
+      password: password,
+      data: {'name': name},
+    );
+    final session = res.session;
+    if (session == null) {
+      // "Confirm email" menyala di dashboard Supabase: akunnya dibuat,
+      // tapi sesi baru ada setelah tautan di email diklik.
+      throw const ApiException(
+        statusCode: 409,
+        message:
+            'Akun dibuat. Buka tautan konfirmasi di email Anda, '
+            'lalu masuk.',
+      );
+    }
+    return _authResponse(session);
+  });
 
   @override
   Future<AuthResponse> login({
     required String email,
     required String password,
-  }) =>
-      runSupabase(() async {
-        final res = await _db.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-        final session = res.session;
-        if (session == null) {
-          throw const ApiException(statusCode: 401, message: 'Sesi tidak terbentuk.');
-        }
-        return _authResponse(session);
-      });
+  }) => runSupabase(() async {
+    final res = await _db.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+    final session = res.session;
+    if (session == null) {
+      throw const ApiException(
+        statusCode: 401,
+        message: 'Sesi tidak terbentuk.',
+      );
+    }
+    return _authResponse(session);
+  });
 
   @override
   Future<UserModel> me() async {
@@ -126,22 +128,23 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signInWithGoogle() => runSupabase(() async {
-        // Web: halaman ini sendiri pindah ke Google (PKCE), lalu kembali ke
-        // alamat yang sama dengan `?code=`; `SupabaseBackend.init` menukarnya
-        // jadi sesi sebelum frame pertama. Android: browser eksternal kembali
-        // lewat deep link [AppConfig.oauthRedirectMobile].
-        final opened = await _db.auth.signInWithOAuth(
-          sb.OAuthProvider.google,
-          redirectTo:
-              kIsWeb ? oauthRedirectUrl(Uri.base) : AppConfig.oauthRedirectMobile,
-        );
-        if (!opened) {
-          throw const ApiException(
-            statusCode: 0,
-            message: 'Halaman masuk Google tidak bisa dibuka.',
-          );
-        }
-      });
+    // Web: halaman ini sendiri pindah ke Google (PKCE), lalu kembali ke
+    // alamat yang sama dengan `?code=`; `SupabaseBackend.init` menukarnya
+    // jadi sesi sebelum frame pertama. Android: browser eksternal kembali
+    // lewat deep link [AppConfig.oauthRedirectMobile].
+    final opened = await _db.auth.signInWithOAuth(
+      sb.OAuthProvider.google,
+      redirectTo: kIsWeb
+          ? oauthRedirectUrl(Uri.base)
+          : AppConfig.oauthRedirectMobile,
+    );
+    if (!opened) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Halaman masuk Google tidak bisa dibuka.',
+      );
+    }
+  });
 
   @override
   Future<AuthResponse?> currentSession() async {
@@ -158,16 +161,16 @@ class SupabaseAuthRepository implements AuthRepository {
   /// `google`.
   @override
   Future<Set<String>> signInProviders() => runSupabase(() async {
-        final providers = {
-          for (final identity
-              in _db.auth.currentUser?.identities ?? const <sb.UserIdentity>[])
-            identity.provider,
-        };
-        if (await _db.rpc<dynamic>('has_password') == true) {
-          providers.add('email');
-        }
-        return providers;
-      });
+    final providers = {
+      for (final identity
+          in _db.auth.currentUser?.identities ?? const <sb.UserIdentity>[])
+        identity.provider,
+    };
+    if (await _db.rpc<dynamic>('has_password') == true) {
+      providers.add('email');
+    }
+    return providers;
+  });
 
   /// Akun Google boleh memasang kata sandi pertamanya tanpa kata sandi lama.
   /// Kalau "Secure password change" menyala di proyek, sesi yang umurnya lebih
@@ -177,22 +180,25 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> setPassword({
     required String newPassword,
     String? currentPassword,
-  }) =>
-      runSupabase(() => _db.auth.updateUser(sb.UserAttributes(
-            password: newPassword,
-            currentPassword: currentPassword,
-          )));
+  }) => runSupabase(
+    () => _db.auth.updateUser(
+      sb.UserAttributes(
+        password: newPassword,
+        currentPassword: currentPassword,
+      ),
+    ),
+  );
 
   AuthResponse _authResponse(sb.Session session) => AuthResponse(
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken ?? '',
-        user: userFromMetadata(
-          id: session.user.id,
-          email: session.user.email,
-          metadata: session.user.userMetadata,
-          createdAt: session.user.createdAt,
-        ),
-      );
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken ?? '',
+    user: userFromMetadata(
+      id: session.user.id,
+      email: session.user.email,
+      metadata: session.user.userMetadata,
+      createdAt: session.user.createdAt,
+    ),
+  );
 }
 
 /// Alamat kembali setelah masuk dengan Google di web: halaman aplikasi ini
@@ -203,11 +209,11 @@ class SupabaseAuthRepository implements AuthRepository {
 /// ini wajib cocok dengan Redirect URLs di dashboard Supabase; kalau tidak,
 /// Supabase mengirim pengguna ke Site URL.
 String oauthRedirectUrl(Uri page) => Uri(
-      scheme: page.scheme,
-      host: page.host,
-      port: page.hasPort ? page.port : null,
-      path: page.path.isEmpty ? '/' : page.path,
-    ).toString();
+  scheme: page.scheme,
+  host: page.host,
+  port: page.hasPort ? page.port : null,
+  path: page.path.isEmpty ? '/' : page.path,
+).toString();
 
 /// Profil pengguna dari data akun Supabase.
 ///
@@ -241,26 +247,26 @@ UserModel userFromMetadata({
 class SupabaseBusinessRepository implements BusinessRepository {
   @override
   Future<BusinessProfile?> getCurrent() => runSupabase(() async {
-        // RLS hanya mengembalikan baris milik pengguna yang sedang masuk, dan
-        // `unique (user_id)` menjamin paling banyak satu.
-        final row = await _db.from(_businessTable).select().maybeSingle();
-        return row == null ? null : BusinessProfile.fromJson(row);
-      });
+    // RLS hanya mengembalikan baris milik pengguna yang sedang masuk, dan
+    // `unique (user_id)` menjamin paling banyak satu.
+    final row = await _db.from(_businessTable).select().maybeSingle();
+    return row == null ? null : BusinessProfile.fromJson(row);
+  });
 
   /// Upsert, bukan insert: kalau profilnya ternyata sudah ada (form onboarding
   /// terbuka di dua perangkat), baris yang sama diperbarui alih-alih gagal.
   @override
   Future<BusinessProfile> create(BusinessDraft draft) => runSupabase(() async {
-        final row = await _db
-            .from(_businessTable)
-            .upsert(
-              {...draft.toJson(), 'user_id': _currentUserId()},
-              onConflict: 'user_id',
-            )
-            .select()
-            .single();
-        return BusinessProfile.fromJson(row);
-      });
+    final row = await _db
+        .from(_businessTable)
+        .upsert({
+          ...draft.toJson(),
+          'user_id': _currentUserId(),
+        }, onConflict: 'user_id')
+        .select()
+        .single();
+    return BusinessProfile.fromJson(row);
+  });
 
   @override
   Future<BusinessProfile> update(String id, BusinessDraft draft) =>
@@ -296,12 +302,12 @@ class SupabaseTransactionRepository implements TransactionRepository {
 
   @override
   Future<List<TxCategoryData>> getCategories() => runSupabase(() async {
-        final rows = await _db
-            .from('tx_categories')
-            .select()
-            .order('sort_order', ascending: true);
-        return rows.map(TxCategoryData.fromJson).toList();
-      });
+    final rows = await _db
+        .from('tx_categories')
+        .select()
+        .order('sort_order', ascending: true);
+    return rows.map(TxCategoryData.fromJson).toList();
+  });
 
   /// Tanpa filter, seluruh transaksi dikembalikan — layar Pencatatan menggulir
   /// bulan dan tahun sendiri.
@@ -323,7 +329,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
         now: DateTime.now(),
       );
       final result = <TxData>[];
-      for (var offset = 0;; offset += _pageSize) {
+      for (var offset = 0; ; offset += _pageSize) {
         var query = _db.from(_txTable).select(_txWithCategory);
         if (range?.from case final start?) query = query.gte('date', start);
         if (range?.until case final end?) query = query.lt('date', end);
@@ -362,9 +368,10 @@ class SupabaseTransactionRepository implements TransactionRepository {
   Future<bool> createTransaction(TransactionDraft draft) =>
       runSupabase(() async {
         final businessId = await _currentBusinessId();
-        await _db
-            .from(_txTable)
-            .insert({...draft.toJson(), 'business_id': businessId});
+        await _db.from(_txTable).insert({
+          ...draft.toJson(),
+          'business_id': businessId,
+        });
         return true;
       });
 
@@ -375,8 +382,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
       final payload = draft.toJson()..remove('business_id');
       // RLS menyembunyikan baris milik orang lain tanpa galat — hasil kosong
       // berarti tidak ada yang diubah.
-      final rows =
-          await _db.from(_txTable).update(payload).eq('id', id).select('id');
+      final rows = await _db
+          .from(_txTable)
+          .update(payload)
+          .eq('id', id)
+          .select('id');
       if (rows.isEmpty) throw _notFound;
       return true;
     });
@@ -449,15 +459,15 @@ class SupabaseRecurringRepository implements RecurringRepository {
   /// `wiki/arsitektur/backend-dan-api.md`.
   @override
   Future<List<RecurringTemplate>> getTemplates() => runSupabase(() async {
-        final rows = await _db
-            .from(_recurringTable)
-            .select(_txWithCategory)
-            .order('is_active', ascending: false)
-            // Bawaan `nullsFirst: false` sudah menaruh `next_date` kosong
-            // (template nonaktif) di akhir.
-            .order('next_date', ascending: true);
-        return rows.map(RecurringTemplate.fromJson).toList();
-      });
+    final rows = await _db
+        .from(_recurringTable)
+        .select(_txWithCategory)
+        .order('is_active', ascending: false)
+        // Bawaan `nullsFirst: false` sudah menaruh `next_date` kosong
+        // (template nonaktif) di akhir.
+        .order('next_date', ascending: true);
+    return rows.map(RecurringTemplate.fromJson).toList();
+  });
 
   /// `business_id` selalu diambil dari server, sama seperti
   /// [SupabaseTransactionRepository.createTransaction].
@@ -591,20 +601,26 @@ class SupabaseAttachmentRepository implements AttachmentRepository {
       final userId = _currentUserId();
       final id = newUuidV4();
       final path = '$userId/$transactionId/$id.${_extensionFor(mimeType)}';
-      await _db.storage.from(_receiptsBucket).uploadBinary(
+      await _db.storage
+          .from(_receiptsBucket)
+          .uploadBinary(
             path,
             bytes,
             fileOptions: sb.FileOptions(contentType: mimeType, upsert: false),
           );
       try {
-        final row = await _db.from(_attachmentTable).insert({
-          'id': id,
-          'transaction_id': transactionId,
-          'storage_path': path,
-          'file_name': fileName,
-          'mime_type': mimeType,
-          'size_bytes': bytes.length,
-        }).select().single();
+        final row = await _db
+            .from(_attachmentTable)
+            .insert({
+              'id': id,
+              'transaction_id': transactionId,
+              'storage_path': path,
+              'file_name': fileName,
+              'mime_type': mimeType,
+              'size_bytes': bytes.length,
+            })
+            .select()
+            .single();
         final url = await _db.storage
             .from(_receiptsBucket)
             .createSignedUrl(path, _signedUrlTtlSeconds);
@@ -639,9 +655,9 @@ class SupabaseAttachmentRepository implements AttachmentRepository {
           .eq('transaction_id', transactionId)
           .maybeSingle();
       if (row == null) throw _notFound;
-      await _db.storage
-          .from(_receiptsBucket)
-          .remove([row['storage_path'] as String]);
+      await _db.storage.from(_receiptsBucket).remove([
+        row['storage_path'] as String,
+      ]);
       await _db.from(_attachmentTable).delete().eq('id', attachmentId);
     });
   }
@@ -671,23 +687,22 @@ TxAttachment _attachmentFromRow(
   Map<String, dynamic> row, {
   required String url,
   required DateTime expiresAt,
-}) =>
-    TxAttachment.fromJson({
-      ...row,
-      'url': url,
-      'url_expires_at': expiresAt.toUtc().toIso8601String(),
-    });
+}) => TxAttachment.fromJson({
+  ...row,
+  'url': url,
+  'url_expires_at': expiresAt.toUtc().toIso8601String(),
+});
 
 /// Ekstensi berkas dari `mime_type` — sama dengan pemetaan yang dipaksa
 /// `transaction_attachments_path_check` di migrasi. [checkAttachmentUpload]
 /// sudah menjamin [mimeType] salah satu dari ketiganya sebelum method ini
 /// pernah dipanggil.
 String _extensionFor(String mimeType) => switch (mimeType) {
-      'image/jpeg' => 'jpg',
-      'image/png' => 'png',
-      'image/webp' => 'webp',
-      _ => 'bin',
-    };
+  'image/jpeg' => 'jpg',
+  'image/png' => 'png',
+  'image/webp' => 'webp',
+  _ => 'bin',
+};
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -819,10 +834,10 @@ String _currentUserId() {
 /// Angka dari PostgREST: `numeric` datang sebagai angka JSON, yang bisa
 /// ter-decode jadi `int` maupun `double`.
 double numValue(Object? value) => switch (value) {
-      num n => n.toDouble(),
-      String s => double.tryParse(s) ?? 0,
-      _ => 0,
-    };
+  num n => n.toDouble(),
+  String s => double.tryParse(s) ?? 0,
+  _ => 0,
+};
 
 /// Rentang tanggal `[from, until)` berformat `YYYY-MM-DD`, atau `null` kalau
 /// tidak ada filter sama sekali.
@@ -859,15 +874,15 @@ double numValue(Object? value) => switch (value) {
 /// Baris `monthly_totals` → angka mentah per bulan. Kolom `hpp` di database
 /// adalah `cogs` di kontrak.
 List<MonthTotals> monthTotalsFromRows(List<Map<String, dynamic>> rows) => [
-      for (final row in rows)
-        (
-          month: numValue(row['month']).toInt(),
-          income: numValue(row['income']),
-          expense: numValue(row['expense']),
-          cogs: numValue(row['hpp']),
-          txCount: numValue(row['tx_count']).toInt(),
-        ),
-    ];
+  for (final row in rows)
+    (
+      month: numValue(row['month']).toInt(),
+      income: numValue(row['income']),
+      expense: numValue(row['expense']),
+      cogs: numValue(row['hpp']),
+      txCount: numValue(row['tx_count']).toInt(),
+    ),
+];
 
 /// Baris `monthly_totals` → ringkasan satu bulan. Omzet YTD adalah pemasukan
 /// Januari sampai [month].
@@ -891,11 +906,10 @@ MonthClose monthCloseFromMonthlyTotals(
   List<Map<String, dynamic>> rows, {
   required int month,
   required int year,
-}) =>
-    MonthClose.fromAggregate(
-      year,
-      monthAggregates(monthTotalsFromRows(rows))[month - 1],
-    );
+}) => MonthClose.fromAggregate(
+  year,
+  monthAggregates(monthTotalsFromRows(rows))[month - 1],
+);
 
 /// Baris `monthly_totals` tahun acuan (dan tahun sebelumnya, kalau ada) →
 /// nilai awal Simulator.
@@ -905,16 +919,18 @@ SimulatorInputs simulatorInputsFromMonthlyTotals({
   required List<Map<String, dynamic>> current,
   List<Map<String, dynamic>>? previous,
   BusinessProfile? business,
-}) =>
-    simulatorInputsFrom(
-      month: month,
-      year: year,
-      current: YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(current)),
-      previous: previous == null
-          ? null
-          : YearAggregate.fromMonthlyTotals(year - 1, monthTotalsFromRows(previous)),
-      business: business,
-    );
+}) => simulatorInputsFrom(
+  month: month,
+  year: year,
+  current: YearAggregate.fromMonthlyTotals(year, monthTotalsFromRows(current)),
+  previous: previous == null
+      ? null
+      : YearAggregate.fromMonthlyTotals(
+          year - 1,
+          monthTotalsFromRows(previous),
+        ),
+  business: business,
+);
 
 /// Baris `monthly_totals` → titik grafik KPI Januari sampai [upToMonth],
 /// berlabel bulan pendek Bahasa Indonesia ("Jan", "Mei", "Agu", …).
@@ -949,11 +965,16 @@ List<TaxDeadline> upcomingDeadlines({
   required int limit,
 }) {
   final today = DateTime(now.year, now.month, now.day);
-  final items = [
-    for (final year in [now.year - 1, now.year])
-      ...generateCalendar(year: year, isPkp: isPkp, hasEmployees: hasEmployees),
-  ].where((d) => !d.deadline.isBefore(today)).toList()
-    ..sort((a, b) => a.deadline.compareTo(b.deadline));
+  final items =
+      [
+          for (final year in [now.year - 1, now.year])
+            ...generateCalendar(
+              year: year,
+              isPkp: isPkp,
+              hasEmployees: hasEmployees,
+            ),
+        ].where((d) => !d.deadline.isBefore(today)).toList()
+        ..sort((a, b) => a.deadline.compareTo(b.deadline));
 
   return [
     for (final d in items.take(limit))
@@ -969,9 +990,9 @@ List<TaxDeadline> upcomingDeadlines({
 
 /// Label jenis pajak di kalender → kode `tax_type` di kontrak API.
 String _taxTypeCode(String taxType) => switch (taxType) {
-      'PPh Final' => 'PPH_FINAL',
-      'PPh 21' => 'PPH21',
-      'SPT Tahunan' => 'SPT',
-      'PPN' => 'PPN',
-      _ => taxType,
-    };
+  'PPh Final' => 'PPH_FINAL',
+  'PPh 21' => 'PPH21',
+  'SPT Tahunan' => 'SPT',
+  'PPN' => 'PPN',
+  _ => taxType,
+};

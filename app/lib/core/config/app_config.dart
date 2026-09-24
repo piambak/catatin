@@ -66,8 +66,9 @@ class AppConfig {
   /// boleh di-commit. Yang melindungi data adalah Row Level Security di
   /// `supabase/migrations/`, bukan kerahasiaan kunci ini. Secret key
   /// (`sb_secret_…`) tidak pernah boleh masuk ke sini: ia melewati RLS.
-  static const String supabasePublishableKey =
-      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  static const String supabasePublishableKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
+  );
 
   static const String _rawDataSource = String.fromEnvironment('DATA_SOURCE');
 
@@ -90,11 +91,15 @@ class AppConfig {
   /// workflow: log jaringan memuat token dan kata sandi (T-28).
   static bool get apiLogEnabled => enableApiLog && kDebugMode;
 
-  static const int connectTimeoutMs =
-      int.fromEnvironment('API_CONNECT_TIMEOUT_MS', defaultValue: 15000);
+  static const int connectTimeoutMs = int.fromEnvironment(
+    'API_CONNECT_TIMEOUT_MS',
+    defaultValue: 15000,
+  );
 
-  static const int receiveTimeoutMs =
-      int.fromEnvironment('API_RECEIVE_TIMEOUT_MS', defaultValue: 15000);
+  static const int receiveTimeoutMs = int.fromEnvironment(
+    'API_RECEIVE_TIMEOUT_MS',
+    defaultValue: 15000,
+  );
 
   // ── Turunan ────────────────────────────────────────────────────────────────
 
@@ -121,11 +126,11 @@ class AppConfig {
   }
 
   static bool _isComplete(DataSource source) => switch (source) {
-        DataSource.mock => true,
-        DataSource.api || DataSource.hybrid => apiBaseUrl.isNotEmpty,
-        DataSource.supabase =>
-          supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty,
-      };
+    DataSource.mock => true,
+    DataSource.api || DataSource.hybrid => apiBaseUrl.isNotEmpty,
+    DataSource.supabase =>
+      supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty,
+  };
 
   /// Mode yang benar-benar dipakai.
   ///
@@ -147,10 +152,10 @@ class AppConfig {
   /// Kenapa konfirmasi tidak dimatikan saja: lihat
   /// `wiki/arsitektur/supabase.md` bagian Pengaturan Auth.
   static bool get emailSignUpEnabled => switch (_rawEmailSignUp) {
-        'true' => true,
-        'false' => false,
-        _ => dataSource != DataSource.supabase,
-      };
+    'true' => true,
+    'false' => false,
+    _ => dataSource != DataSource.supabase,
+  };
 
   /// Pesan kalau kombinasi define-nya tidak masuk akal — dicetak sekali
   /// saat startup, bukan dilempar, supaya app tetap bisa jalan mode mock.
@@ -161,17 +166,17 @@ class AppConfig {
       DataSource.supabase =>
         'DATA_SOURCE=supabase butuh SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY, '
             'tapi salah satunya kosong. Aplikasi jalan dengan data mock.',
-      _ => 'DATA_SOURCE=${requested.name} butuh API_BASE_URL, tapi kosong. '
-          'Aplikasi jalan dengan data mock.',
+      _ =>
+        'DATA_SOURCE=${requested.name} butuh API_BASE_URL, tapi kosong. '
+            'Aplikasi jalan dengan data mock.',
     };
   }
 
   /// Ringkasan satu baris untuk log startup.
   static String get summary => switch (dataSource) {
-        DataSource.mock => 'sumber data: mock (tanpa backend)',
-        DataSource.supabase => 'sumber data: supabase → $supabaseUrl',
-        DataSource.api ||
-        DataSource.hybrid =>
-          'sumber data: ${dataSource.name} → $apiBaseUrl',
-      };
+    DataSource.mock => 'sumber data: mock (tanpa backend)',
+    DataSource.supabase => 'sumber data: supabase → $supabaseUrl',
+    DataSource.api ||
+    DataSource.hybrid => 'sumber data: ${dataSource.name} → $apiBaseUrl',
+  };
 }

@@ -25,11 +25,11 @@ class PeriodTotals {
   });
 
   factory PeriodTotals.fromJson(Map<String, dynamic> j) => PeriodTotals(
-        income: (j['income'] as num?)?.toDouble() ?? 0,
-        expense: (j['expense'] as num?)?.toDouble() ?? 0,
-        cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
-        txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
-      );
+    income: (j['income'] as num?)?.toDouble() ?? 0,
+    expense: (j['expense'] as num?)?.toDouble() ?? 0,
+    cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
+    txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
+  );
 }
 
 /// Rata-rata per bulan dalam jendela tiga bulan penuh sebelum bulan acuan.
@@ -65,16 +65,16 @@ class SimulatorAverage {
   });
 
   factory SimulatorAverage.fromJson(Map<String, dynamic> j) => SimulatorAverage(
-        fromMonth: (j['from_month'] as num).toInt(),
-        fromYear: (j['from_year'] as num).toInt(),
-        toMonth: (j['to_month'] as num).toInt(),
-        toYear: (j['to_year'] as num).toInt(),
-        monthsWithData: (j['months_with_data'] as num?)?.toInt() ?? 0,
-        txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
-        income: (j['income'] as num?)?.toDouble() ?? 0,
-        expense: (j['expense'] as num?)?.toDouble() ?? 0,
-        cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
-      );
+    fromMonth: (j['from_month'] as num).toInt(),
+    fromYear: (j['from_year'] as num).toInt(),
+    toMonth: (j['to_month'] as num).toInt(),
+    toYear: (j['to_year'] as num).toInt(),
+    monthsWithData: (j['months_with_data'] as num?)?.toInt() ?? 0,
+    txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
+    income: (j['income'] as num?)?.toDouble() ?? 0,
+    expense: (j['expense'] as num?)?.toDouble() ?? 0,
+    cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Bagian profil usaha yang dipakai Simulator.
@@ -90,12 +90,13 @@ class SimulatorBusiness {
   });
 
   factory SimulatorBusiness.fromProfile(BusinessProfile p) => SimulatorBusiness(
-        pkpStatus: p.pkpStatus,
-        employeeCount: p.employeeCount,
-        businessType: p.businessType,
-      );
+    pkpStatus: p.pkpStatus,
+    employeeCount: p.employeeCount,
+    businessType: p.businessType,
+  );
 
-  factory SimulatorBusiness.fromJson(Map<String, dynamic> j) => SimulatorBusiness(
+  factory SimulatorBusiness.fromJson(Map<String, dynamic> j) =>
+      SimulatorBusiness(
         pkpStatus: j['pkp_status'] as bool? ?? false,
         employeeCount: (j['employee_count'] as num?)?.toInt() ?? 0,
         businessType: j['business_type'] as String? ?? '',
@@ -132,8 +133,9 @@ class SimulatorInputs {
       month: (j['month'] as num).toInt(),
       year: (j['year'] as num).toInt(),
       average: SimulatorAverage.fromJson(j['average'] as Map<String, dynamic>),
-      currentMonth:
-          PeriodTotals.fromJson(j['current_month'] as Map<String, dynamic>),
+      currentMonth: PeriodTotals.fromJson(
+        j['current_month'] as Map<String, dynamic>,
+      ),
       ytdOmzet: (j['ytd_omzet'] as num?)?.toDouble() ?? 0,
       business: business is Map<String, dynamic>
           ? SimulatorBusiness.fromJson(business)

@@ -91,15 +91,21 @@ class ApiClient {
   static void reset() => _instance = null;
 
   static Dio _createDio() {
-    final dio = Dio(BaseOptions(
-      baseUrl: AppConfig.apiBaseUrl,
-      connectTimeout: const Duration(milliseconds: AppConfig.connectTimeoutMs),
-      receiveTimeout: const Duration(milliseconds: AppConfig.receiveTimeoutMs),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: AppConfig.apiBaseUrl,
+        connectTimeout: const Duration(
+          milliseconds: AppConfig.connectTimeoutMs,
+        ),
+        receiveTimeout: const Duration(
+          milliseconds: AppConfig.receiveTimeoutMs,
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
 
     // Hanya build debug (lihat AppConfig.apiLogEnabled, T-28). Dipasang
     // SEBELUM AuthInterceptor supaya galat dan respons terlihat sebelum
@@ -108,18 +114,21 @@ class ApiClient {
       dio.interceptors.add(_RedactingLogger());
     }
 
-    dio.interceptors.add(AuthInterceptor(
-      dio,
-      onSessionEnded: () =>
-          (ApiClient.onSessionEnded ?? StorageService.clearSession)(),
-    ));
+    dio.interceptors.add(
+      AuthInterceptor(
+        dio,
+        onSessionEnded: () =>
+            (ApiClient.onSessionEnded ?? StorageService.clearSession)(),
+      ),
+    );
 
     return dio;
   }
 
-  static Future<Response<T>> get<T>(String path,
-          {Map<String, dynamic>? params}) =>
-      instance.get<T>(path, queryParameters: params);
+  static Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? params,
+  }) => instance.get<T>(path, queryParameters: params);
 
   static Future<Response<T>> post<T>(String path, {dynamic data}) =>
       instance.post<T>(path, data: data);
@@ -153,7 +162,7 @@ class ApiClient {
 /// biasa — pengguna yang sebentar offline tidak boleh ikut dikeluarkan.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor(this.dio, {Future<void> Function()? onSessionEnded})
-      : _onSessionEnded = onSessionEnded ?? StorageService.clearSession;
+    : _onSessionEnded = onSessionEnded ?? StorageService.clearSession;
 
   /// Tandai request yang tidak boleh membawa access token (mis. refresh).
   static const skipAuthKey = 'skipAuth';
@@ -283,12 +292,16 @@ class AuthInterceptor extends Interceptor {
 
     final completer = Completer<_Refresh>();
     _refreshing = completer;
-    unawaited(_refresh().then(
-      completer.complete,
-      onError: (Object _) => completer.complete(_Refresh.rejected),
-    ).whenComplete(() {
-      _refreshing = null;
-    }));
+    unawaited(
+      _refresh()
+          .then(
+            completer.complete,
+            onError: (Object _) => completer.complete(_Refresh.rejected),
+          )
+          .whenComplete(() {
+            _refreshing = null;
+          }),
+    );
     return completer.future;
   }
 
@@ -312,8 +325,9 @@ class AuthInterceptor extends Interceptor {
       final rotated = data['refresh_token'];
       await StorageService.saveTokens(
         accessToken: access,
-        refreshToken:
-            rotated is String && rotated.isNotEmpty ? rotated : refreshToken,
+        refreshToken: rotated is String && rotated.isNotEmpty
+            ? rotated
+            : refreshToken,
       );
       return _Refresh.renewed;
     } on DioException catch (e) {
@@ -406,8 +420,10 @@ class _RedactingLogger extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final req = err.requestOptions;
     final response = err.response;
-    debugPrint('[api] ✗ ${response?.statusCode ?? err.type.name} '
-        '${req.method} ${req.uri}');
+    debugPrint(
+      '[api] ✗ ${response?.statusCode ?? err.type.name} '
+      '${req.method} ${req.uri}',
+    );
     if (response != null) {
       debugPrint('[api]   body ${redactForLog(response.data)}');
     }
@@ -446,5 +462,7 @@ ApiException apiException(Object error) {
     return error.error as ApiException;
   }
   return const ApiException(
-      statusCode: 0, message: 'Terjadi kesalahan tak terduga.');
+    statusCode: 0,
+    message: 'Terjadi kesalahan tak terduga.',
+  );
 }

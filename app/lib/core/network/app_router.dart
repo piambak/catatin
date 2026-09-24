@@ -30,12 +30,18 @@ final appRouter = GoRouter(
   refreshListenable: AuthService.sessionChanges,
   routes: [
     // ── Auth ──────────────────────────────────────────────
-    GoRoute(path: AppRoutes.splash,
-      builder: (_, __) => _themed(() => SplashScreen())),
-    GoRoute(path: AppRoutes.login,
-      builder: (_, __) => _themed(() => LoginScreen())),
-    GoRoute(path: AppRoutes.register,
-      builder: (_, __) => _themed(() => RegisterScreen())),
+    GoRoute(
+      path: AppRoutes.splash,
+      builder: (_, __) => _themed(() => SplashScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      builder: (_, __) => _themed(() => LoginScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.register,
+      builder: (_, __) => _themed(() => RegisterScreen()),
+    ),
 
     // ── Onboarding (no bottom nav, forced after register) ─
     GoRoute(
@@ -78,30 +84,38 @@ final appRouter = GoRouter(
       builder: (_, __, shell) =>
           _themed(() => MainShell(navigationShell: shell)),
       branches: [
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: AppRoutes.dashboard,
-            pageBuilder: (_, __) => _fade(_themed(() => DashboardScreen())),
-          ),
-        ]),
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: AppRoutes.simulator,
-            pageBuilder: (_, __) => _fade(_themed(() => SimulatorScreen())),
-          ),
-        ]),
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: AppRoutes.accounting,
-            pageBuilder: (_, __) => _fade(_themed(() => AccountingScreen())),
-          ),
-        ]),
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: AppRoutes.settings,
-            pageBuilder: (_, __) => _fade(_themed(() => SettingsScreen())),
-          ),
-        ]),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.dashboard,
+              pageBuilder: (_, __) => _fade(_themed(() => DashboardScreen())),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.simulator,
+              pageBuilder: (_, __) => _fade(_themed(() => SimulatorScreen())),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.accounting,
+              pageBuilder: (_, __) => _fade(_themed(() => AccountingScreen())),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.settings,
+              pageBuilder: (_, __) => _fade(_themed(() => SettingsScreen())),
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -118,12 +132,17 @@ final appRouter = GoRouter(
               children: [
                 Icon(Icons.explore_off_rounded, size: 34, color: DS.faint),
                 const SizedBox(height: 16),
-                Text('Halaman tidak ditemukan',
-                    textAlign: TextAlign.center, style: Typo.serif(24)),
+                Text(
+                  'Halaman tidak ditemukan',
+                  textAlign: TextAlign.center,
+                  style: Typo.serif(24),
+                ),
                 const SizedBox(height: 8),
-                Text('Alamat ${state.uri.path} tidak ada di Catatin.',
-                    textAlign: TextAlign.center,
-                    style: Typo.sans(15, color: DS.body)),
+                Text(
+                  'Alamat ${state.uri.path} tidak ada di Catatin.',
+                  textAlign: TextAlign.center,
+                  style: Typo.sans(15, color: DS.body),
+                ),
                 const SizedBox(height: 20),
                 DsButton(
                   label: 'Kembali ke Dashboard',
@@ -152,14 +171,14 @@ final appRouter = GoRouter(
 /// dan bug-nya kembali. State di dalamnya tetap aman karena tipe dan key-nya
 /// tidak berubah, jadi Element-nya diperbarui, bukan dibuang.
 Widget _themed(Widget Function() build) => ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (_, __, ___) => build(),
-    );
+  valueListenable: themeNotifier,
+  builder: (_, __, ___) => build(),
+);
 
 // ── Auth guard + onboarding redirect ─────────────────────────────────────────
 
 Future<String?> _guard(BuildContext context, GoRouterState state) async {
-  final isLoggedIn  = await StorageService.isLoggedIn();
+  final isLoggedIn = await StorageService.isLoggedIn();
   final isOnboarded = await StorageService.isOnboarded();
   final loc = state.matchedLocation;
 
@@ -168,7 +187,8 @@ Future<String?> _guard(BuildContext context, GoRouterState state) async {
   // layar error bawaan go_router, arahkan ke dashboard.
   if (loc.startsWith('/library')) return AppRoutes.dashboard;
 
-  final onAuth = loc == AppRoutes.login ||
+  final onAuth =
+      loc == AppRoutes.login ||
       loc == AppRoutes.register ||
       loc == AppRoutes.splash;
   final onOnboarding = loc == '/onboarding/business';

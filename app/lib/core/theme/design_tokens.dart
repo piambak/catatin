@@ -24,73 +24,95 @@ class DS {
   // Nama mengikuti peran, bukan nilai — `ink` selalu teks paling kuat.
 
   /// Teks utama, angka besar.
-  static Color get ink => _dark ? const Color(0xFFEDF2F7) : const Color(0xFF0D1B2A);
+  static Color get ink =>
+      _dark ? const Color(0xFFEDF2F7) : const Color(0xFF0D1B2A);
 
   /// Teks isi paragraf.
-  static Color get body => _dark ? const Color(0xFFC8D3DF) : const Color(0xFF334455);
+  static Color get body =>
+      _dark ? const Color(0xFFC8D3DF) : const Color(0xFF334455);
 
   /// Teks sekunder, keterangan.
-  static Color get muted => _dark ? const Color(0xFF9AAABB) : const Color(0xFF667788);
+  static Color get muted =>
+      _dark ? const Color(0xFF9AAABB) : const Color(0xFF667788);
 
   /// Label huruf kecil, satuan.
-  static Color get faint => _dark ? const Color(0xFF8494A6) : const Color(0xFF8898AA);
+  static Color get faint =>
+      _dark ? const Color(0xFF8494A6) : const Color(0xFF8898AA);
 
   /// Teks di atas permukaan gelap.
-  static Color get soft => _dark ? const Color(0xFF8494A6) : const Color(0xFFAAB8CC);
+  static Color get soft =>
+      _dark ? const Color(0xFF8494A6) : const Color(0xFFAAB8CC);
 
   /// Garis pemisah utama.
-  static Color get border => _dark ? const Color(0xFF454B55) : const Color(0xFFCDD8E8);
+  static Color get border =>
+      _dark ? const Color(0xFF454B55) : const Color(0xFFCDD8E8);
 
   /// Garis pemisah halus — dipakai jauh lebih sering di mockup.
-  static Color get hairline => _dark ? const Color(0xFF3A3F47) : const Color(0xFFE3EBF6);
+  static Color get hairline =>
+      _dark ? const Color(0xFF3A3F47) : const Color(0xFFE3EBF6);
 
   /// Latar bar progres, isian tenang.
-  static Color get tint => _dark ? const Color(0xFF363A3F) : const Color(0xFFE8F2FF);
+  static Color get tint =>
+      _dark ? const Color(0xFF363A3F) : const Color(0xFFE8F2FF);
 
   /// Latar halaman / bidang cekung.
-  static Color get sunken => _dark ? const Color(0xFF232528) : const Color(0xFFF4F9FF);
+  static Color get sunken =>
+      _dark ? const Color(0xFF232528) : const Color(0xFFF4F9FF);
 
   /// Permukaan utama.
-  static Color get surface => _dark ? const Color(0xFF2D3035) : const Color(0xFFFFFFFF);
+  static Color get surface =>
+      _dark ? const Color(0xFF2D3035) : const Color(0xFFFFFFFF);
 
   // ── Merek ─────────────────────────────────────────────────────────────────
 
   static const brand = Color(0xFFFFA400);
 
   /// Latar pil "8 hari lagi", tab aktif.
-  static Color get brandMuted => _dark ? const Color(0xFF3A3320) : const Color(0xFFFFF3CC);
+  static Color get brandMuted =>
+      _dark ? const Color(0xFF3A3320) : const Color(0xFFFFF3CC);
 
   /// Teks di atas [brandMuted].
-  static Color get brandInk => _dark ? const Color(0xFFFFCC70) : const Color(0xFF633806);
+  static Color get brandInk =>
+      _dark ? const Color(0xFFFFCC70) : const Color(0xFF633806);
 
   /// Titik penanda, aksen tenang.
-  static Color get brandDeep => _dark ? const Color(0xFFE0A845) : const Color(0xFFB07D2A);
+  static Color get brandDeep =>
+      _dark ? const Color(0xFFE0A845) : const Color(0xFFB07D2A);
 
   /// Teks di atas [brand] — mockup memakai ink, bukan putih.
   static const onBrand = Color(0xFF0D1B2A);
 
   /// Aksen biru dari mockup — tautan, info, dan grafik sekunder.
-  static Color get accent => _dark ? const Color(0xFF3DB5FF) : const Color(0xFF009FFD);
+  static Color get accent =>
+      _dark ? const Color(0xFF3DB5FF) : const Color(0xFF009FFD);
 
   /// Latar tenang bernuansa aksen.
-  static Color get accentMuted => _dark ? const Color(0xFF1B2E3D) : const Color(0xFFEAF6FF);
+  static Color get accentMuted =>
+      _dark ? const Color(0xFF1B2E3D) : const Color(0xFFEAF6FF);
 
   // ── Semantik ──────────────────────────────────────────────────────────────
 
-  static Color get income => _dark ? const Color(0xFF3FBF75) : const Color(0xFF1B8A4B);
-  static Color get expense => _dark ? const Color(0xFFFF6B6B) : const Color(0xFFD92B2B);
+  static Color get income =>
+      _dark ? const Color(0xFF3FBF75) : const Color(0xFF1B8A4B);
+  static Color get expense =>
+      _dark ? const Color(0xFFFF6B6B) : const Color(0xFFD92B2B);
 
   /// Tautan teks.
-  static Color get link => _dark ? const Color(0xFF5CBBF0) : const Color(0xFF0A6FB0);
+  static Color get link =>
+      _dark ? const Color(0xFF5CBBF0) : const Color(0xFF0A6FB0);
 
   /// Warna wordmark "Catat".
-  static Color get wordmark => _dark ? const Color(0xFFAEAEE8) : const Color(0xFF2A2A72);
+  static Color get wordmark =>
+      _dark ? const Color(0xFFAEAEE8) : const Color(0xFF2A2A72);
 
   /// Peringatan lembut — dipakai chip "belum ditinjau pakar pajak" (T-17).
   /// Rasio kontras teks terhadap latarnya diukur: 6,75:1 terang, 8,44:1 gelap.
-  static Color get warnBg => _dark ? const Color(0xFF3A3320) : const Color(0xFFFFF3CC);
-  static Color get warnFg => _dark ? const Color(0xFFFFCC70) : const Color(0xFF7A4A00);
-  static Color get warnBorder => _dark ? const Color(0xFF8A7340) : const Color(0xFFC08A2E);
+  static Color get warnBg =>
+      _dark ? const Color(0xFF3A3320) : const Color(0xFFFFF3CC);
+  static Color get warnFg =>
+      _dark ? const Color(0xFFFFCC70) : const Color(0xFF7A4A00);
+  static Color get warnBorder =>
+      _dark ? const Color(0xFF8A7340) : const Color(0xFFC08A2E);
 
   /// Varian yang dipakai di atas [invSurface] (panel hasil simulator), yang
   /// tetap gelap di kedua mode. Kontras teks 9,32:1.
@@ -140,15 +162,19 @@ class Radii {
 class Typo {
   Typo._();
 
-  static TextStyle serif(double size, {Color? color, double? height, double? spacing}) =>
-      TextStyle(
-        fontFamily: 'DMSerif',
-        fontSize: size,
-        fontWeight: FontWeight.w400,
-        color: color ?? DS.ink,
-        height: height ?? 1.2,
-        letterSpacing: spacing,
-      );
+  static TextStyle serif(
+    double size, {
+    Color? color,
+    double? height,
+    double? spacing,
+  }) => TextStyle(
+    fontFamily: 'DMSerif',
+    fontSize: size,
+    fontWeight: FontWeight.w400,
+    color: color ?? DS.ink,
+    height: height ?? 1.2,
+    letterSpacing: spacing,
+  );
 
   static TextStyle sans(
     double size, {
@@ -156,32 +182,34 @@ class Typo {
     FontWeight weight = FontWeight.w400,
     double? height,
     double? spacing,
-  }) =>
-      TextStyle(
-        fontFamily: 'DMSans',
-        fontSize: size,
-        fontWeight: weight,
-        color: color ?? DS.body,
-        height: height ?? 1.5,
-        letterSpacing: spacing,
-      );
+  }) => TextStyle(
+    fontFamily: 'DMSans',
+    fontSize: size,
+    fontWeight: weight,
+    color: color ?? DS.body,
+    height: height ?? 1.5,
+    letterSpacing: spacing,
+  );
 
-  static TextStyle mono(double size, {Color? color, FontWeight weight = FontWeight.w500}) =>
-      TextStyle(
-        fontFamily: 'monospace',
-        fontSize: size,
-        fontWeight: weight,
-        color: color ?? DS.ink,
-        letterSpacing: -0.3,
-      );
+  static TextStyle mono(
+    double size, {
+    Color? color,
+    FontWeight weight = FontWeight.w500,
+  }) => TextStyle(
+    fontFamily: 'monospace',
+    fontSize: size,
+    fontWeight: weight,
+    color: color ?? DS.ink,
+    letterSpacing: -0.3,
+  );
 
   /// Label huruf besar berjarak lebar — pola paling khas di mockup.
   static TextStyle label({Color? color, double size = 11}) => TextStyle(
-        fontFamily: 'DMSans',
-        fontSize: size,
-        fontWeight: FontWeight.w600,
-        color: color ?? DS.faint,
-        letterSpacing: 2.2,
-        height: 1.3,
-      );
+    fontFamily: 'DMSans',
+    fontSize: size,
+    fontWeight: FontWeight.w600,
+    color: color ?? DS.faint,
+    letterSpacing: 2.2,
+    height: 1.3,
+  );
 }

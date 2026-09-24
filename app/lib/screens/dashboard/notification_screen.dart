@@ -29,8 +29,12 @@ class AppNotification {
   });
 
   AppNotification copyWith({bool? isRead}) => AppNotification(
-    id: id, type: type, title: title, body: body,
-    time: time, isRead: isRead ?? this.isRead,
+    id: id,
+    type: type,
+    title: title,
+    body: body,
+    time: time,
+    isRead: isRead ?? this.isRead,
   );
 }
 
@@ -75,7 +79,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   void _markRead(String id) {
     setState(() {
-      _notifs = _notifs.map((n) => n.id == id ? n.copyWith(isRead: true) : n).toList();
+      _notifs = _notifs
+          .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
+          .toList();
     });
   }
 
@@ -97,56 +103,70 @@ class _NotificationScreenState extends State<NotificationScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Notifikasi',
-              style: AppTextStyles.display(17, weight: FontWeight.w600, color: Theme.of(context).appBarTheme.foregroundColor)),
+            Text(
+              'Notifikasi',
+              style: AppTextStyles.display(
+                17,
+                weight: FontWeight.w600,
+                color: Theme.of(context).appBarTheme.foregroundColor,
+              ),
+            ),
             if (_unreadCount > 0)
-              Text('$_unreadCount belum dibaca',
-                style: AppTextStyles.body(11, color: AppColors.stone400)),
+              Text(
+                '$_unreadCount belum dibaca',
+                style: AppTextStyles.body(11, color: AppColors.stone400),
+              ),
           ],
         ),
         actions: [
           if (_unreadCount > 0)
             TextButton(
               onPressed: _markAllRead,
-              child: Text('Tandai semua dibaca',
-                style: AppTextStyles.body(12,
-                  color: AppColors.brand, weight: FontWeight.w500)),
+              child: Text(
+                'Tandai semua dibaca',
+                style: AppTextStyles.body(
+                  12,
+                  color: AppColors.brand,
+                  weight: FontWeight.w500,
+                ),
+              ),
             ),
         ],
       ),
-      body: Builder(builder: (context) {
-        // Setup notif pinned at top when profile not complete
-        final setupNotif = _profileComplete ? null : AppNotification(
-          id: '__setup__',
-          type: NotifType.setup,
-          title: 'Lengkapi profil usaha Anda',
-          body: 'Tambahkan nama usaha, NPWP, dan status PKP agar '
-                'semua fitur Catatin berjalan optimal. Ketuk untuk melengkapi.',
-          time: DateTime.now(),
-          isRead: false,
-        );
-        final all = [
-          if (setupNotif != null) setupNotif,
-          ..._notifs,
-        ];
-        if (all.isEmpty) return _buildEmpty();
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: all.length,
-          separatorBuilder: (_, __) =>
-              const Divider(height: 1, indent: 64),
-          itemBuilder: (_, i) {
-            final n = all[i];
-            return _NotifTile(
-              notif: n,
-              isPinned: n.id == '__setup__',
-              onTap: n.id == '__setup__'
-                  ? () => context.push(AppRoutes.bizSetup)
-                  : () => _markRead(n.id),
-            );
-          },
-        );
-      }),
+      body: Builder(
+        builder: (context) {
+          // Setup notif pinned at top when profile not complete
+          final setupNotif = _profileComplete
+              ? null
+              : AppNotification(
+                  id: '__setup__',
+                  type: NotifType.setup,
+                  title: 'Lengkapi profil usaha Anda',
+                  body:
+                      'Tambahkan nama usaha, NPWP, dan status PKP agar '
+                      'semua fitur Catatin berjalan optimal. Ketuk untuk melengkapi.',
+                  time: DateTime.now(),
+                  isRead: false,
+                );
+          final all = [if (setupNotif != null) setupNotif, ..._notifs];
+          if (all.isEmpty) return _buildEmpty();
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: all.length,
+            separatorBuilder: (_, __) => const Divider(height: 1, indent: 64),
+            itemBuilder: (_, i) {
+              final n = all[i];
+              return _NotifTile(
+                notif: n,
+                isPinned: n.id == '__setup__',
+                onTap: n.id == '__setup__'
+                    ? () => context.push(AppRoutes.bizSetup)
+                    : () => _markRead(n.id),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -155,16 +175,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.notifications_none_rounded,
-            size: 52, color: AppColors.stone300),
+          Icon(
+            Icons.notifications_none_rounded,
+            size: 52,
+            color: AppColors.stone300,
+          ),
           const SizedBox(height: 12),
-          Text('Tidak ada notifikasi',
-            style: AppTextStyles.body(15,
-              color: AppColors.stone400, weight: FontWeight.w500)),
+          Text(
+            'Tidak ada notifikasi',
+            style: AppTextStyles.body(
+              15,
+              color: AppColors.stone400,
+              weight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text('Kami akan memberitahu Anda\ntentang deadline dan info pajak terbaru',
+          Text(
+            'Kami akan memberitahu Anda\ntentang deadline dan info pajak terbaru',
             style: AppTextStyles.body(13, color: AppColors.stone400),
-            textAlign: TextAlign.center),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -187,28 +217,35 @@ class _NotifTile extends StatelessWidget {
   (Color bg, Color icon, IconData iconData) get _style {
     switch (notif.type) {
       case NotifType.setup:
-        return (AppColors.brandLight, AppColors.brand,
-          Icons.business_outlined);
+        return (AppColors.brandLight, AppColors.brand, Icons.business_outlined);
       case NotifType.deadline:
-        return (AppColors.expenseLight, AppColors.expense,
-          Icons.calendar_today_rounded);
+        return (
+          AppColors.expenseLight,
+          AppColors.expense,
+          Icons.calendar_today_rounded,
+        );
       case NotifType.payment:
-        return (AppColors.warningLight, AppColors.warning,
-          Icons.payments_outlined);
+        return (
+          AppColors.warningLight,
+          AppColors.warning,
+          Icons.payments_outlined,
+        );
       case NotifType.regulation:
-        return (AppColors.navyLight, AppColors.navy,
-          Icons.menu_book_outlined);
+        return (AppColors.navyLight, AppColors.navy, Icons.menu_book_outlined);
       case NotifType.info:
-        return (AppColors.incomeLight, AppColors.income,
-          Icons.info_outline_rounded);
+        return (
+          AppColors.incomeLight,
+          AppColors.income,
+          Icons.info_outline_rounded,
+        );
     }
   }
 
   String get _timeLabel {
     final diff = DateTime.now().difference(notif.time);
     if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-    if (diff.inHours < 24)   return '${diff.inHours} jam lalu';
-    if (diff.inDays < 7)     return '${diff.inDays} hari lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
     return Tanggal.short(notif.time);
   }
 
@@ -220,8 +257,8 @@ class _NotifTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         color: isPinned
-          ? AppColors.brand.withValues(alpha: 0.06)
-          : notif.isRead
+            ? AppColors.brand.withValues(alpha: 0.06)
+            : notif.isRead
             ? Colors.transparent
             : AppColors.brand.withValues(alpha: 0.04),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -230,7 +267,8 @@ class _NotifTile extends StatelessWidget {
           children: [
             // Icon bubble
             Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(10),
@@ -244,47 +282,64 @@ class _NotifTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    Expanded(
-                      child: Text(notif.title,
-                        style: AppTextStyles.body(13,
-                          weight: notif.isRead
-                            ? FontWeight.w400
-                            : FontWeight.w600)),
-                    ),
-                    if (isPinned) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandLight,
-                          borderRadius: BorderRadius.circular(20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notif.title,
+                          style: AppTextStyles.body(
+                            13,
+                            weight: notif.isRead
+                                ? FontWeight.w400
+                                : FontWeight.w600,
+                          ),
                         ),
-                        child: Text('Perlu aksi',
-                          style: AppTextStyles.body(9,
+                      ),
+                      if (isPinned) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Perlu aksi',
+                            style: AppTextStyles.body(
+                              9,
+                              color: AppColors.brand,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ] else if (!notif.isRead) ...[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.only(left: 6, top: 3),
+                          decoration: BoxDecoration(
                             color: AppColors.brand,
-                            weight: FontWeight.w600)),
-                      ),
-                    ] else if (!notif.isRead) ...[
-                      Container(
-                        width: 8, height: 8,
-                        margin: const EdgeInsets.only(left: 6, top: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.brand,
-                          shape: BoxShape.circle,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ]),
+                  ),
                   const SizedBox(height: 3),
-                  Text(notif.body,
+                  Text(
+                    notif.body,
                     style: AppTextStyles.body(12, color: AppColors.stone500),
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 5),
-                  Text(_timeLabel,
-                    style: AppTextStyles.body(11, color: AppColors.stone400)),
+                  Text(
+                    _timeLabel,
+                    style: AppTextStyles.body(11, color: AppColors.stone400),
+                  ),
                 ],
               ),
             ),
@@ -304,7 +359,8 @@ List<AppNotification> _dummyNotifications() {
       id: '1',
       type: NotifType.deadline,
       title: 'Deadline PPh Final Masa Oktober',
-      body: 'Batas setor PPh Final 0,5% masa Oktober 2025 adalah 15 November 2025. Sisa 3 hari lagi.',
+      body:
+          'Batas setor PPh Final 0,5% masa Oktober 2025 adalah 15 November 2025. Sisa 3 hari lagi.',
       time: now.subtract(const Duration(hours: 2)),
       isRead: false,
     ),
@@ -312,7 +368,8 @@ List<AppNotification> _dummyNotifications() {
       id: '2',
       type: NotifType.payment,
       title: 'PPh 21 Karyawan Belum Disetor',
-      body: 'PPh 21 masa Oktober 2025 sebesar Rp 402.500 jatuh tempo 10 November 2025.',
+      body:
+          'PPh 21 masa Oktober 2025 sebesar Rp 402.500 jatuh tempo 10 November 2025.',
       time: now.subtract(const Duration(hours: 5)),
       isRead: false,
     ),
@@ -320,7 +377,8 @@ List<AppNotification> _dummyNotifications() {
       id: '3',
       type: NotifType.regulation,
       title: 'Peraturan Baru: PMK 81/2024',
-      body: 'Pemerintah menerbitkan PMK 81/2024 tentang penyesuaian tarif PTKP. Berlaku mulai Januari 2025.',
+      body:
+          'Pemerintah menerbitkan PMK 81/2024 tentang penyesuaian tarif PTKP. Berlaku mulai Januari 2025.',
       time: now.subtract(const Duration(days: 1)),
       isRead: false,
     ),
@@ -328,7 +386,8 @@ List<AppNotification> _dummyNotifications() {
       id: '4',
       type: NotifType.deadline,
       title: 'SPT Tahunan 2025',
-      body: 'Jangan lupa! SPT Tahunan PPh Orang Pribadi tahun 2025 harus dilaporkan paling lambat 30 April 2026.',
+      body:
+          'Jangan lupa! SPT Tahunan PPh Orang Pribadi tahun 2025 harus dilaporkan paling lambat 30 April 2026.',
       time: now.subtract(const Duration(days: 2)),
       isRead: true,
     ),
@@ -336,7 +395,8 @@ List<AppNotification> _dummyNotifications() {
       id: '5',
       type: NotifType.info,
       title: 'Omzet Mendekati Batas PKP',
-      body: 'Omzet YTD Anda sudah mencapai 85% dari batas PKP Rp 4,8 Miliar. Pertimbangkan konsultasi dengan konsultan pajak.',
+      body:
+          'Omzet YTD Anda sudah mencapai 85% dari batas PKP Rp 4,8 Miliar. Pertimbangkan konsultasi dengan konsultan pajak.',
       time: now.subtract(const Duration(days: 3)),
       isRead: true,
     ),
@@ -344,7 +404,8 @@ List<AppNotification> _dummyNotifications() {
       id: '6',
       type: NotifType.regulation,
       title: 'Update: PP 23/2018 — Batas Waktu',
-      body: 'Pengingat: PP 23/2018 berlaku maksimal 7 tahun untuk WP Orang Pribadi. Periksa status usaha Anda.',
+      body:
+          'Pengingat: PP 23/2018 berlaku maksimal 7 tahun untuk WP Orang Pribadi. Periksa status usaha Anda.',
       time: now.subtract(const Duration(days: 5)),
       isRead: true,
     ),
@@ -352,7 +413,8 @@ List<AppNotification> _dummyNotifications() {
       id: '7',
       type: NotifType.payment,
       title: 'Konfirmasi Pembayaran PPh Final',
-      body: 'Pembayaran PPh Final masa September 2025 sebesar Rp 142.500 telah tercatat.',
+      body:
+          'Pembayaran PPh Final masa September 2025 sebesar Rp 142.500 telah tercatat.',
       time: now.subtract(const Duration(days: 6)),
       isRead: true,
     ),
@@ -360,7 +422,8 @@ List<AppNotification> _dummyNotifications() {
       id: '8',
       type: NotifType.info,
       title: 'Fitur Baru: Export Laporan Excel',
-      body: 'Kini Anda dapat mengekspor laporan laba rugi ke format Excel langsung dari menu Pembukuan.',
+      body:
+          'Kini Anda dapat mengekspor laporan laba rugi ke format Excel langsung dari menu Pembukuan.',
       time: now.subtract(const Duration(days: 7)),
       isRead: true,
     ),

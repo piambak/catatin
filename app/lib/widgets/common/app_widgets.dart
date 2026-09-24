@@ -31,19 +31,13 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: borderColor ?? DS.hairline,
-          width: 0.5,
-        ),
+        border: Border.all(color: borderColor ?? DS.hairline, width: 0.5),
       ),
       child: child,
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: content,
-      );
+      return GestureDetector(onTap: onTap, child: content);
     }
     return content;
   }
@@ -106,19 +100,20 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: DS.border),
             const SizedBox(height: 12),
-            Text(title,
+            Text(
+              title,
               style: Typo.sans(15, color: DS.muted, weight: FontWeight.w500),
-              textAlign: TextAlign.center),
+              textAlign: TextAlign.center,
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
-              Text(subtitle!,
+              Text(
+                subtitle!,
                 style: Typo.sans(13, color: DS.faint),
-                textAlign: TextAlign.center),
+                textAlign: TextAlign.center,
+              ),
             ],
-            if (action != null) ...[
-              const SizedBox(height: 20),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 20), action!],
           ],
         ),
       ),
@@ -144,9 +139,11 @@ class ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, size: 40, color: DS.border),
             const SizedBox(height: 12),
-            Text(message,
+            Text(
+              message,
               style: Typo.sans(14, color: DS.muted),
-              textAlign: TextAlign.center),
+              textAlign: TextAlign.center,
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               OutlinedButton.icon(

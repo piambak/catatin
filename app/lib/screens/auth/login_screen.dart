@@ -91,14 +91,18 @@ class _LoginScreenState extends State<LoginScreen> {
   /// terhubung Google tetap bisa dibuka, lalu kata sandinya diganti di
   /// Pengaturan.
   void _forgotPassword() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(AuthService.googleSignInAvailable
-          ? 'Masuk dengan Google, lalu ganti kata sandi di Pengaturan → '
-              'Cara masuk. Pemulihan lewat email belum tersedia.'
-          : 'Pemulihan kata sandi belum tersedia.'),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 6),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AuthService.googleSignInAvailable
+              ? 'Masuk dengan Google, lalu ganti kata sandi di Pengaturan → '
+                    'Cara masuk. Pemulihan lewat email belum tersedia.'
+              : 'Pemulihan kata sandi belum tersedia.',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   Future<void> _enterDemo() async {
@@ -118,7 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, bp) => Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                  horizontal: Bp.pagePadding(bp), vertical: 32),
+                horizontal: Bp.pagePadding(bp),
+                vertical: 32,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Form(
@@ -133,8 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Text('Belum punya akun?',
-                              style: Typo.sans(13.5, color: DS.muted)),
+                          Text(
+                            'Belum punya akun?',
+                            style: Typo.sans(13.5, color: DS.muted),
+                          ),
                           const SizedBox(width: 5),
                           _InlineLink(
                             'Daftar gratis',
@@ -163,8 +171,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email wajib diisi';
-                          if (!v.contains('@')) return 'Format email tidak valid';
+                          if (v == null || v.isEmpty)
+                            return 'Email wajib diisi';
+                          if (!v.contains('@'))
+                            return 'Format email tidak valid';
                           return null;
                         },
                       ),
@@ -201,8 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 10),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: _InlineLink('Lupa kata sandi?',
-                            color: DS.muted, onTap: _forgotPassword),
+                        child: _InlineLink(
+                          'Lupa kata sandi?',
+                          color: DS.muted,
+                          onTap: _forgotPassword,
+                        ),
                       ),
                       const SizedBox(height: 18),
                       DsButton(
@@ -258,8 +271,11 @@ class _InlineLink extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           child: Text(
             label,
-            style: Typo.sans(13.5,
-                weight: FontWeight.w600, color: color ?? DS.link),
+            style: Typo.sans(
+              13.5,
+              weight: FontWeight.w600,
+              color: color ?? DS.link,
+            ),
           ),
         ),
       ),

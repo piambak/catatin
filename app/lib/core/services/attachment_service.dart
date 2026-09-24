@@ -21,17 +21,15 @@ class AttachmentService {
     required Uint8List bytes,
     required String fileName,
     required String mimeType,
-  }) =>
-      Repos.attachment.uploadAttachment(
-        transactionId,
-        bytes: bytes,
-        fileName: fileName,
-        mimeType: mimeType,
-      );
+  }) => Repos.attachment.uploadAttachment(
+    transactionId,
+    bytes: bytes,
+    fileName: fileName,
+    mimeType: mimeType,
+  );
 
   static Future<void> deleteAttachment(
     String transactionId,
     String attachmentId,
-  ) =>
-      Repos.attachment.deleteAttachment(transactionId, attachmentId);
+  ) => Repos.attachment.deleteAttachment(transactionId, attachmentId);
 }

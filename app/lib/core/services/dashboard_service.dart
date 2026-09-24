@@ -26,6 +26,5 @@ class DashboardService {
   static Future<MonthClose> getMonthClose({
     required int month,
     required int year,
-  }) =>
-      Repos.dashboard.getMonthClose(month: month, year: year);
+  }) => Repos.dashboard.getMonthClose(month: month, year: year);
 }

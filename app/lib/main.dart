@@ -74,22 +74,27 @@ class MyApp extends StatelessWidget {
         final isDark = themeMode == ThemeMode.dark;
 
         // Update status bar icons to match theme
-        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-          statusBarColor:            Colors.transparent,
-          statusBarIconBrightness:   isDark ? Brightness.light : Brightness.dark,
-          systemNavigationBarColor:  isDark
-              ? const Color(0xFF2D3035)
-              : Colors.white,
-          systemNavigationBarIconBrightness:
-              isDark ? Brightness.light : Brightness.dark,
-        ));
+        SystemChrome.setSystemUIOverlayStyle(
+          SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+            systemNavigationBarColor: isDark
+                ? const Color(0xFF2D3035)
+                : Colors.white,
+            systemNavigationBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+          ),
+        );
 
         return MaterialApp.router(
-          title:                    'Catatin',
+          title: 'Catatin',
           debugShowCheckedModeBanner: false,
-          theme:      AppTheme.light,
-          darkTheme:  AppTheme.dark,
-          themeMode:  themeMode,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
           routerConfig: appRouter,
         );
       },

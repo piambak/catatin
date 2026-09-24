@@ -98,16 +98,21 @@ class _TypeBtn extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon,
-                      size: 16, color: selected ? Colors.white : DS.faint),
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: selected ? Colors.white : DS.faint,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       label,
                       overflow: TextOverflow.ellipsis,
-                      style: Typo.sans(13.5,
-                          weight: FontWeight.w600,
-                          color: selected ? Colors.white : DS.muted),
+                      style: Typo.sans(
+                        13.5,
+                        weight: FontWeight.w600,
+                        color: selected ? Colors.white : DS.muted,
+                      ),
                     ),
                   ),
                 ],
@@ -142,8 +147,7 @@ class _AmountInputState extends State<AmountInput> {
   @override
   Widget build(BuildContext context) {
     final accent = widget.isIncome ? DS.income : DS.expense;
-    final raw =
-        widget.controller.text.replaceAll('.', '').replaceAll(',', '');
+    final raw = widget.controller.text.replaceAll('.', '').replaceAll(',', '');
     final parsed = double.tryParse(raw) ?? 0;
     final hasError = widget.error != null;
 
@@ -210,14 +214,16 @@ class _AmountInputState extends State<AmountInput> {
 class _ThousandSeparatorFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     final digits = newValue.text.replaceAll('.', '');
     if (digits.isEmpty) return newValue.copyWith(text: '');
     final value = int.tryParse(digits) ?? 0;
     final formatted = value.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),
@@ -246,12 +252,16 @@ class CategoryGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Kategori',
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          'Kategori',
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 10),
         if (categories.isEmpty)
-          Text('Tidak ada kategori untuk jenis transaksi ini.',
-              style: Typo.sans(13, color: DS.muted))
+          Text(
+            'Tidak ada kategori untuk jenis transaksi ini.',
+            style: Typo.sans(13, color: DS.muted),
+          )
         else
           Wrap(
             spacing: 8,
@@ -307,8 +317,7 @@ class _CategoryChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(Radii.pill),
             child: Container(
               constraints: const BoxConstraints(minHeight: 46),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(Radii.pill),
                 border: Border.all(
@@ -327,18 +336,18 @@ class _CategoryChip extends StatelessWidget {
                     children: [
                       Text(
                         category.name,
-                        style: Typo.sans(13.5,
-                            weight:
-                                selected ? FontWeight.w600 : FontWeight.w400,
-                            color: selected
-                                ? category.flutterColor
-                                : DS.body,
-                            height: 1.25),
+                        style: Typo.sans(
+                          13.5,
+                          weight: selected ? FontWeight.w600 : FontWeight.w400,
+                          color: selected ? category.flutterColor : DS.body,
+                          height: 1.25,
+                        ),
                       ),
                       if (tags.isNotEmpty)
-                        Text(tags.join(' · '),
-                            style:
-                                Typo.sans(10.5, color: DS.faint, height: 1.25)),
+                        Text(
+                          tags.join(' · '),
+                          style: Typo.sans(10.5, color: DS.faint, height: 1.25),
+                        ),
                     ],
                   ),
                 ],
@@ -368,8 +377,10 @@ class PaymentMethodPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Metode pembayaran',
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          'Metode pembayaran',
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -432,10 +443,11 @@ class _PaymentChip extends StatelessWidget {
                   const SizedBox(width: 7),
                   Text(
                     label,
-                    style: Typo.sans(13.5,
-                        weight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                        color: selected ? DS.brandInk : DS.body),
+                    style: Typo.sans(
+                      13.5,
+                      weight: selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? DS.brandInk : DS.body,
+                    ),
                   ),
                 ],
               ),
