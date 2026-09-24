@@ -199,9 +199,9 @@ class MockTransactionRepository implements TransactionRepository {
   @override
   Future<TxData?> getTransaction(String id) async {
     await Future.delayed(MockData.latency);
-    final all = _all;
-    if (all.isEmpty) return null;
-    return all.where((t) => t.id == id).firstOrNull ?? all.first;
+    // Id tak dikenal → null, BUKAN transaksi pertama: dulu detail — dan
+    // tombol hapusnya — bisa mengenai transaksi lain (T-37).
+    return _all.where((t) => t.id == id).firstOrNull;
   }
 
   @override
