@@ -128,8 +128,30 @@ class StorageService {
     }
   }
 
-  static Future<void> clearAll() async {
+  /// Mengakhiri sesi di perangkat ini: token, info pengguna, usaha,
+  /// onboarding, penanda demo — dan sisa sesi klien Supabase — dihapus.
+  ///
+  /// Yang DIPERTAHANKAN hanya preferensi milik perangkat, bukan milik akun:
+  /// saat ini tema ([StorageKeys.themeMode]). Dulu fungsi ini `prefs.clear()`
+  /// polos (`clearAll`), sehingga setiap keluar atau refresh token yang gagal
+  /// ikut mereset tema ke terang (T-23).
+  ///
+  /// Onboarding dan `business_id` sengaja ikut dihapus: keduanya milik akun,
+  /// dan akun berikutnya di perangkat yang sama tidak boleh mewarisinya.
+  /// Pengguna yang masuk lagi tidak melihat onboarding — `AuthService`
+  /// menyelaraskannya dari profil usaha di backend saat masuk.
+  static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
+    final kept = <String, String>{
+      for (final key in _deviceKeys)
+        if (prefs.getString(key) case final value?) key: value,
+    };
     await Future.wait([clearTokens(), prefs.clear()]);
+    for (final entry in kept.entries) {
+      await prefs.setString(entry.key, entry.value);
+    }
   }
+
+  /// Kunci SharedPreferences yang bertahan melewati [clearSession].
+  static const _deviceKeys = [StorageKeys.themeMode];
 }

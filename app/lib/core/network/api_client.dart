@@ -3,7 +3,10 @@
 // Satu-satunya tempat Dio dikonfigurasi. Di luar `core/data/api_repositories.dart`
 // tidak ada yang perlu memanggil kelas ini langsung.
 
+import 'dart:async';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/app_config.dart';
@@ -68,6 +71,14 @@ class ApiException implements Exception {
 class ApiClient {
   ApiClient._();
 
+  /// Dipanggil saat server menolak refresh token — sesi benar-benar berakhir.
+  ///
+  /// Dipasang `AuthService` supaya penjaga rute ikut bereaksi dan pengguna
+  /// dibawa ke layar masuk, bukan ditinggal di layar yang semua request-nya
+  /// gagal (T-23). Lapisan jaringan tidak mengimpor `AuthService` langsung
+  /// supaya arah ketergantungannya tetap satu: layanan → jaringan.
+  static Future<void> Function()? onSessionEnded;
+
   static Dio? _instance;
 
   static Dio get instance => _instance ??= _createDio();
@@ -88,7 +99,11 @@ class ApiClient {
       },
     ));
 
-    dio.interceptors.add(_AuthInterceptor(dio));
+    dio.interceptors.add(AuthInterceptor(
+      dio,
+      onSessionEnded: () =>
+          (ApiClient.onSessionEnded ?? StorageService.clearSession)(),
+    ));
 
     if (AppConfig.enableApiLog) {
       dio.interceptors.add(PrettyDioLogger(
@@ -119,78 +134,219 @@ class ApiClient {
 
 // ── Interceptor auth — menyisipkan JWT dan menangani 401 ──────────────────────
 
-class _AuthInterceptor extends Interceptor {
-  final Dio dio;
-  bool _isRefreshing = false;
+/// Menyisipkan access token ke setiap request dan memperbarui sesi saat 401.
+///
+/// Tiga aturan, masing-masing menutup satu lapis T-23:
+///
+/// 1. **Satu refresh untuk semua.** Dashboard menembak beberapa request
+///    sekaligus; kalau semuanya kena 401, hanya satu yang memanggil
+///    `/auth/refresh`. Sisanya MENUNGGU hasil refresh itu lalu diulang — dulu
+///    mereka langsung ditolak "Sesi berakhir" walau refresh-nya berhasil.
+/// 2. **Refresh tanpa Bearer.** Request refresh ditandai
+///    `extra[skipAuthKey] = true`; [onRequest] lalu tidak menyisipkan (dan
+///    membuang) header `Authorization`. Server menolak refresh yang membawa
+///    Bearer — lihat `wiki/arsitektur/backend-dan-api.md` bagian
+///    `POST /auth/refresh`.
+/// 3. **Rotasi dihormati (D-14).** Refresh token baru dari respons disimpan
+///    menggantikan yang lama; yang lama sudah hangus begitu ditukar.
+///
+/// Sesi hanya diakhiri kalau server MENOLAK refresh (400/401/403). Gagal
+/// jaringan, 429, atau 5xx saat refresh dilaporkan sebagai galat jaringan
+/// biasa — pengguna yang sebentar offline tidak boleh ikut dikeluarkan.
+class AuthInterceptor extends Interceptor {
+  AuthInterceptor(this.dio, {Future<void> Function()? onSessionEnded})
+      : _onSessionEnded = onSessionEnded ?? StorageService.clearSession;
 
-  _AuthInterceptor(this.dio);
+  /// Tandai request yang tidak boleh membawa access token (mis. refresh).
+  static const skipAuthKey = 'skipAuth';
+
+  /// Request yang sudah diulang sekali sesudah refresh — tidak diulang lagi.
+  static const _retriedKey = 'authRetried';
+
+  final Dio dio;
+  final Future<void> Function() _onSessionEnded;
+
+  /// Refresh yang sedang berjalan; `null` kalau tidak ada.
+  Completer<_Refresh>? _refreshing;
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await StorageService.getAccessToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    if (options.extra[skipAuthKey] == true) {
+      options.headers.remove('Authorization');
+      handler.next(options);
+      return;
+    }
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (_) {
+      // Token tak terbaca (mis. OperationError WebCrypto di web) = tidak
+      // punya sesi. Request tetap dikirim tanpa token; Dio membuang Future
+      // callback ini, jadi galat yang lolos di sini membuat request macet
+      // selamanya, bukan gagal.
     }
     handler.next(options);
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response != null) {
-      final statusCode = err.response!.statusCode ?? 0;
-
-      // Coba perpanjang sesi sekali saat 401.
-      if (statusCode == 401 && !_isRefreshing) {
-        _isRefreshing = true;
-        try {
-          final refreshToken = await StorageService.getRefreshToken();
-          if (refreshToken != null) {
-            final res = await dio.post(
-              ApiEndpoints.refresh,
-              data: {'refresh_token': refreshToken},
-              options: Options(headers: {'Authorization': null}),
-            );
-            final newToken = res.data['access_token'] as String;
-            await StorageService.saveTokens(
-              accessToken: newToken,
-              refreshToken: refreshToken,
-            );
-            err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-            final retry = await dio.fetch(err.requestOptions);
-            _isRefreshing = false;
-            handler.resolve(retry);
-            return;
-          }
-        } catch (_) {
-          await StorageService.clearAll();
-        }
-        _isRefreshing = false;
-      }
-
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final response = err.response;
+    if (response == null) {
+      // Gagal di level jaringan.
       handler.reject(
         DioException(
           requestOptions: err.requestOptions,
-          response: err.response,
-          error: apiExceptionFromResponse(statusCode, err.response!.data),
+          error: const ApiException(
+            statusCode: 0,
+            message: 'Tidak dapat terhubung ke server.',
+          ),
         ),
       );
       return;
     }
 
-    // Gagal di level jaringan.
+    final statusCode = response.statusCode ?? 0;
+    final options = err.requestOptions;
+    if (statusCode == 401 &&
+        options.extra[skipAuthKey] != true &&
+        options.extra[_retriedKey] != true) {
+      _Refresh renewal;
+      try {
+        renewal = await _renewSession(options);
+      } catch (_) {
+        // Sama seperti di onRequest: galat yang lolos membuat request macet.
+        renewal = _Refresh.rejected;
+      }
+      switch (renewal) {
+        case _Refresh.renewed:
+          options.extra[_retriedKey] = true;
+          try {
+            // Header diisi ulang onRequest dari token yang baru disimpan.
+            handler.resolve(await dio.fetch<dynamic>(options));
+          } on DioException catch (e) {
+            handler.reject(e);
+          }
+          return;
+        case _Refresh.offline:
+          // Sesinya mungkin masih sah; yang gagal jaringannya.
+          handler.reject(
+            DioException(
+              requestOptions: options,
+              error: const ApiException(
+                statusCode: 0,
+                message: 'Tidak dapat terhubung ke server.',
+              ),
+            ),
+          );
+          return;
+        case _Refresh.rejected:
+          break;
+      }
+    }
+
     handler.reject(
       DioException(
-        requestOptions: err.requestOptions,
-        error: const ApiException(
-          statusCode: 0,
-          message: 'Tidak dapat terhubung ke server.',
-        ),
+        requestOptions: options,
+        response: response,
+        error: apiExceptionFromResponse(statusCode, response.data),
       ),
     );
   }
+
+  /// Memastikan ada access token yang lebih baru dari yang dipakai [failed]:
+  /// hasil refresh yang dijalankan request ini, refresh milik request lain
+  /// yang ditunggu, atau refresh yang sudah selesai sebelum 401 ini tiba.
+  ///
+  /// Request yang dikirim TANPA token (mis. `/auth/login` dengan kata sandi
+  /// salah) tidak punya sesi untuk diperbarui: 401-nya diteruskan apa adanya.
+  Future<_Refresh> _renewSession(RequestOptions failed) async {
+    final used = failed.headers['Authorization'];
+    if (used == null) return _Refresh.rejected;
+    if (_refreshing != null) return _refreshOnce();
+    final current = await StorageService.getAccessToken();
+    // Sesi sudah diakhiri (refresh lain gagal, atau pengguna keluar) selagi
+    // request ini di jalan — jangan diakhiri untuk kedua kalinya.
+    if (current == null) return _Refresh.rejected;
+    if (used != 'Bearer $current') return _Refresh.renewed;
+    return _refreshOnce();
+  }
+
+  Future<_Refresh> _refreshOnce() {
+    final running = _refreshing;
+    if (running != null) return running.future;
+
+    final completer = Completer<_Refresh>();
+    _refreshing = completer;
+    unawaited(_refresh().then(
+      completer.complete,
+      onError: (Object _) => completer.complete(_Refresh.rejected),
+    ).whenComplete(() {
+      _refreshing = null;
+    }));
+    return completer.future;
+  }
+
+  Future<_Refresh> _refresh() async {
+    final refreshToken = await StorageService.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _onSessionEnded();
+      return _Refresh.rejected;
+    }
+    try {
+      final res = await dio.post<dynamic>(
+        ApiEndpoints.refresh,
+        data: {'refresh_token': refreshToken},
+        options: Options(extra: {skipAuthKey: true}),
+      );
+      final data = res.data;
+      final access = data is Map ? data['access_token'] : null;
+      if (access is! String || access.isEmpty) {
+        throw const FormatException('respons /auth/refresh tanpa access_token');
+      }
+      final rotated = data['refresh_token'];
+      await StorageService.saveTokens(
+        accessToken: access,
+        refreshToken:
+            rotated is String && rotated.isNotEmpty ? rotated : refreshToken,
+      );
+      return _Refresh.renewed;
+    } on DioException catch (e) {
+      // Hanya penolakan eksplisit (400/401/403) yang mengakhiri sesi. Tanpa
+      // jawaban (offline, timeout), 429, atau 5xx dari gateway → sesinya
+      // mungkin masih sah; request aslinya gagal sebagai galat jaringan dan
+      // refresh dicoba lagi di request berikutnya.
+      final status = e.response?.statusCode;
+      if (status != 400 && status != 401 && status != 403) {
+        return _Refresh.offline;
+      }
+      await _onSessionEnded();
+      return _Refresh.rejected;
+    } on FormatException catch (e) {
+      debugPrint('[Catatin] refresh gagal: ${e.message}');
+      await _onSessionEnded();
+      return _Refresh.rejected;
+    }
+  }
+}
+
+/// Hasil satu upaya memperbarui sesi.
+enum _Refresh {
+  /// Token baru tersimpan; request boleh diulang.
+  renewed,
+
+  /// Server menolak (atau tidak ada refresh token) — sesi berakhir.
+  rejected,
+
+  /// Server tidak terjangkau atau sedang bermasalah; sesi dibiarkan.
+  offline,
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────────
