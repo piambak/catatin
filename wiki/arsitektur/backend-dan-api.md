@@ -142,7 +142,7 @@ Saat server membalas `401`, klien otomatis sekali memanggil `/auth/refresh`
 dengan refresh token tersimpan, lalu mengulang request aslinya. Kalau refresh
 ikut gagal, sesi lokal dihapus dan pengguna dikembalikan ke layar masuk.
 
-**Umur dan rotasi token** mengikuti default D-14 selama PO belum memutus lain
+**Umur dan rotasi token** mengikuti D-14, yang diputus PO pada 24 Sep 2026
 ([log keputusan](../proyek/log-keputusan.md)): access token berlaku
 **15 menit**, dan setiap `/auth/refresh` **merotasi** refresh token — yang lama
 hangus begitu ditukar. Mode Supabase sudah berperilaku begini; rinciannya,
@@ -177,6 +177,26 @@ register tidak dibaca.
   }
 }
 ```
+
+Padanan di mode Supabase: `POST /auth/v1/token?grant_type=password`. Sesi yang
+disimpan klien setelah login di staging (25 Sep 2026, #39, #43):
+
+```json
+{
+  "access_token": "eyJhbGciOi…",
+  "token_type": "bearer",
+  "expires_in": 900,
+  "expires_at": 1790272626,
+  "refresh_token": "…",
+  "provider_token": null,
+  "provider_refresh_token": null,
+  "user": { "id": "…", "email": "…", "app_metadata": { "provider": "email" }, … }
+}
+```
+
+`expires_in` 900 dan klaim JWT `exp − iat` = 900 detik sesuai D-14. Nama dan
+foto pengguna ada di `user.user_metadata`, bukan di akar objek seperti kontrak
+REST di atas; klien memetakannya ke model `User` yang sama.
 
 #### `POST /auth/refresh`
 
@@ -548,6 +568,17 @@ luar 2000–2099, atau `end_date` sebelum `start_date`, semuanya
 `400 validation_failed` dengan satu field di `details`. Template milik akun
 lain atau yang tidak ada balas `404 not_found`.
 
+**Dibuktikan di staging (24 Sep 2026, #43).** `POST /recurring` dengan body
+contoh di atas, pada hari WIB 24 Sep, menghasilkan `next_date` `2026-10-01`
+dan `is_active: true` dari trigger, kategori `ec4` persis contoh, dan **nol**
+transaksi yang langsung terbit karena 24 Sep bukan tanggal kemunculan.
+`POST /recurring/{id}/stop` lalu menjadikan `is_active: false` dan
+`next_date: null`. Di mode Supabase barisnya juga memuat `user_id`,
+`category_id`, `updated_at`, dan `category.sort_order`, serta `amount` sebagai
+`1500000.00`; klien mengabaikan field tambahan itu. Uji dijalankan sebagai
+pengguna `authenticated` dalam satu transaksi yang dibatalkan, jadi staging
+tidak berubah.
+
 ---
 
 ### Lampiran struk
@@ -565,7 +596,7 @@ dari satu lampiran.
   "file_name": "struk-sewa.jpg",
   "mime_type": "image/jpeg",
   "size_bytes": 482113,
-  "url": "https://…/struk-sewa.jpg?token=…",
+  "url": "https://<ref>.supabase.co/storage/v1/object/sign/receipts/usr_01/trx_01/att_01.jpg?token=…",
   "url_expires_at": "2026-09-21T11:00:00Z",
   "created_at": "2026-09-21T10:00:00Z"
 }
@@ -597,6 +628,18 @@ atau milik akun lain balas `404 not_found`.
 
 Menghapus lampiran beserta berkasnya. Menghapus transaksi (`DELETE
 /transactions/{id}`) ikut menghapus semua lampirannya.
+
+**Dibuktikan di staging (25 Sep 2026, #43).** Satu PNG 70 byte diunggah ke
+transaksi data contoh dengan sesi pengguna sungguhan, mengikuti urutan
+`SupabaseAttachmentRepository`: unggah ke bucket `receipts` `200`, sisip baris
+`201`, *signed URL* `200`, `GET` daftar `200` dengan satu item. Membuka *signed
+URL* dibalas `200` `image/png`, sedangkan jalur yang sama tanpa tanda tangan
+dibalas `400` (bucket privat). Jalur berkasnya
+`<user_id>/<transaction_id>/<attachment_id>.<ext>`, seperti dipaksa
+`transaction_attachments_path_check`. Di mode Supabase baris lampiran juga
+memuat `storage_path` dan `user_id`, sedangkan `url_expires_at` dihitung klien
+(waktu permintaan + 1 jam), bukan dikirim server. Lampiran dan berkasnya
+dihapus lagi setelahnya (`200`, `204`).
 
 ---
 
