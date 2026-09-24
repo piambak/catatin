@@ -70,18 +70,19 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: DS.expense,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: DS.expense,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   /// Layar ini dibuka dengan `context.go` dari dashboard, jadi biasanya tidak
   /// ada halaman di bawahnya — `pop` polos akan melempar galat.
-  void _leave() => context.canPop()
-      ? context.pop()
-      : context.go(AppRoutes.dashboard);
+  void _leave() =>
+      context.canPop() ? context.pop() : context.go(AppRoutes.dashboard);
 
   List<TxCategoryData> get _filteredCats =>
       _categories.where((c) => c.isIncome == _isIncome).toList();
@@ -141,11 +142,13 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
         type: _isIncome ? 'INCOME' : 'EXPENSE',
         amount: amount,
         categoryId: _selectedCatId!,
-        description:
-            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        description: _descCtrl.text.trim().isEmpty
+            ? null
+            : _descCtrl.text.trim(),
         paymentMethod: _paymentMethod,
-        receiptNote:
-            _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+        receiptNote: _noteCtrl.text.trim().isEmpty
+            ? null
+            : _noteCtrl.text.trim(),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -196,7 +199,9 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             TypeToggle(
-                                isIncome: _isIncome, onChanged: _onTypeChanged),
+                              isIncome: _isIncome,
+                              onChanged: _onTypeChanged,
+                            ),
                             const SizedBox(height: 26),
                             AmountInput(
                               controller: _amountCtrl,
@@ -248,13 +253,14 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
                                     label: _submitting
                                         ? 'Menyimpan…'
                                         : _isIncome
-                                            ? 'Simpan pemasukan'
-                                            : 'Simpan pengeluaran',
+                                        ? 'Simpan pemasukan'
+                                        : 'Simpan pengeluaran',
                                     onPressed: _submitting ? null : _submit,
                                     expand: true,
                                     minHeight: 50,
-                                    background:
-                                        _isIncome ? DS.income : DS.expense,
+                                    background: _isIncome
+                                        ? DS.income
+                                        : DS.expense,
                                     foreground: Colors.white,
                                   ),
                                 ),
@@ -300,8 +306,10 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tanggal',
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          'Tanggal',
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 6),
         Semantics(
           button: true,
@@ -323,14 +331,22 @@ class _NewTransactionScreenState extends State<NewTransactionScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 17, color: DS.faint),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 17,
+                        color: DS.faint,
+                      ),
                       const SizedBox(width: 10),
-                      Text(Tanggal.long(_date),
-                          style: Typo.sans(15, color: DS.ink)),
+                      Text(
+                        Tanggal.long(_date),
+                        style: Typo.sans(15, color: DS.ink),
+                      ),
                       const Spacer(),
-                      Icon(Icons.chevron_right_rounded,
-                          size: 20, color: DS.faint),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: DS.faint,
+                      ),
                     ],
                   ),
                 ),
@@ -366,8 +382,10 @@ class _SuccessView extends StatelessWidget {
             const SizedBox(height: 20),
             Text('Transaksi tersimpan', style: Typo.serif(24)),
             const SizedBox(height: 8),
-            Text('Mengarahkan kembali ke Pencatatan…',
-                style: Typo.sans(14, color: DS.muted)),
+            Text(
+              'Mengarahkan kembali ke Pencatatan…',
+              style: Typo.sans(14, color: DS.muted),
+            ),
           ],
         ),
       ),

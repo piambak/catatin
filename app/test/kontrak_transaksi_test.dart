@@ -49,9 +49,30 @@ const _sampleTransaction = {
 const _sampleAggregate = {
   'year': 2026,
   'months': [
-    {'month': 1, 'income': 19200000, 'expense': 16300000, 'cogs': 5800000, 'tx_count': 6, 'ytd_omzet': 19200000},
-    {'month': 2, 'income': 21500000, 'expense': 17000000, 'cogs': 6500000, 'tx_count': 6, 'ytd_omzet': 40700000},
-    {'month': 3, 'income': 38000000, 'expense': 21900000, 'cogs': 11400000, 'tx_count': 6, 'ytd_omzet': 78700000},
+    {
+      'month': 1,
+      'income': 19200000,
+      'expense': 16300000,
+      'cogs': 5800000,
+      'tx_count': 6,
+      'ytd_omzet': 19200000,
+    },
+    {
+      'month': 2,
+      'income': 21500000,
+      'expense': 17000000,
+      'cogs': 6500000,
+      'tx_count': 6,
+      'ytd_omzet': 40700000,
+    },
+    {
+      'month': 3,
+      'income': 38000000,
+      'expense': 21900000,
+      'cogs': 11400000,
+      'tx_count': 6,
+      'ytd_omzet': 78700000,
+    },
   ],
 };
 
@@ -68,9 +89,13 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -90,21 +115,40 @@ void main() {
       );
     });
 
-    test('to sebelum from ditolak; hari yang sama boleh walau jamnya mundur', () {
-      expect(
-        () => checkTransactionFilter(
-            from: DateTime(2026, 8, 2), to: DateTime(2026, 8, 1)),
-        throwsArgumentError,
-      );
-      checkTransactionFilter(
-          from: DateTime(2026, 8, 1, 18), to: DateTime(2026, 8, 1, 7));
-    });
+    test(
+      'to sebelum from ditolak; hari yang sama boleh walau jamnya mundur',
+      () {
+        expect(
+          () => checkTransactionFilter(
+            from: DateTime(2026, 8, 2),
+            to: DateTime(2026, 8, 1),
+          ),
+          throwsArgumentError,
+        );
+        checkTransactionFilter(
+          from: DateTime(2026, 8, 1, 18),
+          to: DateTime(2026, 8, 1, 7),
+        );
+      },
+    );
   });
 
   group('YearAggregate', () {
     final aggregate = YearAggregate.fromMonthlyTotals(2026, [
-      (month: 1, income: 19200000, expense: 12400000, cogs: 6100000, txCount: 9),
-      (month: 3, income: 38000000, expense: 22800000, cogs: 12500000, txCount: 11),
+      (
+        month: 1,
+        income: 19200000,
+        expense: 12400000,
+        cogs: 6100000,
+        txCount: 9,
+      ),
+      (
+        month: 3,
+        income: 38000000,
+        expense: 22800000,
+        cogs: 12500000,
+        txCount: 11,
+      ),
     ]);
 
     test('selalu 12 bulan; bulan tanpa angka bernilai nol', () {
@@ -151,18 +195,26 @@ void main() {
     });
 
     test('message diterima sebagai alias error', () {
-      final e = apiExceptionFromResponse(409, {'message': 'Email sudah terdaftar'});
+      final e = apiExceptionFromResponse(409, {
+        'message': 'Email sudah terdaftar',
+      });
       expect(e.message, 'Email sudah terdaftar');
       expect(e.code, isNull);
     });
 
     test('details kosong atau bukan objek dibuang', () {
       expect(
-        apiExceptionFromResponse(400, {'error': 'x', 'details': {}}).userMessage,
+        apiExceptionFromResponse(400, {
+          'error': 'x',
+          'details': {},
+        }).userMessage,
         'Data tidak valid.',
       );
       expect(
-        apiExceptionFromResponse(400, {'error': 'x', 'details': ['a']}).errors,
+        apiExceptionFromResponse(400, {
+          'error': 'x',
+          'details': ['a'],
+        }).errors,
         isNull,
       );
     });
@@ -221,7 +273,9 @@ void main() {
     tearDown(ApiClient.reset);
 
     test('tanpa filter tidak mengirim query apa pun', () async {
-      useFakeServer({'transactions': [_sampleTransaction]});
+      useFakeServer({
+        'transactions': [_sampleTransaction],
+      });
       final txs = await ApiTransactionRepository().getTransactions();
       expect(adapter.requests.single.uri.queryParameters, isEmpty);
       expect(txs.single.category.name, 'Penjualan Produk');
@@ -234,14 +288,17 @@ void main() {
         from: DateTime(2026, 8, 1),
         to: DateTime(2026, 8, 31, 17, 30),
       );
-      expect(adapter.requests.single.uri.queryParameters,
-          {'from': '2026-08-01', 'to': '2026-08-31'});
+      expect(adapter.requests.single.uri.queryParameters, {
+        'from': '2026-08-01',
+        'to': '2026-08-31',
+      });
     });
 
     test('agregat memanggil /transactions/aggregate?year=', () async {
       useFakeServer(_sampleAggregate);
-      final aggregate =
-          await ApiTransactionRepository().getAggregate(year: 2026);
+      final aggregate = await ApiTransactionRepository().getAggregate(
+        year: 2026,
+      );
       final uri = adapter.requests.single.uri;
       expect(uri.path, '/api/v1/transactions/aggregate');
       expect(uri.queryParameters, {'year': '2026'});

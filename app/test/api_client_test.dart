@@ -52,8 +52,10 @@ class _FakeServer implements HttpClientAdapter {
       refreshCalls++;
       switch (refreshReply) {
         case _RefreshReply.ok:
-          return _json(
-              {'access_token': 'baru', 'refresh_token': 'refresh-2'}, 200);
+          return _json({
+            'access_token': 'baru',
+            'refresh_token': 'refresh-2',
+          }, 200);
         case _RefreshReply.rejected:
           return _json({'error': 'refresh token tidak dikenal'}, 401);
         case _RefreshReply.unavailable:
@@ -72,10 +74,13 @@ class _FakeServer implements HttpClientAdapter {
     return _json({'error': 'unauthorized'}, 401);
   }
 
-  static ResponseBody _json(Object body, int status) =>
-      ResponseBody.fromString(jsonEncode(body), status, headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      });
+  static ResponseBody _json(Object body, int status) => ResponseBody.fromString(
+    jsonEncode(body),
+    status,
+    headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    },
+  );
 
   @override
   void close({bool force = false}) {}
@@ -93,9 +98,14 @@ void main() {
     server = s;
     dio = Dio(BaseOptions(baseUrl: 'https://api.test/api/v1'))
       ..httpClientAdapter = server;
-    dio.interceptors.add(AuthInterceptor(dio, onSessionEnded: () async {
-      sessionEnded++;
-    }));
+    dio.interceptors.add(
+      AuthInterceptor(
+        dio,
+        onSessionEnded: () async {
+          sessionEnded++;
+        },
+      ),
+    );
   }
 
   setUp(() {
@@ -128,58 +138,67 @@ void main() {
       expect(secure[StorageKeys.refreshToken], 'refresh-2');
     });
 
-    test('request refresh tidak membawa Bearer, membawa refresh token',
-        () async {
-      useServer(_FakeServer());
+    test(
+      'request refresh tidak membawa Bearer, membawa refresh token',
+      () async {
+        useServer(_FakeServer());
 
-      await dio.get<dynamic>('/dashboard');
+        await dio.get<dynamic>('/dashboard');
 
-      final refresh =
-          server.requests.singleWhere((r) => r.path == ApiEndpoints.refresh);
-      expect(refresh.headers.containsKey('Authorization'), isFalse);
-      expect(refresh.data, {'refresh_token': 'refresh-1'});
-    });
+        final refresh = server.requests.singleWhere(
+          (r) => r.path == ApiEndpoints.refresh,
+        );
+        expect(refresh.headers.containsKey('Authorization'), isFalse);
+        expect(refresh.data, {'refresh_token': 'refresh-1'});
+      },
+    );
 
-    test('tiga request bersamaan kena 401 → SATU refresh, tiga berhasil',
-        () async {
-      useServer(_FakeServer());
+    test(
+      'tiga request bersamaan kena 401 → SATU refresh, tiga berhasil',
+      () async {
+        useServer(_FakeServer());
 
-      final results = await Future.wait([
-        dio.get<dynamic>('/dashboard'),
-        dio.get<dynamic>('/transactions'),
-        dio.get<dynamic>('/business'),
-      ]);
+        final results = await Future.wait([
+          dio.get<dynamic>('/dashboard'),
+          dio.get<dynamic>('/transactions'),
+          dio.get<dynamic>('/business'),
+        ]);
 
-      expect(server.refreshCalls, 1);
-      expect(results.map((r) => r.statusCode), everyElement(200));
-      expect(sessionEnded, 0);
-    });
+        expect(server.refreshCalls, 1);
+        expect(results.map((r) => r.statusCode), everyElement(200));
+        expect(sessionEnded, 0);
+      },
+    );
 
-    test('refresh ditolak server → sesi diakhiri sekali, request gagal 401',
-        () async {
-      useServer(_FakeServer(refreshReply: _RefreshReply.rejected));
+    test(
+      'refresh ditolak server → sesi diakhiri sekali, request gagal 401',
+      () async {
+        useServer(_FakeServer(refreshReply: _RefreshReply.rejected));
 
-      final errors = await Future.wait([
-        _errorOf(dio.get<dynamic>('/dashboard')),
-        _errorOf(dio.get<dynamic>('/transactions')),
-        _errorOf(dio.get<dynamic>('/business')),
-      ]);
+        final errors = await Future.wait([
+          _errorOf(dio.get<dynamic>('/dashboard')),
+          _errorOf(dio.get<dynamic>('/transactions')),
+          _errorOf(dio.get<dynamic>('/business')),
+        ]);
 
-      expect(server.refreshCalls, 1);
-      expect(sessionEnded, 1);
-      expect(errors.map((e) => e.statusCode), everyElement(401));
-    });
+        expect(server.refreshCalls, 1);
+        expect(sessionEnded, 1);
+        expect(errors.map((e) => e.statusCode), everyElement(401));
+      },
+    );
 
-    test('offline saat refresh → sesi TIDAK diakhiri, galat jaringan',
-        () async {
-      useServer(_FakeServer(refreshReply: _RefreshReply.offline));
+    test(
+      'offline saat refresh → sesi TIDAK diakhiri, galat jaringan',
+      () async {
+        useServer(_FakeServer(refreshReply: _RefreshReply.offline));
 
-      final error = await _errorOf(dio.get<dynamic>('/dashboard'));
+        final error = await _errorOf(dio.get<dynamic>('/dashboard'));
 
-      expect(error.statusCode, 0);
-      expect(sessionEnded, 0);
-      expect(secure[StorageKeys.refreshToken], 'refresh-1');
-    });
+        expect(error.statusCode, 0);
+        expect(sessionEnded, 0);
+        expect(secure[StorageKeys.refreshToken], 'refresh-1');
+      },
+    );
 
     test('502 dari gateway saat refresh → sesi TIDAK diakhiri', () async {
       useServer(_FakeServer(refreshReply: _RefreshReply.unavailable));
@@ -190,18 +209,24 @@ void main() {
       expect(sessionEnded, 0);
     });
 
-    test('401 pada request tanpa token (kata sandi salah) → tanpa refresh',
-        () async {
-      secure.clear();
-      useServer(_FakeServer());
+    test(
+      '401 pada request tanpa token (kata sandi salah) → tanpa refresh',
+      () async {
+        secure.clear();
+        useServer(_FakeServer());
 
-      final error = await _errorOf(dio.post<dynamic>(ApiEndpoints.login,
-          data: {'email': 'a@b.c', 'password': 'salah'}));
+        final error = await _errorOf(
+          dio.post<dynamic>(
+            ApiEndpoints.login,
+            data: {'email': 'a@b.c', 'password': 'salah'},
+          ),
+        );
 
-      expect(error.statusCode, 401);
-      expect(server.refreshCalls, 0);
-      expect(sessionEnded, 0);
-    });
+        expect(error.statusCode, 401);
+        expect(server.refreshCalls, 0);
+        expect(sessionEnded, 0);
+      },
+    );
   });
 
   group('StorageService.clearSession', () {

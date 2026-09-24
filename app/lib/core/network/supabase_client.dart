@@ -202,11 +202,13 @@ void _reportAppError(Object error, ApiException? mapped) {
     platform: _platform,
   );
   if (row == null) return;
-  unawaited(Future(() async {
-    try {
-      await SupabaseBackend.client.from('app_errors').insert(row);
-    } catch (_) {}
-  }));
+  unawaited(
+    Future(() async {
+      try {
+        await SupabaseBackend.client.from('app_errors').insert(row);
+      } catch (_) {}
+    }),
+  );
 }
 
 // ── Penerjemah galat ──────────────────────────────────────────────────────────
@@ -216,10 +218,7 @@ const _offline = ApiException(
   message: 'Tidak dapat terhubung ke server.',
 );
 
-const _sessionEnded = ApiException(
-  statusCode: 401,
-  message: 'Sesi berakhir.',
-);
+const _sessionEnded = ApiException(statusCode: 401, message: 'Sesi berakhir.');
 
 /// Menerjemahkan galat klien Supabase jadi [ApiException].
 ///
@@ -269,7 +268,8 @@ ApiException _fromAuth(sb.AuthException e) {
     case 'email_not_confirmed':
       return const ApiException(
         statusCode: 409,
-        message: 'Email belum dikonfirmasi. Buka tautan di email Anda, '
+        message:
+            'Email belum dikonfirmasi. Buka tautan di email Anda, '
             'lalu masuk.',
       );
     case 'signup_disabled':
@@ -281,7 +281,9 @@ ApiException _fromAuth(sb.AuthException e) {
       return const ApiException(
         statusCode: 400,
         message: 'Kata sandi terlalu lemah.',
-        errors: {'password': 'Kata sandi terlalu lemah. Pakai yang lebih panjang.'},
+        errors: {
+          'password': 'Kata sandi terlalu lemah. Pakai yang lebih panjang.',
+        },
       );
     case 'same_password':
       return const ApiException(
@@ -307,7 +309,8 @@ ApiException _fromAuth(sb.AuthException e) {
       // ke pengunjung umum. Sesi yang baru dibuat tidak memerlukannya.
       return const ApiException(
         statusCode: 409,
-        message: 'Demi keamanan, kata sandi hanya bisa dipasang tidak lama '
+        message:
+            'Demi keamanan, kata sandi hanya bisa dipasang tidak lama '
             'setelah masuk. Keluar, masuk lagi dengan Google, lalu coba lagi.',
       );
     case 'email_address_invalid':
@@ -335,7 +338,10 @@ ApiException _fromAuth(sb.AuthException e) {
 
   final status = int.tryParse(e.statusCode ?? '');
   if (status == 429) {
-    return const ApiException(statusCode: 429, message: 'Terlalu banyak percobaan.');
+    return const ApiException(
+      statusCode: 429,
+      message: 'Terlalu banyak percobaan.',
+    );
   }
   if (status == 409) {
     return const ApiException(
@@ -385,7 +391,10 @@ ApiException _fromStorage(sb.StorageException e, {required bool hasSession}) {
           ? const ApiException(statusCode: 403, message: 'Akses ditolak.')
           : _sessionEnded;
     case '404':
-      return const ApiException(statusCode: 404, message: 'Data tidak ditemukan.');
+      return const ApiException(
+        statusCode: 404,
+        message: 'Data tidak ditemukan.',
+      );
     case '409':
       return const ApiException(
         statusCode: 409,
@@ -413,7 +422,10 @@ ApiException _fromPostgrest(
           ? const ApiException(statusCode: 403, message: 'Akses ditolak.')
           : _sessionEnded;
     case 'PGRST116':
-      return const ApiException(statusCode: 404, message: 'Data tidak ditemukan.');
+      return const ApiException(
+        statusCode: 404,
+        message: 'Data tidak ditemukan.',
+      );
     case '23505':
       return const ApiException(
         statusCode: 409,
@@ -580,10 +592,7 @@ const _constraintFields = <String, (String, String)>{
     'file',
     'Nama berkas tidak valid.',
   ),
-  'transaction_attachments_path_check': (
-    'file',
-    'Lokasi berkas tidak valid.',
-  ),
+  'transaction_attachments_path_check': ('file', 'Lokasi berkas tidak valid.'),
 };
 
 /// Galat 400 dengan pesan per field untuk constraint yang dikenal, supaya
@@ -594,7 +603,11 @@ ApiException? _constraintViolation(sb.PostgrestException e) {
   final field = _constraintFields[name];
   if (field == null) return null;
   final (key, message) = field;
-  return ApiException(statusCode: 400, message: message, errors: {key: message});
+  return ApiException(
+    statusCode: 400,
+    message: message,
+    errors: {key: message},
+  );
 }
 
 /// Galat yang tidak dikenali jatuh ke pesan umum di UI; di mode debug pesan

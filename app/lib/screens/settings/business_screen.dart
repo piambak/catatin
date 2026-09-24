@@ -100,7 +100,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
         _businessType = profile.businessType;
         _pkpStatus = profile.pkpStatus;
         // Kalau detail tambahan sudah pernah diisi, jangan disembunyikan.
-        _showMore = (profile.npwp?.isNotEmpty ?? false) ||
+        _showMore =
+            (profile.npwp?.isNotEmpty ?? false) ||
             (profile.ownerName?.isNotEmpty ?? false) ||
             profile.employeeCount > 0;
       });
@@ -163,18 +164,20 @@ class _BusinessScreenState extends State<BusinessScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _showError(e is ApiException
-          ? e.userMessage
-          : 'Gagal menyimpan. Coba lagi.');
+      _showError(
+        e is ApiException ? e.userMessage : 'Gagal menyimpan. Coba lagi.',
+      );
     }
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: DS.expense,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: DS.expense,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _skip() async {
@@ -198,7 +201,9 @@ class _BusinessScreenState extends State<BusinessScreen> {
             return Center(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
-                    horizontal: Bp.pagePadding(bp), vertical: 28),
+                  horizontal: Bp.pagePadding(bp),
+                  vertical: 28,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 560),
                   child: Form(
@@ -229,8 +234,8 @@ class _BusinessScreenState extends State<BusinessScreen> {
                           label: _saving
                               ? 'Menyimpan…'
                               : widget.isOnboarding
-                                  ? 'Simpan dan mulai'
-                                  : 'Simpan perubahan',
+                              ? 'Simpan dan mulai'
+                              : 'Simpan perubahan',
                           onPressed: _saving ? null : _save,
                           expand: true,
                           minHeight: 50,
@@ -266,8 +271,10 @@ class _BusinessScreenState extends State<BusinessScreen> {
         children: [
           const DsWordmark(size: 26),
           const SizedBox(height: 30),
-          Text('Ceritakan usaha Anda',
-              style: Typo.serif(bp.isExpanded ? 32 : 27)),
+          Text(
+            'Ceritakan usaha Anda',
+            style: Typo.serif(bp.isExpanded ? 32 : 27),
+          ),
           const SizedBox(height: 10),
           Text(
             'Tiga hal ini menentukan skema pajak yang berlaku untuk Anda. '
@@ -287,7 +294,10 @@ class _BusinessScreenState extends State<BusinessScreen> {
         ),
         const SizedBox(width: 4),
         Expanded(
-          child: Text('Profil usaha', style: Typo.serif(bp.isExpanded ? 32 : 25)),
+          child: Text(
+            'Profil usaha',
+            style: Typo.serif(bp.isExpanded ? 32 : 25),
+          ),
         ),
       ],
     );
@@ -297,8 +307,10 @@ class _BusinessScreenState extends State<BusinessScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Jenis usaha',
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          'Jenis usaha',
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -320,8 +332,10 @@ class _BusinessScreenState extends State<BusinessScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Status PKP',
-            style: Typo.sans(13, weight: FontWeight.w500, color: DS.body)),
+        Text(
+          'Status PKP',
+          style: Typo.sans(13, weight: FontWeight.w500, color: DS.body),
+        ),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -389,9 +403,14 @@ class _BusinessScreenState extends State<BusinessScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Row(
                   children: [
-                    Text('Detail tambahan',
-                        style:
-                            Typo.sans(14, weight: FontWeight.w600, color: DS.ink)),
+                    Text(
+                      'Detail tambahan',
+                      style: Typo.sans(
+                        14,
+                        weight: FontWeight.w600,
+                        color: DS.ink,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     Icon(
                       _showMore
@@ -476,19 +495,21 @@ class _SelectableChip extends StatelessWidget {
           // penuh sebagai maksimum — jadi tiap pil memakan satu baris sendiri.
           child: Container(
             constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(Radii.pill),
               border: Border.all(
-                  color: selected ? DS.brand : DS.border,
-                  width: selected ? 1.5 : 1),
+                color: selected ? DS.brand : DS.border,
+                width: selected ? 1.5 : 1,
+              ),
             ),
             child: Text(
               label,
-              style: Typo.sans(14,
-                  weight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? DS.brandInk : DS.body),
+              style: Typo.sans(
+                14,
+                weight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? DS.brandInk : DS.body,
+              ),
             ),
           ),
         ),
@@ -525,26 +546,32 @@ class _PkpOption extends StatelessWidget {
             borderRadius: BorderRadius.circular(Radii.md),
             child: Container(
               constraints: const BoxConstraints(minHeight: 68),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(Radii.md),
                 border: Border.all(
-                    color: selected ? DS.brand : DS.border,
-                    width: selected ? 1.5 : 1),
+                  color: selected ? DS.brand : DS.border,
+                  width: selected ? 1.5 : 1,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(label,
-                      style: Typo.sans(15,
-                          weight: FontWeight.w600,
-                          color: selected ? DS.brandInk : DS.ink)),
+                  Text(
+                    label,
+                    style: Typo.sans(
+                      15,
+                      weight: FontWeight.w600,
+                      color: selected ? DS.brandInk : DS.ink,
+                    ),
+                  ),
                   const SizedBox(height: 3),
-                  Text(subtitle,
-                      style: Typo.sans(12, color: DS.muted, height: 1.35)),
+                  Text(
+                    subtitle,
+                    style: Typo.sans(12, color: DS.muted, height: 1.35),
+                  ),
                 ],
               ),
             ),
@@ -572,7 +599,9 @@ class _SuccessView extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                    color: DS.brandMuted, shape: BoxShape.circle),
+                  color: DS.brandMuted,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(Icons.check_rounded, size: 30, color: DS.brandDeep),
               ),
               const SizedBox(height: 20),

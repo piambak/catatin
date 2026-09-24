@@ -121,10 +121,12 @@ class _NavPill extends StatelessWidget {
                     destination.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Typo.sans(10.5,
-                        weight: selected ? FontWeight.w600 : FontWeight.w400,
-                        color: selected ? DS.brandInk : DS.muted,
-                        height: 1.2),
+                    style: Typo.sans(
+                      10.5,
+                      weight: selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? DS.brandInk : DS.muted,
+                      height: 1.2,
+                    ),
                   ),
                 ],
               ),
@@ -207,8 +209,7 @@ class AppNavRail extends StatelessWidget {
             alignment: Alignment.center,
             child: expanded
                 ? Icon(Icons.chevron_left_rounded, size: 20, color: DS.body)
-                : Text('C',
-                    style: Typo.serif(19, color: DS.invInk, height: 1)),
+                : Text('C', style: Typo.serif(19, color: DS.invInk, height: 1)),
           ),
         ),
       ),
@@ -227,7 +228,10 @@ class AppNavRail extends StatelessWidget {
                 style: Typo.serif(24, color: DS.wordmark),
                 children: [
                   const TextSpan(text: 'Catat'),
-                  TextSpan(text: 'in', style: Typo.serif(24, color: DS.brand)),
+                  TextSpan(
+                    text: 'in',
+                    style: Typo.serif(24, color: DS.brand),
+                  ),
                 ],
               ),
             ),
@@ -245,8 +249,10 @@ class AppNavRail extends StatelessWidget {
       height: 38,
       decoration: BoxDecoration(color: DS.wordmark, shape: BoxShape.circle),
       alignment: Alignment.center,
-      child: Text(initials,
-          style: Typo.sans(13.5, weight: FontWeight.w600, color: Colors.white)),
+      child: Text(
+        initials,
+        style: Typo.sans(13.5, weight: FontWeight.w600, color: Colors.white),
+      ),
     );
 
     if (!expanded) return Center(child: avatar);
@@ -266,7 +272,11 @@ class AppNavRail extends StatelessWidget {
                   userName?.isNotEmpty == true ? userName! : 'Pengguna',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Typo.sans(13.5, weight: FontWeight.w500, color: DS.ink),
+                  style: Typo.sans(
+                    13.5,
+                    weight: FontWeight.w500,
+                    color: DS.ink,
+                  ),
                 ),
                 if (userRole?.isNotEmpty == true)
                   Text(
@@ -284,8 +294,10 @@ class AppNavRail extends StatelessWidget {
   }
 
   static String _initials(String? name) {
-    final parts =
-        (name ?? '').trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    final parts = (name ?? '')
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty);
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.characters.first.toUpperCase();
     return (parts.first.characters.first + parts.last.characters.first)
@@ -311,13 +323,19 @@ class _RailItem extends StatelessWidget {
     final content = Container(
       constraints: const BoxConstraints(minHeight: 48),
       padding: EdgeInsets.symmetric(
-          horizontal: expanded ? 14 : 0, vertical: 12),
+        horizontal: expanded ? 14 : 0,
+        vertical: 12,
+      ),
       child: Row(
-        mainAxisAlignment:
-            expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+        mainAxisAlignment: expanded
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
         children: [
-          Icon(destination.icon,
-              size: 20, color: selected ? DS.brand : DS.muted),
+          Icon(
+            destination.icon,
+            size: 20,
+            color: selected ? DS.brand : DS.muted,
+          ),
           if (expanded) ...[
             const SizedBox(width: 12),
             Flexible(
@@ -325,9 +343,11 @@ class _RailItem extends StatelessWidget {
                 destination.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Typo.sans(14.5,
-                    weight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected ? DS.ink : DS.body),
+                style: Typo.sans(
+                  14.5,
+                  weight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? DS.ink : DS.body,
+                ),
               ),
             ),
           ],

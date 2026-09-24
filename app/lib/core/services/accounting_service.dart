@@ -26,14 +26,13 @@ class AccountingService {
     DateTime? from,
     DateTime? to,
     String? businessId,
-  }) =>
-      Repos.transaction.getTransactions(
-        month: month,
-        year: year,
-        from: from,
-        to: to,
-        businessId: businessId,
-      );
+  }) => Repos.transaction.getTransactions(
+    month: month,
+    year: year,
+    from: from,
+    to: to,
+    businessId: businessId,
+  );
 
   static Future<YearAggregate> getAggregate({required int year}) =>
       Repos.transaction.getAggregate(year: year);
@@ -50,8 +49,9 @@ class AccountingService {
     String? description,
     required String paymentMethod,
     String? receiptNote,
-  }) =>
-      _notifyIfOk(Repos.transaction.createTransaction(TransactionDraft(
+  }) => _notifyIfOk(
+    Repos.transaction.createTransaction(
+      TransactionDraft(
         businessId: businessId,
         date: date,
         type: type,
@@ -60,7 +60,9 @@ class AccountingService {
         description: description,
         paymentMethod: paymentMethod,
         receiptNote: receiptNote,
-      )));
+      ),
+    ),
+  );
 
   static Future<bool> updateTransaction({
     required String id,
@@ -72,20 +74,21 @@ class AccountingService {
     String? description,
     required String paymentMethod,
     String? receiptNote,
-  }) =>
-      _notifyIfOk(Repos.transaction.updateTransaction(
-        id,
-        TransactionDraft(
-          businessId: businessId,
-          date: date,
-          type: type,
-          amount: amount,
-          categoryId: categoryId,
-          description: description,
-          paymentMethod: paymentMethod,
-          receiptNote: receiptNote,
-        ),
-      ));
+  }) => _notifyIfOk(
+    Repos.transaction.updateTransaction(
+      id,
+      TransactionDraft(
+        businessId: businessId,
+        date: date,
+        type: type,
+        amount: amount,
+        categoryId: categoryId,
+        description: description,
+        paymentMethod: paymentMethod,
+        receiptNote: receiptNote,
+      ),
+    ),
+  );
 
   static Future<bool> deleteTransaction(String id) =>
       _notifyIfOk(Repos.transaction.deleteTransaction(id));

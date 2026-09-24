@@ -41,52 +41,55 @@ void main() {
       final repo = MockTransactionRepository();
       final before = await repo.getTransactions();
 
-      await repo.createTransaction(TransactionDraft(
-        businessId: 'b1',
-        date: DateTime.now().toIso8601String().substring(0, 10),
-        type: 'INCOME',
-        amount: 1000000,
-        categoryId: 'ic1',
-        paymentMethod: 'CASH',
-      ));
+      await repo.createTransaction(
+        TransactionDraft(
+          businessId: 'b1',
+          date: DateTime.now().toIso8601String().substring(0, 10),
+          type: 'INCOME',
+          amount: 1000000,
+          categoryId: 'ic1',
+          paymentMethod: 'CASH',
+        ),
+      );
 
       final after = await repo.getTransactions();
       expect(after.length, before.length + 1);
     });
 
-    test('transaksi yang diubah menggantikan versi lama, tidak menggandakan',
-        () async {
-      final repo = MockTransactionRepository();
-      final before = await repo.getTransactions();
-      final target = before.first;
+    test(
+      'transaksi yang diubah menggantikan versi lama, tidak menggandakan',
+      () async {
+        final repo = MockTransactionRepository();
+        final before = await repo.getTransactions();
+        final target = before.first;
 
-      final ok = await repo.updateTransaction(
-        target.id,
-        TransactionDraft(
-          businessId: target.businessId,
-          date: target.date.toIso8601String().substring(0, 10),
-          type: target.type,
-          amount: 4321000,
-          categoryId: target.category.id,
-          paymentMethod: 'KARTU_DEBIT',
-        ),
-      );
+        final ok = await repo.updateTransaction(
+          target.id,
+          TransactionDraft(
+            businessId: target.businessId,
+            date: target.date.toIso8601String().substring(0, 10),
+            type: target.type,
+            amount: 4321000,
+            categoryId: target.category.id,
+            paymentMethod: 'KARTU_DEBIT',
+          ),
+        );
 
-      final after = await repo.getTransactions();
-      final updated = after.where((t) => t.id == target.id);
-      expect(ok, isTrue);
-      expect(after.length, before.length);
-      expect(updated, hasLength(1));
-      expect(updated.single.amount, 4321000);
-      expect(updated.single.paymentMethod, 'KARTU_DEBIT');
-    });
+        final after = await repo.getTransactions();
+        final updated = after.where((t) => t.id == target.id);
+        expect(ok, isTrue);
+        expect(after.length, before.length);
+        expect(updated, hasLength(1));
+        expect(updated.single.amount, 4321000);
+        expect(updated.single.paymentMethod, 'KARTU_DEBIT');
+      },
+    );
   });
 
   group('Repos', () {
     tearDown(() => Repos.useDemo(false));
 
-    test('sesi demo membuang implementasi yang tersimpan dan memakai mock',
-        () {
+    test('sesi demo membuang implementasi yang tersimpan dan memakai mock', () {
       Repos.transaction = _FakeTransactionRepository();
       expect(Repos.transaction, isA<_FakeTransactionRepository>());
 
@@ -99,15 +102,17 @@ void main() {
   });
 
   group('MockAuthRepository', () {
-    test('tanpa Supabase tidak ada alur Google dan tidak ada sesi backend',
-        () async {
-      final repo = MockAuthRepository();
-      await expectLater(
-        repo.signInWithGoogle(),
-        throwsA(same(googleSignInUnsupported)),
-      );
-      expect(await repo.currentSession(), isNull);
-    });
+    test(
+      'tanpa Supabase tidak ada alur Google dan tidak ada sesi backend',
+      () async {
+        final repo = MockAuthRepository();
+        await expectLater(
+          repo.signInWithGoogle(),
+          throwsA(same(googleSignInUnsupported)),
+        );
+        expect(await repo.currentSession(), isNull);
+      },
+    );
 
     test('akun demo masuk dengan email + kata sandi', () async {
       final repo = MockAuthRepository();
@@ -122,10 +127,12 @@ void main() {
   });
 
   testWidgets('tema terpasang tanpa exception', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light,
-      home: const Scaffold(body: Text('Catatin')),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(body: Text('Catatin')),
+      ),
+    );
 
     expect(find.text('Catatin'), findsOneWidget);
   });

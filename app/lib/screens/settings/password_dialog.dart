@@ -76,21 +76,23 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   }
 
   Widget _visibilityToggle() => IconButton(
-        tooltip: _obscure ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi',
-        icon: Icon(
-          _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          size: 19,
-          color: DS.faint,
-        ),
-        onPressed: () => setState(() => _obscure = !_obscure),
-      );
+    tooltip: _obscure ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi',
+    icon: Icon(
+      _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+      size: 19,
+      color: DS.faint,
+    ),
+    onPressed: () => setState(() => _obscure = !_obscure),
+  );
 
   @override
   Widget build(BuildContext context) {
     final email = widget.email;
     return Dialog(
       backgroundColor: DS.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.lg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(
@@ -110,8 +112,8 @@ class _PasswordDialogState extends State<_PasswordDialog> {
                   widget.hasPassword
                       ? 'Kata sandi baru berlaku untuk masuk dengan email.'
                       : 'Setelah ini akun yang sama bisa dibuka dengan '
-                          '${email ?? 'email Google Anda'} dan kata sandi ini, '
-                          'selain dengan Google.',
+                            '${email ?? 'email Google Anda'} dan kata sandi ini, '
+                            'selain dengan Google.',
                   style: Typo.sans(13.5, color: DS.body, height: 1.5),
                 ),
                 const SizedBox(height: 20),
@@ -159,10 +161,13 @@ class _PasswordDialogState extends State<_PasswordDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed:
-                          _saving ? null : () => Navigator.pop(context, false),
-                      child: Text('Batal',
-                          style: Typo.sans(14, color: DS.muted)),
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.pop(context, false),
+                      child: Text(
+                        'Batal',
+                        style: Typo.sans(14, color: DS.muted),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     DsButton(

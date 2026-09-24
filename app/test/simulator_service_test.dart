@@ -47,8 +47,11 @@ void main() {
       // Ambang berlaku per tahun, sedangkan input fungsinya per bulan.
       final r = calculatePPhFinal(AppConstants.pkpThreshold / 12);
       expect(r.omzetTahunanEst, closeTo(AppConstants.pkpThreshold, 0.001));
-      expect(r.eligible, isTrue,
-          reason: 'batas ambang bersifat inklusif (<=), bukan eksklusif');
+      expect(
+        r.eligible,
+        isTrue,
+        reason: 'batas ambang bersifat inklusif (<=), bukan eksklusif',
+      );
       expect(r.pkpThresholdPercent, closeTo(100, 0.001));
     });
 
@@ -93,8 +96,11 @@ void main() {
   group('calculatePPh21', () {
     test('setiap status PTKP punya nilai dan tidak melempar', () {
       for (final status in PtkpStatus.values) {
-        expect(() => calculatePPh21(10000000, status), returnsNormally,
-            reason: 'status $status gagal dipetakan ke nilai PTKP');
+        expect(
+          () => calculatePPh21(10000000, status),
+          returnsNormally,
+          reason: 'status $status gagal dipetakan ke nilai PTKP',
+        );
         final r = calculatePPh21(10000000, status);
         expect(r.ptkp, greaterThan(0));
       }
@@ -105,8 +111,11 @@ void main() {
     // AppConstants.ptkp, tes ini gagal sebelum pengguna kena crash.
     test('setiap status punya kunci yang benar-benar ada di AppConstants', () {
       for (final status in PtkpStatus.values) {
-        expect(AppConstants.ptkp.containsKey(status.ptkpKey), isTrue,
-            reason: 'kunci "${status.ptkpKey}" tidak ada di AppConstants.ptkp');
+        expect(
+          AppConstants.ptkp.containsKey(status.ptkpKey),
+          isTrue,
+          reason: 'kunci "${status.ptkpKey}" tidak ada di AppConstants.ptkp',
+        );
       }
     });
 
@@ -151,27 +160,34 @@ void main() {
       var previous = -1.0;
       for (var gaji = 1000000.0; gaji <= 80000000; gaji += 1000000) {
         final rate = calculatePPh21(gaji, PtkpStatus.tk0).terRate;
-        expect(rate, greaterThanOrEqualTo(previous),
-            reason: 'tarif turun di gaji $gaji');
+        expect(
+          rate,
+          greaterThanOrEqualTo(previous),
+          reason: 'tarif turun di gaji $gaji',
+        );
         previous = rate;
       }
     });
 
-    test('tepat di batas lapisan memakai tarif lapisan itu, bukan berikutnya',
-        () {
-      for (final row in AppConstants.terTableA) {
-        final max = (row['max'] as num).toDouble();
-        if (max.isInfinite) continue;
-        final expected = (row['rate'] as num).toDouble();
-        final actual = calculatePPh21(max, PtkpStatus.tk0).terRate;
-        expect(actual, expected,
-            reason: 'gaji tepat $max seharusnya memakai tarif lapisan itu');
-      }
-    });
+    test(
+      'tepat di batas lapisan memakai tarif lapisan itu, bukan berikutnya',
+      () {
+        for (final row in AppConstants.terTableA) {
+          final max = (row['max'] as num).toDouble();
+          if (max.isInfinite) continue;
+          final expected = (row['rate'] as num).toDouble();
+          final actual = calculatePPh21(max, PtkpStatus.tk0).terRate;
+          expect(
+            actual,
+            expected,
+            reason: 'gaji tepat $max seharusnya memakai tarif lapisan itu',
+          );
+        }
+      },
+    );
 
     test('gaji sangat besar memakai lapisan tertinggi', () {
-      final highest =
-          (AppConstants.terTableA.last['rate'] as num).toDouble();
+      final highest = (AppConstants.terTableA.last['rate'] as num).toDouble();
       expect(calculatePPh21(999000000, PtkpStatus.tk0).terRate, highest);
     });
 
@@ -185,11 +201,15 @@ void main() {
     // Saat ini `calculatePPh21` selalu membaca `terTableA`, jadi tes ini pasti
     // gagal. Hapus `skip` begitu tabel B dan C dari pakar pajak masuk — itu
     // sekaligus jadi verifikasi bahwa perbaikannya benar-benar bekerja.
-    test('status di kategori TER berbeda menghasilkan tarif berbeda', () {
-      final a = calculatePPh21(12000000, PtkpStatus.tk0); // kategori A
-      final c = calculatePPh21(12000000, PtkpStatus.k3); // kategori C
-      expect(a.terRate, isNot(equals(c.terRate)));
-    }, skip: 'Menunggu T-1: terTableB & terTableC belum ada di app_constants');
+    test(
+      'status di kategori TER berbeda menghasilkan tarif berbeda',
+      () {
+        final a = calculatePPh21(12000000, PtkpStatus.tk0); // kategori A
+        final c = calculatePPh21(12000000, PtkpStatus.k3); // kategori C
+        expect(a.terRate, isNot(equals(c.terRate)));
+      },
+      skip: 'Menunggu T-1: terTableB & terTableC belum ada di app_constants',
+    );
   });
 
   // ── Tabel TER untuk tampilan ──────────────────────────────────────────────
@@ -207,7 +227,11 @@ void main() {
     test('gaji positif menyorot tepat satu baris', () {
       for (final gaji in [3000000.0, 8000000.0, 12000000.0, 45000000.0]) {
         final active = buildTerTable(gaji).where((r) => r.isActive);
-        expect(active.length, 1, reason: 'gaji $gaji menyorot ${active.length} baris');
+        expect(
+          active.length,
+          1,
+          reason: 'gaji $gaji menyorot ${active.length} baris',
+        );
       }
     });
 
@@ -223,11 +247,14 @@ void main() {
         20000000.0,
         40000000.0,
       ]) {
-        final shown =
-            buildTerTable(gaji).firstWhere((r) => r.isActive).rate;
+        final shown = buildTerTable(gaji).firstWhere((r) => r.isActive).rate;
         final used = calculatePPh21(gaji, PtkpStatus.tk0).terRate;
-        expect(shown, used,
-            reason: 'gaji $gaji: tabel menampilkan $shown, hitungan memakai $used');
+        expect(
+          shown,
+          used,
+          reason:
+              'gaji $gaji: tabel menampilkan $shown, hitungan memakai $used',
+        );
       }
     });
   });
@@ -247,8 +274,10 @@ void main() {
       final results = calculateScenarios(base);
       expect(results, hasLength(3));
       expect(results.where((r) => r.isFeatured), hasLength(1));
-      expect(results.map((r) => r.label),
-          containsAll(['Konservatif', 'Base Case', 'Optimistis']));
+      expect(
+        results.map((r) => r.label),
+        containsAll(['Konservatif', 'Base Case', 'Optimistis']),
+      );
     });
 
     test('omzet naik dari konservatif ke optimistis', () {
@@ -258,8 +287,9 @@ void main() {
     });
 
     test('skenario base memakai omzet apa adanya', () {
-      final baseCase =
-          calculateScenarios(base).firstWhere((r) => r.label == 'Base Case');
+      final baseCase = calculateScenarios(
+        base,
+      ).firstWhere((r) => r.label == 'Base Case');
       expect(baseCase.omzetBulanan, closeTo(base.omzetBulanan, 0.001));
       expect(baseCase.omzetTahunan, closeTo(base.omzetBulanan * 12, 0.001));
     });
@@ -285,15 +315,16 @@ void main() {
 
     test('total pajak adalah jumlah komponennya', () {
       for (final r in calculateScenarios(base)) {
-        expect(r.totalPajak,
-            closeTo(r.pphFinal + r.pph21Total + r.ppn, 0.001));
+        expect(r.totalPajak, closeTo(r.pphFinal + r.pph21Total + r.ppn, 0.001));
       }
     });
 
     test('tarif efektif = total pajak dibagi omzet tahunan', () {
       for (final r in calculateScenarios(base)) {
-        expect(r.effectiveRate,
-            closeTo(r.totalPajak / r.omzetTahunan, 0.000001));
+        expect(
+          r.effectiveRate,
+          closeTo(r.totalPajak / r.omzetTahunan, 0.000001),
+        );
       }
     });
 
@@ -312,16 +343,16 @@ void main() {
     });
 
     test('PPh 21 dihitung per karyawan lalu dikalikan jumlahnya', () {
-      final perEmployee =
-          calculatePPh21(base.avgGaji, base.ptkpStatus).pajakTahunanEst;
+      final perEmployee = calculatePPh21(
+        base.avgGaji,
+        base.ptkpStatus,
+      ).pajakTahunanEst;
       for (final r in calculateScenarios(base)) {
-        expect(r.pph21Total,
-            closeTo(perEmployee * base.employeeCount, 0.001));
+        expect(r.pph21Total, closeTo(perEmployee * base.employeeCount, 0.001));
       }
     });
 
-    test('omzet di atas ambang membuat PPh Final nol, bukan tetap dihitung',
-        () {
+    test('omzet di atas ambang membuat PPh Final nol, bukan tetap dihitung', () {
       // Harus cukup besar supaya skenario Konservatif (0,7x) pun masih di atas
       // ambang: 0,7 x 600 jt x 12 = 5,04 M > 4,8 M.
       const huge = ScenarioInput(
@@ -332,8 +363,11 @@ void main() {
         isPkp: false,
       );
       for (final r in calculateScenarios(huge)) {
-        expect(r.pphFinal, 0,
-            reason: 'skema final tidak berlaku di atas ambang PKP');
+        expect(
+          r.pphFinal,
+          0,
+          reason: 'skema final tidak berlaku di atas ambang PKP',
+        );
       }
     });
 
@@ -348,8 +382,7 @@ void main() {
         isPkp: false,
       );
       final results = calculateScenarios(straddling);
-      final konservatif =
-          results.firstWhere((r) => r.label == 'Konservatif');
+      final konservatif = results.firstWhere((r) => r.label == 'Konservatif');
       final optimistis = results.firstWhere((r) => r.label == 'Optimistis');
 
       expect(konservatif.pphFinal, greaterThan(0));

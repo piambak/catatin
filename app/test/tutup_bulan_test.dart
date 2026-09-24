@@ -47,9 +47,13 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -64,7 +68,10 @@ class _FakeDashboard implements DashboardRepository {
   int dipanggil = 0;
 
   @override
-  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+  Future<MonthClose> getMonthClose({
+    required int month,
+    required int year,
+  }) async {
     dipanggil++;
     if (galat != null) throw galat!;
     return MonthClose.fromJson(_contoh);
@@ -104,9 +111,27 @@ void main() {
   group('monthCloseFromMonthlyTotals', () {
     // Campuran int dan double, seperti hasil decode angka JSON dari PostgREST.
     final rows = <Map<String, dynamic>>[
-      {'month': 1, 'income': 1000000, 'expense': 400000, 'hpp': 100000, 'tx_count': 3},
-      {'month': 2, 'income': 2500000.5, 'expense': 1000000, 'hpp': 250000, 'tx_count': 4},
-      {'month': 4, 'income': 700000, 'expense': 900000, 'hpp': 0, 'tx_count': 2},
+      {
+        'month': 1,
+        'income': 1000000,
+        'expense': 400000,
+        'hpp': 100000,
+        'tx_count': 3,
+      },
+      {
+        'month': 2,
+        'income': 2500000.5,
+        'expense': 1000000,
+        'hpp': 250000,
+        'tx_count': 4,
+      },
+      {
+        'month': 4,
+        'income': 700000,
+        'expense': 900000,
+        'hpp': 0,
+        'tx_count': 2,
+      },
     ];
 
     test('angka bulan terpilih; kolom hpp menjadi cogs', () {
@@ -121,15 +146,21 @@ void main() {
     });
 
     test('omzet YTD menjumlah pemasukan Januari sampai bulan terpilih', () {
-      expect(monthCloseFromMonthlyTotals(rows, month: 2, year: 2026).ytdOmzet,
-          3500000.5);
-      expect(monthCloseFromMonthlyTotals(rows, month: 4, year: 2026).ytdOmzet,
-          4200000.5);
+      expect(
+        monthCloseFromMonthlyTotals(rows, month: 2, year: 2026).ytdOmzet,
+        3500000.5,
+      );
+      expect(
+        monthCloseFromMonthlyTotals(rows, month: 4, year: 2026).ytdOmzet,
+        4200000.5,
+      );
     });
 
     test('laba boleh negatif', () {
-      expect(monthCloseFromMonthlyTotals(rows, month: 4, year: 2026).profit,
-          -200000);
+      expect(
+        monthCloseFromMonthlyTotals(rows, month: 4, year: 2026).profit,
+        -200000,
+      );
     });
 
     test('bulan tanpa transaksi bernilai nol, bukan galat', () {
@@ -141,15 +172,18 @@ void main() {
       expect(c.ytdOmzet, 3500000.5);
     });
 
-    test('sama persis dengan summaryFromMonthlyTotals untuk bulan yang sama', () {
-      final c = monthCloseFromMonthlyTotals(rows, month: 2, year: 2026);
-      final s = summaryFromMonthlyTotals(rows, month: 2);
-      expect(c.income, s.income);
-      expect(c.expense, s.expense);
-      expect(c.profit, s.profit);
-      expect(c.ytdOmzet, s.ytdOmzet);
-      expect(c.txCount, s.txCount);
-    });
+    test(
+      'sama persis dengan summaryFromMonthlyTotals untuk bulan yang sama',
+      () {
+        final c = monthCloseFromMonthlyTotals(rows, month: 2, year: 2026);
+        final s = summaryFromMonthlyTotals(rows, month: 2);
+        expect(c.income, s.income);
+        expect(c.expense, s.expense);
+        expect(c.profit, s.profit);
+        expect(c.ytdOmzet, s.ytdOmzet);
+        expect(c.txCount, s.txCount);
+      },
+    );
   });
 
   group('checkMonthParam', () {
@@ -157,10 +191,12 @@ void main() {
       test('bulan $month → 400 validation_failed dengan details.month', () {
         expect(
           () => checkMonthParam(month: month),
-          throwsA(isA<ApiException>()
-              .having((e) => e.statusCode, 'statusCode', 400)
-              .having((e) => e.code, 'code', 'validation_failed')
-              .having((e) => e.errors?['month'], 'errors.month', isNotNull)),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.statusCode, 'statusCode', 400)
+                .having((e) => e.code, 'code', 'validation_failed')
+                .having((e) => e.errors?['month'], 'errors.month', isNotNull),
+          ),
         );
       });
     }
@@ -172,58 +208,71 @@ void main() {
   });
 
   group('MockDashboardRepository.getMonthClose', () {
-    test('sama dengan agregat Pembukuan, termasuk transaksi baru sesi ini',
-        () async {
-      // Tahun jauh supaya data contoh tidak ikut terhitung.
-      final income =
-          MockData.txCategories.firstWhere((c) => c.type == 'INCOME');
-      final cogs = MockData.txCategories
-          .firstWhere((c) => c.type == 'EXPENSE' && c.isCogs);
-      final tx = MockTransactionRepository();
-      await tx.createTransaction(TransactionDraft(
-        businessId: 'biz',
-        date: '2031-01-10',
-        type: 'INCOME',
-        amount: 400000,
-        categoryId: income.id,
-        paymentMethod: 'CASH',
-      ));
-      await tx.createTransaction(TransactionDraft(
-        businessId: 'biz',
-        date: '2031-03-15',
-        type: 'INCOME',
-        amount: 1000000,
-        categoryId: income.id,
-        paymentMethod: 'CASH',
-      ));
-      await tx.createTransaction(TransactionDraft(
-        businessId: 'biz',
-        date: '2031-03-20',
-        type: 'EXPENSE',
-        amount: 300000,
-        categoryId: cogs.id,
-        paymentMethod: 'CASH',
-      ));
+    test(
+      'sama dengan agregat Pembukuan, termasuk transaksi baru sesi ini',
+      () async {
+        // Tahun jauh supaya data contoh tidak ikut terhitung.
+        final income = MockData.txCategories.firstWhere(
+          (c) => c.type == 'INCOME',
+        );
+        final cogs = MockData.txCategories.firstWhere(
+          (c) => c.type == 'EXPENSE' && c.isCogs,
+        );
+        final tx = MockTransactionRepository();
+        await tx.createTransaction(
+          TransactionDraft(
+            businessId: 'biz',
+            date: '2031-01-10',
+            type: 'INCOME',
+            amount: 400000,
+            categoryId: income.id,
+            paymentMethod: 'CASH',
+          ),
+        );
+        await tx.createTransaction(
+          TransactionDraft(
+            businessId: 'biz',
+            date: '2031-03-15',
+            type: 'INCOME',
+            amount: 1000000,
+            categoryId: income.id,
+            paymentMethod: 'CASH',
+          ),
+        );
+        await tx.createTransaction(
+          TransactionDraft(
+            businessId: 'biz',
+            date: '2031-03-20',
+            type: 'EXPENSE',
+            amount: 300000,
+            categoryId: cogs.id,
+            paymentMethod: 'CASH',
+          ),
+        );
 
-      final c = await MockDashboardRepository()
-          .getMonthClose(month: 3, year: 2031);
-      expect(c.income, 1000000);
-      expect(c.expense, 300000);
-      expect(c.profit, 700000);
-      expect(c.cogs, 300000);
-      expect(c.txCount, 2);
-      expect(c.ytdOmzet, 1400000);
+        final c = await MockDashboardRepository().getMonthClose(
+          month: 3,
+          year: 2031,
+        );
+        expect(c.income, 1000000);
+        expect(c.expense, 300000);
+        expect(c.profit, 700000);
+        expect(c.cogs, 300000);
+        expect(c.txCount, 2);
+        expect(c.ytdOmzet, 1400000);
 
-      final agg = await tx.getAggregate(year: 2031);
-      expect(c.income, agg[3].income);
-      expect(c.ytdOmzet, agg[3].ytdOmzet);
-    });
+        final agg = await tx.getAggregate(year: 2031);
+        expect(c.income, agg[3].income);
+        expect(c.ytdOmzet, agg[3].ytdOmzet);
+      },
+    );
 
     test('bulan tidak valid ditolak juga di mode mock', () {
       expect(
         MockDashboardRepository().getMonthClose(month: 13, year: 2026),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400),
+        ),
       );
     });
   });
@@ -241,8 +290,10 @@ void main() {
 
     test('GET /dashboard/close?month&year membaca ringkasan', () async {
       useFakeServer(_contoh);
-      final c =
-          await ApiDashboardRepository().getMonthClose(month: 8, year: 2026);
+      final c = await ApiDashboardRepository().getMonthClose(
+        month: 8,
+        year: 2026,
+      );
       final req = adapter.requests.single;
       expect(req.method, 'GET');
       expect(req.uri.path, '/api/v1/dashboard/close');
@@ -266,21 +317,27 @@ void main() {
   group('HybridDashboardRepository.getMonthClose', () {
     test('404 (endpoint belum ada) → jatuh ke mock', () async {
       final api = _FakeDashboard(
-          galat: const ApiException(statusCode: 404, message: 'x'));
+        galat: const ApiException(statusCode: 404, message: 'x'),
+      );
       final mock = _FakeDashboard();
-      await HybridDashboardRepository(api, mock)
-          .getMonthClose(month: 8, year: 2026);
+      await HybridDashboardRepository(
+        api,
+        mock,
+      ).getMonthClose(month: 8, year: 2026);
       expect(api.dipanggil, 1);
       expect(mock.dipanggil, 1);
     });
 
     test('400 (jawaban backend) → naik, mock tidak tersentuh', () async {
       final api = _FakeDashboard(
-          galat: const ApiException(statusCode: 400, message: 'x'));
+        galat: const ApiException(statusCode: 400, message: 'x'),
+      );
       final mock = _FakeDashboard();
       await expectLater(
-        HybridDashboardRepository(api, mock)
-            .getMonthClose(month: 8, year: 2026),
+        HybridDashboardRepository(
+          api,
+          mock,
+        ).getMonthClose(month: 8, year: 2026),
         throwsA(isA<ApiException>()),
       );
       expect(mock.dipanggil, 0);

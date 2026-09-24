@@ -31,28 +31,35 @@ class SimCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Row(children: [
-            Container(
-              width: 30, height: 30,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(7),
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(icon, size: 16, color: iconColor),
               ),
-              child: Icon(icon, size: 16, color: iconColor),
-            ),
-            const SizedBox(width: 10),
-            Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                  style: AppTextStyles.body(
-                    14, weight: FontWeight.w600)),
-                Text(subtitle,
-                  style: AppTextStyles.body(
-                    11, color: AppColors.stone400)),
-              ],
-            )),
-          ]),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.body(14, weight: FontWeight.w600),
+                    ),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.body(11, color: AppColors.stone400),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           const Divider(height: 1),
           const SizedBox(height: 14),
@@ -99,7 +106,10 @@ class _RupiahInputState extends State<RupiahInput> {
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   void _onChanged(String raw) {
     final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
@@ -109,7 +119,8 @@ class _RupiahInputState extends State<RupiahInput> {
     _ctrl.value = TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(
-        offset: formatted.length.clamp(0, formatted.length)),
+        offset: formatted.length.clamp(0, formatted.length),
+      ),
     );
 
     final val = double.tryParse(digits) ?? 0;
@@ -121,8 +132,10 @@ class _RupiahInputState extends State<RupiahInput> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label,
-          style: AppTextStyles.body(12, weight: FontWeight.w500)),
+        Text(
+          widget.label,
+          style: AppTextStyles.body(12, weight: FontWeight.w500),
+        ),
         const SizedBox(height: 5),
         Focus(
           child: TextField(
@@ -135,8 +148,7 @@ class _RupiahInputState extends State<RupiahInput> {
               hintText: widget.hint,
               hintStyle: AppTextStyles.body(13, color: AppColors.stone400),
               prefixText: 'Rp  ',
-              prefixStyle: AppTextStyles.mono(
-                13, color: AppColors.stone400),
+              prefixStyle: AppTextStyles.mono(13, color: AppColors.stone400),
               helperText: widget.helper,
             ),
           ),
@@ -163,8 +175,7 @@ class SimDisclaimer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded,
-            size: 14, color: AppColors.stone400),
+          Icon(Icons.info_outline_rounded, size: 14, color: AppColors.stone400),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -218,40 +229,52 @@ class ScenarioCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Label
-          Text(label,
-            style: AppTextStyles.body(10,
+          Text(
+            label,
+            style: AppTextStyles.body(
+              10,
               color: isFeatured ? AppColors.brand : AppColors.stone400,
-              weight: FontWeight.w600)),
-          Text(note,
-            style: AppTextStyles.body(10, color: AppColors.stone400)),
+              weight: FontWeight.w600,
+            ),
+          ),
+          Text(note, style: AppTextStyles.body(10, color: AppColors.stone400)),
           const SizedBox(height: 8),
 
           // Omzet
-          _ScRow('Omzet/Tahun',
-            Rupiah.compact(omzetTahunan),
-            small: true),
+          _ScRow('Omzet/Tahun', Rupiah.compact(omzetTahunan), small: true),
 
           // Breakdown
-          ...breakdown.entries.map((e) =>
-            _ScRow(e.key, Rupiah.format(e.value), small: true)),
+          ...breakdown.entries.map(
+            (e) => _ScRow(e.key, Rupiah.format(e.value), small: true),
+          ),
 
           const Divider(height: 12),
 
           // Total
-          _ScRow('Total Pajak',
+          _ScRow(
+            'Total Pajak',
             Rupiah.format(totalPajak),
             bold: true,
-            color: isFeatured ? AppColors.brand : null),
+            color: isFeatured ? AppColors.brand : null,
+          ),
 
           // Rate
-          Row(children: [
-            Text('Efektif rate: ',
-              style: AppTextStyles.body(10, color: AppColors.stone400)),
-            Text(Pct.format(effectiveRate, decimals: 2),
-              style: AppTextStyles.mono(10,
-                color: isFeatured ? AppColors.brand : AppColors.stone600,
-                weight: FontWeight.w600)),
-          ]),
+          Row(
+            children: [
+              Text(
+                'Efektif rate: ',
+                style: AppTextStyles.body(10, color: AppColors.stone400),
+              ),
+              Text(
+                Pct.format(effectiveRate, decimals: 2),
+                style: AppTextStyles.mono(
+                  10,
+                  color: isFeatured ? AppColors.brand : AppColors.stone600,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -265,7 +288,13 @@ class _ScRow extends StatelessWidget {
   final bool bold;
   final Color? color;
 
-  const _ScRow(this.k, this.v, {this.small = false, this.bold = false, this.color});
+  const _ScRow(
+    this.k,
+    this.v, {
+    this.small = false,
+    this.bold = false,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -274,12 +303,21 @@ class _ScRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: AppTextStyles.body(
-            small ? 10 : 12, color: AppColors.stone500)),
-          Text(v, style: AppTextStyles.mono(
-            small ? 10 : 12,
-            color: color ?? AppColors.stone800,
-            weight: bold ? FontWeight.w700 : FontWeight.w500)),
+          Text(
+            k,
+            style: AppTextStyles.body(
+              small ? 10 : 12,
+              color: AppColors.stone500,
+            ),
+          ),
+          Text(
+            v,
+            style: AppTextStyles.mono(
+              small ? 10 : 12,
+              color: color ?? AppColors.stone800,
+              weight: bold ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -314,53 +352,70 @@ class DeadlineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(children: [
-        // Dot
-        Container(
-          width: 8, height: 8,
-          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-          margin: const EdgeInsets.only(top: 2),
-        ),
-        const SizedBox(width: 10),
-
-        // Label + date
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-              style: AppTextStyles.body(12, weight: FontWeight.w500),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-            Text('Jatuh tempo: ${Tanggal.long(deadline)}',
-              style: AppTextStyles.body(10, color: AppColors.stone400)),
-          ],
-        )),
-        const SizedBox(width: 8),
-
-        // Days badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: badgeColor,
-            borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          // Dot
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+            margin: const EdgeInsets.only(top: 2),
           ),
-          child: Text(daysLabel,
-            style: AppTextStyles.body(10, color: badgeText,
-              weight: FontWeight.w600)),
-        ),
-        const SizedBox(width: 6),
+          const SizedBox(width: 10),
 
-        // Tax type tag
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-          decoration: BoxDecoration(
-            color: AppColors.stone100,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.stone200, width: 0.5),
+          // Label + date
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.body(12, weight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Jatuh tempo: ${Tanggal.long(deadline)}',
+                  style: AppTextStyles.body(10, color: AppColors.stone400),
+                ),
+              ],
+            ),
           ),
-          child: Text(taxType,
-            style: AppTextStyles.body(9, color: AppColors.stone500)),
-        ),
-      ]),
+          const SizedBox(width: 8),
+
+          // Days badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              daysLabel,
+              style: AppTextStyles.body(
+                10,
+                color: badgeText,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+
+          // Tax type tag
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.stone100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.stone200, width: 0.5),
+            ),
+            child: Text(
+              taxType,
+              style: AppTextStyles.body(9, color: AppColors.stone500),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

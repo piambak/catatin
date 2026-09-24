@@ -37,6 +37,7 @@ const _statusBolehFallback = {0, 404, 501};
 Future<T> _orFallback<T>(
   Future<T> Function() primary,
   Future<T> Function() fallback, {
+
   /// Disetel `false` untuk operasi yang tidak boleh punya jalur mock sama
   /// sekali — seluruh auth. Lebih baik pengguna melihat galat jaringan
   /// daripada masuk sebagai orang lain.
@@ -65,27 +66,24 @@ class HybridAuthRepository implements AuthRepository {
     required String name,
     required String email,
     required String password,
-  }) =>
-      _orFallback(
-        () => api.register(name: name, email: email, password: password),
-        () => mock.register(name: name, email: email, password: password),
-        allowFallback: false,
-      );
+  }) => _orFallback(
+    () => api.register(name: name, email: email, password: password),
+    () => mock.register(name: name, email: email, password: password),
+    allowFallback: false,
+  );
 
   @override
   Future<AuthResponse> login({
     required String email,
     required String password,
-  }) =>
-      _orFallback(
-        () => api.login(email: email, password: password),
-        () => mock.login(email: email, password: password),
-        allowFallback: false,
-      );
+  }) => _orFallback(
+    () => api.login(email: email, password: password),
+    () => mock.login(email: email, password: password),
+    allowFallback: false,
+  );
 
   @override
-  Future<UserModel> me() =>
-      _orFallback(api.me, mock.me, allowFallback: false);
+  Future<UserModel> me() => _orFallback(api.me, mock.me, allowFallback: false);
 
   @override
   Future<void> logout() =>
@@ -104,11 +102,10 @@ class HybridAuthRepository implements AuthRepository {
   Future<void> setPassword({
     required String newPassword,
     String? currentPassword,
-  }) =>
-      api.setPassword(
-        newPassword: newPassword,
-        currentPassword: currentPassword,
-      );
+  }) => api.setPassword(
+    newPassword: newPassword,
+    currentPassword: currentPassword,
+  );
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -172,33 +169,32 @@ class HybridTransactionRepository implements TransactionRepository {
     DateTime? from,
     DateTime? to,
     String? businessId,
-  }) =>
-      _orFallback(
-        () => api.getTransactions(
-            month: month,
-            year: year,
-            from: from,
-            to: to,
-            businessId: businessId),
-        () => mock.getTransactions(
-            month: month,
-            year: year,
-            from: from,
-            to: to,
-            businessId: businessId),
-      );
+  }) => _orFallback(
+    () => api.getTransactions(
+      month: month,
+      year: year,
+      from: from,
+      to: to,
+      businessId: businessId,
+    ),
+    () => mock.getTransactions(
+      month: month,
+      year: year,
+      from: from,
+      to: to,
+      businessId: businessId,
+    ),
+  );
 
   @override
-  Future<TxData?> getTransaction(String id) => _orFallback(
-        () => api.getTransaction(id),
-        () => mock.getTransaction(id),
-      );
+  Future<TxData?> getTransaction(String id) =>
+      _orFallback(() => api.getTransaction(id), () => mock.getTransaction(id));
 
   @override
   Future<bool> createTransaction(TransactionDraft draft) => _orFallback(
-        () => api.createTransaction(draft),
-        () => mock.createTransaction(draft),
-      );
+    () => api.createTransaction(draft),
+    () => mock.createTransaction(draft),
+  );
 
   @override
   Future<bool> updateTransaction(String id, TransactionDraft draft) =>
@@ -209,15 +205,15 @@ class HybridTransactionRepository implements TransactionRepository {
 
   @override
   Future<bool> deleteTransaction(String id) => _orFallback(
-        () => api.deleteTransaction(id),
-        () => mock.deleteTransaction(id),
-      );
+    () => api.deleteTransaction(id),
+    () => mock.deleteTransaction(id),
+  );
 
   @override
   Future<YearAggregate> getAggregate({required int year}) => _orFallback(
-        () => api.getAggregate(year: year),
-        () => mock.getAggregate(year: year),
-      );
+    () => api.getAggregate(year: year),
+    () => mock.getAggregate(year: year),
+  );
 }
 
 // ── Transaksi berulang ──────────────────────────────────────────────────────
@@ -233,11 +229,10 @@ class HybridRecurringRepository implements RecurringRepository {
       _orFallback(api.getTemplates, mock.getTemplates);
 
   @override
-  Future<RecurringTemplate> createTemplate(RecurringDraft draft) =>
-      _orFallback(
-        () => api.createTemplate(draft),
-        () => mock.createTemplate(draft),
-      );
+  Future<RecurringTemplate> createTemplate(RecurringDraft draft) => _orFallback(
+    () => api.createTemplate(draft),
+    () => mock.createTemplate(draft),
+  );
 
   @override
   Future<RecurringTemplate> updateTemplate(String id, RecurringDraft draft) =>
@@ -247,10 +242,8 @@ class HybridRecurringRepository implements RecurringRepository {
       );
 
   @override
-  Future<RecurringTemplate> stopTemplate(String id) => _orFallback(
-        () => api.stopTemplate(id),
-        () => mock.stopTemplate(id),
-      );
+  Future<RecurringTemplate> stopTemplate(String id) =>
+      _orFallback(() => api.stopTemplate(id), () => mock.stopTemplate(id));
 }
 
 // ── Lampiran struk ────────────────────────────────────────────────────────────
@@ -274,13 +267,20 @@ class HybridAttachmentRepository implements AttachmentRepository {
     required Uint8List bytes,
     required String fileName,
     required String mimeType,
-  }) =>
-      _orFallback(
-        () => api.uploadAttachment(transactionId,
-            bytes: bytes, fileName: fileName, mimeType: mimeType),
-        () => mock.uploadAttachment(transactionId,
-            bytes: bytes, fileName: fileName, mimeType: mimeType),
-      );
+  }) => _orFallback(
+    () => api.uploadAttachment(
+      transactionId,
+      bytes: bytes,
+      fileName: fileName,
+      mimeType: mimeType,
+    ),
+    () => mock.uploadAttachment(
+      transactionId,
+      bytes: bytes,
+      fileName: fileName,
+      mimeType: mimeType,
+    ),
+  );
 
   @override
   Future<void> deleteAttachment(String transactionId, String attachmentId) =>
@@ -300,27 +300,27 @@ class HybridDashboardRepository implements DashboardRepository {
 
   @override
   Future<MonthlySummary> getSummary({int? month, int? year}) => _orFallback(
-        () => api.getSummary(month: month, year: year),
-        () => mock.getSummary(month: month, year: year),
-      );
+    () => api.getSummary(month: month, year: year),
+    () => mock.getSummary(month: month, year: year),
+  );
 
   @override
   Future<List<RecentTx>> getRecentTransactions({int limit = 5}) => _orFallback(
-        () => api.getRecentTransactions(limit: limit),
-        () => mock.getRecentTransactions(limit: limit),
-      );
+    () => api.getRecentTransactions(limit: limit),
+    () => mock.getRecentTransactions(limit: limit),
+  );
 
   @override
   Future<List<TaxDeadline>> getDeadlines({int limit = 3}) => _orFallback(
-        () => api.getDeadlines(limit: limit),
-        () => mock.getDeadlines(limit: limit),
-      );
+    () => api.getDeadlines(limit: limit),
+    () => mock.getDeadlines(limit: limit),
+  );
 
   @override
   Future<List<KpiPoint>> getKpiHistory(KpiMetric metric) => _orFallback(
-        () => api.getKpiHistory(metric),
-        () => mock.getKpiHistory(metric),
-      );
+    () => api.getKpiHistory(metric),
+    () => mock.getKpiHistory(metric),
+  );
 
   @override
   Future<MonthClose> getMonthClose({required int month, required int year}) =>
@@ -340,7 +340,7 @@ class HybridSimulatorRepository implements SimulatorRepository {
 
   @override
   Future<SimulatorInputs> getInputs({int? month, int? year}) => _orFallback(
-        () => api.getInputs(month: month, year: year),
-        () => mock.getInputs(month: month, year: year),
-      );
+    () => api.getInputs(month: month, year: year),
+    () => mock.getInputs(month: month, year: year),
+  );
 }

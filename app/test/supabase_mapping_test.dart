@@ -27,32 +27,41 @@ void main() {
     ApiException map(Object error) =>
         supabaseException(error, hasSession: false)!;
 
-    test('kredensial salah tampil sebagai pesan form, bukan "data tidak valid"', () {
-      final e = map(const sb.AuthApiException(
-        'Invalid login credentials',
-        statusCode: '400',
-        code: 'invalid_credentials',
-      ));
-      expect(e.statusCode, 400);
-      expect(e.userMessage, 'Email atau kata sandi salah.');
-    });
+    test(
+      'kredensial salah tampil sebagai pesan form, bukan "data tidak valid"',
+      () {
+        final e = map(
+          const sb.AuthApiException(
+            'Invalid login credentials',
+            statusCode: '400',
+            code: 'invalid_credentials',
+          ),
+        );
+        expect(e.statusCode, 400);
+        expect(e.userMessage, 'Email atau kata sandi salah.');
+      },
+    );
 
     test('email yang sudah terdaftar → 409 berbahasa Indonesia', () {
-      final e = map(const sb.AuthApiException(
-        'User already registered',
-        statusCode: '422',
-        code: 'user_already_exists',
-      ));
+      final e = map(
+        const sb.AuthApiException(
+          'User already registered',
+          statusCode: '422',
+          code: 'user_already_exists',
+        ),
+      );
       expect(e.statusCode, 409);
       expect(e.userMessage, 'Email sudah terdaftar. Silakan masuk.');
     });
 
     test('kata sandi lemah → pesan per field', () {
-      final e = map(sb.AuthWeakPasswordException(
-        message: 'Password should be at least 6 characters',
-        statusCode: '422',
-        reasons: const ['length'],
-      ));
+      final e = map(
+        sb.AuthWeakPasswordException(
+          message: 'Password should be at least 6 characters',
+          statusCode: '422',
+          reasons: const ['length'],
+        ),
+      );
       expect(e.statusCode, 400);
       expect(e.userMessage, startsWith('Kata sandi terlalu lemah'));
     });
@@ -60,8 +69,9 @@ void main() {
     test('sesi hilang atau refresh token dicabut → 401', () {
       expect(map(sb.AuthSessionMissingException()).statusCode, 401);
       expect(
-        map(const sb.AuthApiException('x', code: 'refresh_token_not_found'))
-            .statusCode,
+        map(
+          const sb.AuthApiException('x', code: 'refresh_token_not_found'),
+        ).statusCode,
         401,
       );
       expect(map(sb.AuthInvalidJwtException('x')).statusCode, 401);
@@ -76,12 +86,15 @@ void main() {
     });
 
     test('rate limit dikenali dari statusCode string maupun kode', () {
-      final byStatus = map(const sb.AuthApiException('slow', statusCode: '429'));
+      final byStatus = map(
+        const sb.AuthApiException('slow', statusCode: '429'),
+      );
       expect(byStatus.statusCode, 429);
       expect(byStatus.userMessage, startsWith('Terlalu banyak percobaan'));
       expect(
-        map(const sb.AuthApiException('x', code: 'over_email_send_rate_limit'))
-            .statusCode,
+        map(
+          const sb.AuthApiException('x', code: 'over_email_send_rate_limit'),
+        ).statusCode,
         429,
       );
     });
@@ -89,34 +102,48 @@ void main() {
     test('pasang/ganti kata sandi: galat per field dalam Bahasa Indonesia', () {
       final same = map(const sb.AuthApiException('x', code: 'same_password'));
       expect(same.statusCode, 400);
-      expect(same.errors, containsPair('password', startsWith('Kata sandi baru')));
+      expect(
+        same.errors,
+        containsPair('password', startsWith('Kata sandi baru')),
+      );
 
-      final wrong =
-          map(const sb.AuthApiException('x', code: 'current_password_invalid'));
+      final wrong = map(
+        const sb.AuthApiException('x', code: 'current_password_invalid'),
+      );
       expect(wrong.userMessage, 'Kata sandi saat ini salah.');
 
       expect(
-        map(const sb.AuthApiException('x', code: 'current_password_required'))
-            .userMessage,
+        map(
+          const sb.AuthApiException('x', code: 'current_password_required'),
+        ).userMessage,
         'Masukkan kata sandi saat ini.',
       );
     });
 
-    test('verifikasi ulang (sesi > 24 jam) meminta masuk ulang, bukan email', () {
-      final e =
-          map(const sb.AuthApiException('x', code: 'reauthentication_needed'));
-      expect(e.statusCode, 409);
-      expect(e.userMessage, contains('masuk lagi dengan Google'));
-    });
+    test(
+      'verifikasi ulang (sesi > 24 jam) meminta masuk ulang, bukan email',
+      () {
+        final e = map(
+          const sb.AuthApiException('x', code: 'reauthentication_needed'),
+        );
+        expect(e.statusCode, 409);
+        expect(e.userMessage, contains('masuk lagi dengan Google'));
+      },
+    );
 
-    test('409 tak dikenal tidak membocorkan pesan server berbahasa Inggris', () {
-      final e = map(const sb.AuthApiException(
-        'Conflict happened',
-        statusCode: '409',
-        code: 'kode_baru',
-      ));
-      expect(e.userMessage, isNot(contains('Conflict')));
-    });
+    test(
+      '409 tak dikenal tidak membocorkan pesan server berbahasa Inggris',
+      () {
+        final e = map(
+          const sb.AuthApiException(
+            'Conflict happened',
+            statusCode: '409',
+            code: 'kode_baru',
+          ),
+        );
+        expect(e.userMessage, isNot(contains('Conflict')));
+      },
+    );
   });
 
   group('supabaseException — PostgREST', () {
@@ -154,9 +181,9 @@ void main() {
   // supabase/tests/database/04_validasi_transaksi.test.sql.
   group('supabaseException — validasi per field (#40)', () {
     ApiException map(String code, String message) => supabaseException(
-          sb.PostgrestException(message: message, code: code),
-          hasSession: true,
-        )!;
+      sb.PostgrestException(message: message, code: code),
+      hasSession: true,
+    )!;
 
     String check(String table, String constraint) =>
         'new row for relation "$table" violates check constraint "$constraint"';
@@ -165,15 +192,20 @@ void main() {
         'constraint "$constraint"';
 
     test('nominal ≤ 0 → field amount', () {
-      final e = map('23514', check('transactions', 'transactions_amount_check'));
+      final e = map(
+        '23514',
+        check('transactions', 'transactions_amount_check'),
+      );
       expect(e.statusCode, 400);
       expect(e.errors, {'amount': 'Nominal harus lebih dari 0.'});
       expect(e.userMessage, 'Nominal harus lebih dari 0.');
     });
 
     test('tanggal di luar 2000–2099 → field date', () {
-      final e =
-          map('23514', check('transactions', 'transactions_date_range_check'));
+      final e = map(
+        '23514',
+        check('transactions', 'transactions_date_range_check'),
+      );
       expect(e.errors?.keys, ['date']);
       expect(e.userMessage, contains('2000'));
     });
@@ -184,30 +216,35 @@ void main() {
       expect(hilang.statusCode, 400);
       expect(hilang.userMessage, 'Kategori tidak ditemukan.');
       expect(salahJenis.statusCode, 400);
-      expect(salahJenis.userMessage,
-          'Kategori tidak cocok dengan jenis transaksi.');
+      expect(
+        salahJenis.userMessage,
+        'Kategori tidak cocok dengan jenis transaksi.',
+      );
       expect(salahJenis.errors?.keys, ['category_id']);
     });
 
     test('metode pembayaran dan nama usaha', () {
       expect(
-        map('23514',
-                check('transactions', 'transactions_payment_method_check'))
-            .errors
-            ?.keys,
+        map(
+          '23514',
+          check('transactions', 'transactions_payment_method_check'),
+        ).errors?.keys,
         ['payment_method'],
       );
       expect(
-        map('23514', check('business_profiles',
-                'business_profiles_business_name_check'))
-            .userMessage,
+        map(
+          '23514',
+          check('business_profiles', 'business_profiles_business_name_check'),
+        ).userMessage,
         'Nama usaha wajib diisi.',
       );
     });
 
     test('tanggal kalender yang tidak ada (22008) → field date', () {
-      final e =
-          map('22008', 'date/time field value out of range: "2026-02-30"');
+      final e = map(
+        '22008',
+        'date/time field value out of range: "2026-02-30"',
+      );
       expect(e.statusCode, 400);
       expect(e.errors?.keys, ['date']);
     });
@@ -230,10 +267,16 @@ void main() {
   });
 
   group('reportableAppError — laporan galat untuk pemantauan (#103)', () {
-    Map<String, Object?>? lapor(Object error, ApiException? mapped,
-            {bool hasSession = true}) =>
-        reportableAppError(error, mapped,
-            hasSession: hasSession, platform: 'web');
+    Map<String, Object?>? lapor(
+      Object error,
+      ApiException? mapped, {
+      bool hasSession = true,
+    }) => reportableAppError(
+      error,
+      mapped,
+      hasSession: hasSession,
+      platform: 'web',
+    );
 
     const pg500 = sb.PostgrestException(message: 'rahasia', code: 'XX000');
     const e500 = ApiException(statusCode: 500, message: 'x');
@@ -250,8 +293,16 @@ void main() {
 
     test('pesan galat TIDAK pernah ikut — tanpa data pribadi', () {
       final row = lapor(pg500, e500)!;
-      expect(row.keys,
-          unorderedEquals(['status', 'code', 'source', 'app_version', 'platform']));
+      expect(
+        row.keys,
+        unorderedEquals([
+          'status',
+          'code',
+          'source',
+          'app_version',
+          'platform',
+        ]),
+      );
       expect(row.values, isNot(contains('rahasia')));
     });
 
@@ -273,12 +324,21 @@ void main() {
 
     test('sumber auth dan storage dibedakan', () {
       expect(
-        lapor(const sb.AuthException('x', statusCode: '500', code: 'unexpected_failure'),
-                e500)?['source'],
+        lapor(
+          const sb.AuthException(
+            'x',
+            statusCode: '500',
+            code: 'unexpected_failure',
+          ),
+          e500,
+        )?['source'],
         'auth',
       );
       expect(
-        lapor(const sb.StorageException('x', statusCode: '503'), e500)?['source'],
+        lapor(
+          const sb.StorageException('x', statusCode: '503'),
+          e500,
+        )?['source'],
         'storage',
       );
     });
@@ -293,14 +353,18 @@ void main() {
       }
     });
 
-    test('tanpa sesi tidak dilaporkan — tabelnya hanya menerima authenticated',
-        () {
-      expect(lapor(pg500, e500, hasSession: false), isNull);
-    });
+    test(
+      'tanpa sesi tidak dilaporkan — tabelnya hanya menerima authenticated',
+      () {
+        expect(lapor(pg500, e500, hasSession: false), isNull);
+      },
+    );
 
     test('kode lebih dari 64 karakter dipotong, sesuai constraint tabel', () {
       final row = lapor(
-          sb.PostgrestException(message: 'x', code: 'K' * 100), e500);
+        sb.PostgrestException(message: 'x', code: 'K' * 100),
+        e500,
+      );
       expect((row?['code'] as String).length, 64);
     });
   });
@@ -308,9 +372,9 @@ void main() {
   // Pesan persis seperti di supabase/tests/database/07_pengerasan_validasi.test.sql.
   group('supabaseException — pengerasan validasi (#115)', () {
     ApiException map(String code, String message) => supabaseException(
-          sb.PostgrestException(message: message, code: code),
-          hasSession: true,
-        )!;
+      sb.PostgrestException(message: message, code: code),
+      hasSession: true,
+    )!;
 
     String check(String table, String constraint) =>
         'new row for relation "$table" violates check constraint "$constraint"';
@@ -353,8 +417,10 @@ void main() {
     }
 
     test('NPWP berkarakter asing → field npwp', () {
-      final e = map('23514',
-          check('business_profiles', 'business_profiles_npwp_format_check'));
+      final e = map(
+        '23514',
+        check('business_profiles', 'business_profiles_npwp_format_check'),
+      );
       expect(e.errors?.keys, ['npwp']);
       expect(e.userMessage, contains('NPWP'));
     });
@@ -385,29 +451,48 @@ void main() {
         0,
       );
       expect(
-        supabaseException(TimeoutException('lambat'), hasSession: true)!
-            .statusCode,
+        supabaseException(
+          TimeoutException('lambat'),
+          hasSession: true,
+        )!.statusCode,
         0,
       );
     });
 
     test('ApiException diteruskan apa adanya', () {
-      const original = ApiException(statusCode: 409, message: 'Lengkapi profil');
+      const original = ApiException(
+        statusCode: 409,
+        message: 'Lengkapi profil',
+      );
       expect(supabaseException(original, hasSession: true), same(original));
     });
 
     test('bug pemrograman TIDAK ditelan jadi galat jaringan', () {
       expect(supabaseException(StateError('bug'), hasSession: true), isNull);
-      expect(supabaseException(const FormatException('x'), hasSession: true),
-          isNull);
+      expect(
+        supabaseException(const FormatException('x'), hasSession: true),
+        isNull,
+      );
     });
   });
 
   group('summaryFromMonthlyTotals', () {
     // Campuran int dan double, seperti hasil decode angka JSON dari PostgREST.
     final rows = <Map<String, dynamic>>[
-      {'month': 1, 'income': 1000000, 'expense': 400000, 'hpp': 0, 'tx_count': 3},
-      {'month': 2, 'income': 2500000.5, 'expense': 1000000, 'hpp': 0, 'tx_count': 4},
+      {
+        'month': 1,
+        'income': 1000000,
+        'expense': 400000,
+        'hpp': 0,
+        'tx_count': 3,
+      },
+      {
+        'month': 2,
+        'income': 2500000.5,
+        'expense': 1000000,
+        'hpp': 0,
+        'tx_count': 4,
+      },
       {'month': 3, 'income': 700000, 'expense': 0, 'hpp': 0, 'tx_count': 1},
     ];
 
@@ -443,28 +528,43 @@ void main() {
       {'month': 3, 'income': 500.5, 'expense': 100},
     ];
 
-    test('satu titik per bulan sampai upToMonth, bulan kosong bernilai nol', () {
-      final points = kpiFromMonthlyTotals(rows, KpiMetric.income, upToMonth: 3);
-      expect(points.map((p) => p.value), [1000, 0, 500.5]);
-    });
+    test(
+      'satu titik per bulan sampai upToMonth, bulan kosong bernilai nol',
+      () {
+        final points = kpiFromMonthlyTotals(
+          rows,
+          KpiMetric.income,
+          upToMonth: 3,
+        );
+        expect(points.map((p) => p.value), [1000, 0, 500.5]);
+      },
+    );
 
     test('profit dan ytd diturunkan dari pemasukan & pengeluaran', () {
       expect(
-        kpiFromMonthlyTotals(rows, KpiMetric.profit, upToMonth: 3)
-            .map((p) => p.value),
+        kpiFromMonthlyTotals(
+          rows,
+          KpiMetric.profit,
+          upToMonth: 3,
+        ).map((p) => p.value),
         [600, 0, 400.5],
       );
       expect(
-        kpiFromMonthlyTotals(rows, KpiMetric.ytd, upToMonth: 3)
-            .map((p) => p.value),
+        kpiFromMonthlyTotals(
+          rows,
+          KpiMetric.ytd,
+          upToMonth: 3,
+        ).map((p) => p.value),
         [1000, 1000, 1500.5],
       );
     });
 
     test('label bulan pendek Bahasa Indonesia, sama dengan data contoh', () {
-      final labels = kpiFromMonthlyTotals(const [], KpiMetric.income,
-              upToMonth: 12)
-          .map((p) => p.month);
+      final labels = kpiFromMonthlyTotals(
+        const [],
+        KpiMetric.income,
+        upToMonth: 12,
+      ).map((p) => p.month);
       expect(labels, [
         'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', //
         'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
@@ -566,7 +666,13 @@ void main() {
   group('monthTotalsFromRows', () {
     test('kolom hpp database jadi cogs kontrak', () {
       final totals = monthTotalsFromRows([
-        {'month': 8, 'income': 28500000, 'expense': 18200000.0, 'hpp': 9100000, 'tx_count': 12},
+        {
+          'month': 8,
+          'income': 28500000,
+          'expense': 18200000.0,
+          'hpp': 9100000,
+          'tx_count': 12,
+        },
       ]);
       expect(totals.single.month, 8);
       expect(totals.single.cogs, 9100000);
@@ -577,7 +683,9 @@ void main() {
   group('oauthRedirectUrl', () {
     test('situs publik: fragment rute dan query dibuang', () {
       expect(
-        oauthRedirectUrl(Uri.parse('https://piambak.github.io/catatin/#/login')),
+        oauthRedirectUrl(
+          Uri.parse('https://piambak.github.io/catatin/#/login'),
+        ),
         'https://piambak.github.io/catatin/',
       );
     });
@@ -585,63 +693,81 @@ void main() {
     test('build lokal berport kembali ke dirinya sendiri', () {
       expect(
         oauthRedirectUrl(
-            Uri.parse('http://localhost:8012/catatin/?code=abc#/register')),
+          Uri.parse('http://localhost:8012/catatin/?code=abc#/register'),
+        ),
         'http://localhost:8012/catatin/',
       );
     });
 
     test('tanpa path tetap berakhir garis miring', () {
-      expect(oauthRedirectUrl(Uri.parse('https://catatin.id')),
-          'https://catatin.id/');
+      expect(
+        oauthRedirectUrl(Uri.parse('https://catatin.id')),
+        'https://catatin.id/',
+      );
     });
   });
 
   group('oauthCallbackError', () {
     test('pengguna menekan batal di halaman Google', () {
       final uri = Uri.parse(
-          'https://piambak.github.io/catatin/?error=access_denied&error_description=x');
-      expect(oauthCallbackError(uri, hasSession: false),
-          'Masuk dengan Google dibatalkan.');
+        'https://piambak.github.io/catatin/?error=access_denied&error_description=x',
+      );
+      expect(
+        oauthCallbackError(uri, hasSession: false),
+        'Masuk dengan Google dibatalkan.',
+      );
     });
 
     test('galat lain, termasuk yang dikirim lewat fragment', () {
       final uri = Uri.parse(
-          'https://piambak.github.io/catatin/#error=server_error&error_code=500');
-      expect(oauthCallbackError(uri, hasSession: false),
-          'Masuk dengan Google gagal. Coba lagi.');
+        'https://piambak.github.io/catatin/#error=server_error&error_code=500',
+      );
+      expect(
+        oauthCallbackError(uri, hasSession: false),
+        'Masuk dengan Google gagal. Coba lagi.',
+      );
     });
 
     test('kode callback yang gagal ditukar jadi sesi', () {
       final uri = Uri.parse('https://piambak.github.io/catatin/?code=abc');
-      expect(oauthCallbackError(uri, hasSession: false),
-          'Masuk dengan Google gagal. Coba lagi.');
+      expect(
+        oauthCallbackError(uri, hasSession: false),
+        'Masuk dengan Google gagal. Coba lagi.',
+      );
       expect(oauthCallbackError(uri, hasSession: true), isNull);
     });
 
     test('halaman biasa tidak dianggap kembalian Google', () {
       expect(
-        oauthCallbackError(Uri.parse('https://piambak.github.io/catatin/#/login'),
-            hasSession: false),
+        oauthCallbackError(
+          Uri.parse('https://piambak.github.io/catatin/#/login'),
+          hasSession: false,
+        ),
         isNull,
       );
     });
   });
 
   group('userFromMetadata', () {
-    UserModel user(Map<String, dynamic>? meta, {String? email = 'budi@usaha.com'}) =>
-        userFromMetadata(
-          id: 'u1',
-          email: email,
-          metadata: meta,
-          createdAt: '2026-09-13T01:00:00Z',
-        );
+    UserModel user(
+      Map<String, dynamic>? meta, {
+      String? email = 'budi@usaha.com',
+    }) => userFromMetadata(
+      id: 'u1',
+      email: email,
+      metadata: meta,
+      createdAt: '2026-09-13T01:00:00Z',
+    );
 
     test('nama dari pendaftaran email', () {
       expect(user({'name': ' Budi '}).name, 'Budi');
     });
 
     test('akun Google: full_name dan picture', () {
-      final u = user({'full_name': 'Budi Santoso', 'picture': 'https://x/p.png'});
+      final u = user({
+        'full_name': 'Budi Santoso',
+        'picture': 'https://x/p.png',
+      });
       expect(u.name, 'Budi Santoso');
       expect(u.image, 'https://x/p.png');
     });

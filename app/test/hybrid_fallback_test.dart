@@ -101,7 +101,8 @@ void main() {
   group('Auth tidak pernah jatuh ke mock', () {
     test('401 dilempar, mock.login tidak disentuh', () async {
       final api = _FakeAuth(
-          galat: const ApiException(statusCode: 401, message: 'salah'));
+        galat: const ApiException(statusCode: 401, message: 'salah'),
+      );
       final mock = _FakeAuth();
       final hybrid = HybridAuthRepository(api, mock);
 
@@ -109,13 +110,17 @@ void main() {
         hybrid.login(email: 'a@b.id', password: 'salah'),
         throwsA(isA<ApiException>()),
       );
-      expect(mock.loginDipanggil, 0,
-          reason: 'kata sandi salah tidak boleh membuka sesi demo');
+      expect(
+        mock.loginDipanggil,
+        0,
+        reason: 'kata sandi salah tidak boleh membuka sesi demo',
+      );
     });
 
     test('jaringan mati (statusCode 0) pun tetap dilempar', () async {
       final api = _FakeAuth(
-          galat: const ApiException(statusCode: 0, message: 'offline'));
+        galat: const ApiException(statusCode: 0, message: 'offline'),
+      );
       final mock = _FakeAuth();
       final hybrid = HybridAuthRepository(api, mock);
 
@@ -130,7 +135,8 @@ void main() {
   group('Operasi tulis tidak menelan penolakan backend', () {
     test('422 dilempar, tidak ditulis ke mock', () async {
       final api = _FakeTx(
-          galat: const ApiException(statusCode: 422, message: 'tidak valid'));
+        galat: const ApiException(statusCode: 422, message: 'tidak valid'),
+      );
       final mock = _FakeTx();
       final hybrid = HybridTransactionRepository(api, mock);
 
@@ -138,13 +144,17 @@ void main() {
         hybrid.createTransaction(_draft),
         throwsA(isA<ApiException>()),
       );
-      expect(mock.createDipanggil, 0,
-          reason: 'penolakan validasi tidak boleh dilaporkan berhasil');
+      expect(
+        mock.createDipanggil,
+        0,
+        reason: 'penolakan validasi tidak boleh dilaporkan berhasil',
+      );
     });
 
     test('404 (endpoint belum ada) memang jatuh ke mock', () async {
       final api = _FakeTx(
-          galat: const ApiException(statusCode: 404, message: 'belum ada'));
+        galat: const ApiException(statusCode: 404, message: 'belum ada'),
+      );
       final mock = _FakeTx();
       final hybrid = HybridTransactionRepository(api, mock);
 
@@ -156,20 +166,19 @@ void main() {
   group('Operasi baca', () {
     test('500 dilempar, bukan disamarkan data contoh', () async {
       final api = _FakeTx(
-          galat: const ApiException(statusCode: 500, message: 'server'));
+        galat: const ApiException(statusCode: 500, message: 'server'),
+      );
       final mock = _FakeTx();
       final hybrid = HybridTransactionRepository(api, mock);
 
-      await expectLater(
-        hybrid.getTransactions(),
-        throwsA(isA<ApiException>()),
-      );
+      await expectLater(hybrid.getTransactions(), throwsA(isA<ApiException>()));
       expect(mock.getDipanggil, 0);
     });
 
     test('jaringan mati jatuh ke mock', () async {
       final api = _FakeTx(
-          galat: const ApiException(statusCode: 0, message: 'offline'));
+        galat: const ApiException(statusCode: 0, message: 'offline'),
+      );
       final mock = _FakeTx();
       final hybrid = HybridTransactionRepository(api, mock);
 

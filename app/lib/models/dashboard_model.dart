@@ -73,13 +73,13 @@ class MonthAggregate {
   double get profit => income - expense;
 
   factory MonthAggregate.fromJson(Map<String, dynamic> j) => MonthAggregate(
-        month: (j['month'] as num).toInt(),
-        income: (j['income'] as num?)?.toDouble() ?? 0,
-        expense: (j['expense'] as num?)?.toDouble() ?? 0,
-        cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
-        txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
-        ytdOmzet: (j['ytd_omzet'] as num?)?.toDouble() ?? 0,
-      );
+    month: (j['month'] as num).toInt(),
+    income: (j['income'] as num?)?.toDouble() ?? 0,
+    expense: (j['expense'] as num?)?.toDouble() ?? 0,
+    cogs: (j['cogs'] as num?)?.toDouble() ?? 0,
+    txCount: (j['tx_count'] as num?)?.toInt() ?? 0,
+    ytdOmzet: (j['ytd_omzet'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Dua belas bulan [MonthAggregate], Januari di indeks 0. Bulan yang tidak ada
@@ -95,14 +95,16 @@ List<MonthAggregate> monthAggregates(Iterable<MonthTotals> totals) {
   for (var m = 1; m <= 12; m++) {
     final t = byMonth[m];
     ytd += t?.income ?? 0;
-    result.add(MonthAggregate(
-      month: m,
-      income: t?.income ?? 0,
-      expense: t?.expense ?? 0,
-      cogs: t?.cogs ?? 0,
-      txCount: t?.txCount ?? 0,
-      ytdOmzet: ytd,
-    ));
+    result.add(
+      MonthAggregate(
+        month: m,
+        income: t?.income ?? 0,
+        expense: t?.expense ?? 0,
+        cogs: t?.cogs ?? 0,
+        txCount: t?.txCount ?? 0,
+        ytdOmzet: ytd,
+      ),
+    );
   }
   return result;
 }
@@ -120,15 +122,14 @@ class YearAggregate {
   factory YearAggregate.fromMonthlyTotals(
     int year,
     Iterable<MonthTotals> totals,
-  ) =>
-      YearAggregate(year: year, months: monthAggregates(totals));
+  ) => YearAggregate(year: year, months: monthAggregates(totals));
 
   factory YearAggregate.fromJson(Map<String, dynamic> j) => YearAggregate(
-        year: (j['year'] as num).toInt(),
-        months: (j['months'] as List)
-            .map((e) => MonthAggregate.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    year: (j['year'] as num).toInt(),
+    months: (j['months'] as List)
+        .map((e) => MonthAggregate.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 
   /// Angka bulan [month] (1–12).
   MonthAggregate operator [](int month) => months[month - 1];
@@ -176,15 +177,15 @@ class MonthClose {
   });
 
   factory MonthClose.fromAggregate(int year, MonthAggregate m) => MonthClose(
-        month: m.month,
-        year: year,
-        income: m.income,
-        expense: m.expense,
-        profit: m.profit,
-        cogs: m.cogs,
-        txCount: m.txCount,
-        ytdOmzet: m.ytdOmzet,
-      );
+    month: m.month,
+    year: year,
+    income: m.income,
+    expense: m.expense,
+    profit: m.profit,
+    cogs: m.cogs,
+    txCount: m.txCount,
+    ytdOmzet: m.ytdOmzet,
+  );
 
   factory MonthClose.fromJson(Map<String, dynamic> j) {
     final income = (j['income'] as num?)?.toDouble() ?? 0;
@@ -226,9 +227,9 @@ class KpiPoint {
   const KpiPoint({required this.month, required this.value});
 
   factory KpiPoint.fromJson(Map<String, dynamic> j) => KpiPoint(
-        month: j['month'] as String,
-        value: (j['value'] as num).toDouble(),
-      );
+    month: j['month'] as String,
+    value: (j['value'] as num).toDouble(),
+  );
 }
 
 // ── Transaksi ringkas untuk kartu "Transaksi Terakhir" ────────────────────────
@@ -257,15 +258,15 @@ class RecentTx {
   bool get isIncome => type == 'INCOME';
 
   factory RecentTx.fromJson(Map<String, dynamic> j) => RecentTx(
-        id: j['id'] as String,
-        categoryName: j['category']['name'] as String,
-        categoryIcon: j['category']['icon'] as String?,
-        categoryColor: j['category']['color'] as String? ?? '#6B7280',
-        type: j['type'] as String,
-        amount: (j['amount'] as num).toDouble(),
-        description: j['description'] as String?,
-        date: DateTime.parse(j['date'] as String),
-      );
+    id: j['id'] as String,
+    categoryName: j['category']['name'] as String,
+    categoryIcon: j['category']['icon'] as String?,
+    categoryColor: j['category']['color'] as String? ?? '#6B7280',
+    type: j['type'] as String,
+    amount: (j['amount'] as num).toDouble(),
+    description: j['description'] as String?,
+    date: DateTime.parse(j['date'] as String),
+  );
 }
 
 // ── Tenggat pajak ─────────────────────────────────────────────────────────────
@@ -292,10 +293,10 @@ class TaxDeadline {
   bool get isOverdue => daysRemaining < 0;
 
   factory TaxDeadline.fromJson(Map<String, dynamic> j) => TaxDeadline(
-        id: j['id'] as String,
-        label: j['label'] as String,
-        taxType: j['tax_type'] as String,
-        deadline: DateTime.parse(j['deadline'] as String).toLocal(),
-        status: j['status'] as String,
-      );
+    id: j['id'] as String,
+    label: j['label'] as String,
+    taxType: j['tax_type'] as String,
+    deadline: DateTime.parse(j['deadline'] as String).toLocal(),
+    status: j['status'] as String,
+  );
 }

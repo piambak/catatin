@@ -18,8 +18,8 @@ class ThemeNotifier extends ValueNotifier<ThemeMode> {
 
   // ── Init — load saved preference ──────────────────────────
   Future<void> init() async {
-    final prefs  = await SharedPreferences.getInstance();
-    final saved  = prefs.getString(_key);
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_key);
     value = saved == 'dark' ? ThemeMode.dark : ThemeMode.light;
   }
 

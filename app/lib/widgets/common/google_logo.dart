@@ -16,11 +16,11 @@ class GoogleLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
-        child: CustomPaint(
-          size: Size.square(size),
-          painter: const _GoogleLogoPainter(),
-        ),
-      );
+    child: CustomPaint(
+      size: Size.square(size),
+      painter: const _GoogleLogoPainter(),
+    ),
+  );
 }
 
 class _GoogleLogoPainter extends CustomPainter {

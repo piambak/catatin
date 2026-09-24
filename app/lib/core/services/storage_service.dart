@@ -82,7 +82,8 @@ class StorageService {
       prefs.setString(StorageKeys.userId, id),
       prefs.setString(StorageKeys.userName, name),
       prefs.setString(StorageKeys.userEmail, email),
-      if (businessId != null) prefs.setString(StorageKeys.businessId, businessId),
+      if (businessId != null)
+        prefs.setString(StorageKeys.businessId, businessId),
     ]);
   }
 
@@ -121,8 +122,10 @@ class StorageService {
     final cached = _onboarded;
     if (cached != null) return cached;
     final stored =
-        (await SharedPreferences.getInstance()).getBool(StorageKeys.onboarded) ??
-            false;
+        (await SharedPreferences.getInstance()).getBool(
+          StorageKeys.onboarded,
+        ) ??
+        false;
     // `??=`, bukan `=`: penulisan yang terjadi selama pembacaan di atas lebih
     // baru dari hasil baca ini dan tidak boleh tertimpa.
     return _onboarded ??= stored;

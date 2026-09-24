@@ -62,8 +62,9 @@ class _SimulatorScreenState extends State<SimulatorScreen>
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: ConstrainedBox(
-                      constraints:
-                          const BoxConstraints(maxWidth: Bp.contentMax),
+                      constraints: const BoxConstraints(
+                        maxWidth: Bp.contentMax,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -71,15 +72,19 @@ class _SimulatorScreenState extends State<SimulatorScreen>
                             const DsLabel('Simulator'),
                             const SizedBox(height: 8),
                           ],
-                          Text('Hitung pajak Anda',
-                              style: Typo.serif(bp.isExpanded ? 29 : 23)),
+                          Text(
+                            'Hitung pajak Anda',
+                            style: Typo.serif(bp.isExpanded ? 29 : 23),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             bp.isExpanded
                                 ? 'Versi web memakai alur yang sama — hanya lebih lapang.'
                                 : 'Tiga pertanyaan, tanpa istilah rumit.',
-                            style: Typo.sans(bp.isExpanded ? 15 : 13.5,
-                                color: DS.muted),
+                            style: Typo.sans(
+                              bp.isExpanded ? 15 : 13.5,
+                              color: DS.muted,
+                            ),
                           ),
                         ],
                       ),
@@ -130,7 +135,7 @@ class _SimulatorTabs extends StatelessWidget {
         border: Border(bottom: BorderSide(color: DS.hairline)),
       ),
       child: Align(
-                    alignment: Alignment.centerLeft,
+        alignment: Alignment.centerLeft,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: Bp.contentMax),
           child: AnimatedBuilder(
@@ -183,9 +188,11 @@ class _TabPill extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label,
-              style: Typo.sans(13.5,
-                  weight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: selected ? DS.brandInk : DS.muted),
+              style: Typo.sans(
+                13.5,
+                weight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? DS.brandInk : DS.muted,
+              ),
             ),
           ),
         ),

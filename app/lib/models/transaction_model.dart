@@ -26,14 +26,14 @@ class TxCategoryData {
   bool get isIncome => type == 'INCOME';
 
   factory TxCategoryData.fromJson(Map<String, dynamic> j) => TxCategoryData(
-        id: j['id'] as String,
-        name: j['name'] as String,
-        type: j['type'] as String,
-        taxRelevant: j['tax_relevant'] as bool? ?? false,
-        isCogs: j['is_cogs'] as bool? ?? false,
-        icon: j['icon'] as String? ?? '💰',
-        color: j['color'] as String? ?? '#6B7280',
-      );
+    id: j['id'] as String,
+    name: j['name'] as String,
+    type: j['type'] as String,
+    taxRelevant: j['tax_relevant'] as bool? ?? false,
+    isCogs: j['is_cogs'] as bool? ?? false,
+    icon: j['icon'] as String? ?? '💰',
+    color: j['color'] as String? ?? '#6B7280',
+  );
 
   Color get flutterColor {
     try {
@@ -79,35 +79,34 @@ class TxData {
   bool get isIncome => type == 'INCOME';
 
   TxData copyWith({double? amount}) => TxData(
-        id: id,
-        businessId: businessId,
-        date: date,
-        type: type,
-        amount: amount ?? this.amount,
-        category: category,
-        description: description,
-        paymentMethod: paymentMethod,
-        receiptNote: receiptNote,
-        createdAt: createdAt,
-        recurringTemplateId: recurringTemplateId,
-      );
+    id: id,
+    businessId: businessId,
+    date: date,
+    type: type,
+    amount: amount ?? this.amount,
+    category: category,
+    description: description,
+    paymentMethod: paymentMethod,
+    receiptNote: receiptNote,
+    createdAt: createdAt,
+    recurringTemplateId: recurringTemplateId,
+  );
 
   factory TxData.fromJson(Map<String, dynamic> j) => TxData(
-        id: j['id'] as String,
-        businessId: j['business_id'] as String,
-        date: DateTime.parse(j['date'] as String),
-        type: j['type'] as String,
-        amount: (j['amount'] as num).toDouble(),
-        category:
-            TxCategoryData.fromJson(j['category'] as Map<String, dynamic>),
-        description: j['description'] as String?,
-        paymentMethod: j['payment_method'] as String? ?? 'CASH',
-        receiptNote: j['receipt_note'] as String?,
-        // Server mengirim UTC; tanpa toLocal transaksi yang dibuat sebelum
-        // 07.00 WIB tampil di tanggal kemarin.
-        createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
-        recurringTemplateId: j['recurring_template_id'] as String?,
-      );
+    id: j['id'] as String,
+    businessId: j['business_id'] as String,
+    date: DateTime.parse(j['date'] as String),
+    type: j['type'] as String,
+    amount: (j['amount'] as num).toDouble(),
+    category: TxCategoryData.fromJson(j['category'] as Map<String, dynamic>),
+    description: j['description'] as String?,
+    paymentMethod: j['payment_method'] as String? ?? 'CASH',
+    receiptNote: j['receipt_note'] as String?,
+    // Server mengirim UTC; tanpa toLocal transaksi yang dibuat sebelum
+    // 07.00 WIB tampil di tanggal kemarin.
+    createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
+    recurringTemplateId: j['recurring_template_id'] as String?,
+  );
 }
 
 // ── Input transaksi ───────────────────────────────────────────────────────────
@@ -137,15 +136,15 @@ class TransactionDraft {
   });
 
   Map<String, dynamic> toJson() => {
-        'business_id': businessId,
-        'date': date,
-        'type': type,
-        'amount': amount,
-        'category_id': categoryId,
-        'description': description,
-        'payment_method': paymentMethod,
-        'receipt_note': receiptNote,
-      };
+    'business_id': businessId,
+    'date': date,
+    'type': type,
+    'amount': amount,
+    'category_id': categoryId,
+    'description': description,
+    'payment_method': paymentMethod,
+    'receipt_note': receiptNote,
+  };
 }
 
 // ── Ringkasan bulanan ─────────────────────────────────────────────────────────
@@ -173,7 +172,11 @@ class TxSummary {
       }
     }
     return TxSummary(
-        income: inc, expense: exp, profit: inc - exp, count: txs.length);
+      income: inc,
+      expense: exp,
+      profit: inc - exp,
+      count: txs.length,
+    );
   }
 }
 

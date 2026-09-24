@@ -14,7 +14,8 @@ import 'package:fl_chart/fl_chart.dart';
 
 class AccountingScreen extends StatefulWidget {
   const AccountingScreen({super.key});
-  @override State<AccountingScreen> createState() => _AccountingScreenState();
+  @override
+  State<AccountingScreen> createState() => _AccountingScreenState();
 }
 
 class _AccountingScreenState extends State<AccountingScreen>
@@ -22,22 +23,22 @@ class _AccountingScreenState extends State<AccountingScreen>
   late TabController _tabCtrl;
 
   // Shared data
-  List<TxData> _allTx   = [];
-  bool         _loading = true;
-  String?      _error;
+  List<TxData> _allTx = [];
+  bool _loading = true;
+  String? _error;
 
   // Date cursors
   late DateTime _dailyCursor;
   late DateTime _calCursor;
-  late int      _monthlyYear;
+  late int _monthlyYear;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl     = TabController(length: 4, vsync: this);
-    final now    = DateTime.now();
+    _tabCtrl = TabController(length: 4, vsync: this);
+    final now = DateTime.now();
     _dailyCursor = DateTime(now.year, now.month);
-    _calCursor   = DateTime(now.year, now.month);
+    _calCursor = DateTime(now.year, now.month);
     _monthlyYear = now.year;
     _loadAll();
     // Layar ini tetap hidup di IndexedStack; muat ulang setiap transaksi
@@ -72,14 +73,12 @@ class _AccountingScreenState extends State<AccountingScreen>
 
   void _showAddSheet() {
     showDialog(
-      context:          context,
+      context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14)),
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 24, vertical: 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: TxAddSheet(
@@ -100,61 +99,71 @@ class _AccountingScreenState extends State<AccountingScreen>
 
     return Scaffold(
       backgroundColor: DS.surface,
-      body: Column(children: [
-        // ── Kepala tetap ─────────────────────────────────────
-        Material(
-          color: DS.surface,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            SizedBox(height: MediaQuery.of(context).padding.top),
-            Padding(
-              padding: EdgeInsets.fromLTRB(pad, 20, pad - 8, 0),
-              child: Row(children: [
-                Expanded(
-                  child: Text('Pencatatan',
-                      style: Typo.serif(bp.isExpanded ? 34 : 25)),
+      body: Column(
+        children: [
+          // ── Kepala tetap ─────────────────────────────────────
+          Material(
+            color: DS.surface,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: MediaQuery.of(context).padding.top),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(pad, 20, pad - 8, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Pencatatan',
+                          style: Typo.serif(bp.isExpanded ? 34 : 25),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ]),
+                const SizedBox(height: 12),
+                _ViewTabs(controller: _tabCtrl, pad: pad),
+              ],
             ),
-            const SizedBox(height: 12),
-            _ViewTabs(controller: _tabCtrl, pad: pad),
-          ]),
-        ),
+          ),
 
-        // ── Tab content ──────────────────────────────────────
-        // Galat diperiksa SEBELUM loading: kalau tidak, skeleton menutupi
-        // keadaan galat dan pengguna tidak pernah melihatnya.
-        if (_error != null)
-          Expanded(child: ErrorState(message: _error!, onRetry: _loadAll))
-        else
-        Expanded(child: TabBarView(
-          controller: _tabCtrl,
-          children: [
-            _DailyTab(
-              allTx:   _allTx,
-              loading: _loading,
-              cursor:  _dailyCursor,
-              onShift: (d) => setState(() => _dailyCursor = d),
-              onRefresh: _loadAll,
+          // ── Tab content ──────────────────────────────────────
+          // Galat diperiksa SEBELUM loading: kalau tidak, skeleton menutupi
+          // keadaan galat dan pengguna tidak pernah melihatnya.
+          if (_error != null)
+            Expanded(
+              child: ErrorState(message: _error!, onRetry: _loadAll),
+            )
+          else
+            Expanded(
+              child: TabBarView(
+                controller: _tabCtrl,
+                children: [
+                  _DailyTab(
+                    allTx: _allTx,
+                    loading: _loading,
+                    cursor: _dailyCursor,
+                    onShift: (d) => setState(() => _dailyCursor = d),
+                    onRefresh: _loadAll,
+                  ),
+                  _CalendarTab(
+                    allTx: _allTx,
+                    loading: _loading,
+                    cursor: _calCursor,
+                    onShift: (d) => setState(() => _calCursor = d),
+                  ),
+                  _MonthlyTab(
+                    allTx: _allTx,
+                    loading: _loading,
+                    year: _monthlyYear,
+                    onShift: (y) => setState(() => _monthlyYear = y),
+                  ),
+                  _TotalTab(allTx: _allTx, loading: _loading),
+                ],
+              ),
             ),
-            _CalendarTab(
-              allTx:   _allTx,
-              loading: _loading,
-              cursor:  _calCursor,
-              onShift: (d) => setState(() => _calCursor = d),
-            ),
-            _MonthlyTab(
-              allTx:   _allTx,
-              loading: _loading,
-              year:    _monthlyYear,
-              onShift: (y) => setState(() => _monthlyYear = y),
-            ),
-            _TotalTab(
-              allTx:   _allTx,
-              loading: _loading,
-            ),
-          ],
-        )),
-      ]),
+        ],
+      ),
 
       // ── FAB ──────────────────────────────────────────────
       // Digeser ke atas supaya tidak tertimpa pil navigasi mengambang.
@@ -185,30 +194,42 @@ class _MonthNav extends StatelessWidget {
   const _MonthNav({required this.cursor, required this.onShift});
 
   static const _months = [
-    '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-    child: Row(children: [
-      _NavBtn(
-        icon: Icons.chevron_left_rounded,
-        onTap: () => onShift(DateTime(
-          cursor.year, cursor.month - 1)),
-      ),
-      const SizedBox(width: 10),
-      Text(
-        '${_months[cursor.month]} ${cursor.year}',
-        style: Typo.sans(13, weight: FontWeight.w500)),
-      const SizedBox(width: 10),
-      _NavBtn(
-        icon: Icons.chevron_right_rounded,
-        onTap: () => onShift(DateTime(
-          cursor.year, cursor.month + 1)),
-      ),
-    ]),
+    child: Row(
+      children: [
+        _NavBtn(
+          icon: Icons.chevron_left_rounded,
+          onTap: () => onShift(DateTime(cursor.year, cursor.month - 1)),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          '${_months[cursor.month]} ${cursor.year}',
+          style: Typo.sans(13, weight: FontWeight.w500),
+        ),
+        const SizedBox(width: 10),
+        _NavBtn(
+          icon: Icons.chevron_right_rounded,
+          onTap: () => onShift(DateTime(cursor.year, cursor.month + 1)),
+        ),
+      ],
+    ),
   );
 }
 
@@ -221,17 +242,21 @@ class _YearNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-    child: Row(children: [
-      _NavBtn(
-        icon: Icons.chevron_left_rounded,
-        onTap: () => onShift(year - 1)),
-      const SizedBox(width: 10),
-      Text('$year', style: Typo.sans(13, weight: FontWeight.w500)),
-      const SizedBox(width: 10),
-      _NavBtn(
-        icon: Icons.chevron_right_rounded,
-        onTap: () => onShift(year + 1)),
-    ]),
+    child: Row(
+      children: [
+        _NavBtn(
+          icon: Icons.chevron_left_rounded,
+          onTap: () => onShift(year - 1),
+        ),
+        const SizedBox(width: 10),
+        Text('$year', style: Typo.sans(13, weight: FontWeight.w500)),
+        const SizedBox(width: 10),
+        _NavBtn(
+          icon: Icons.chevron_right_rounded,
+          onTap: () => onShift(year + 1),
+        ),
+      ],
+    ),
   );
 }
 
@@ -244,16 +269,18 @@ class _NavBtn extends StatelessWidget {
   Widget build(BuildContext context) => MouseRegion(
     cursor: SystemMouseCursors.click,
     child: GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 28, height: 28,
-      decoration: BoxDecoration(
-        color: DS.hairline,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: DS.hairline, width: 0.5)),
-      child: Icon(icon, size: 17, color: DS.muted),
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: DS.hairline,
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: DS.hairline, width: 0.5),
+        ),
+        child: Icon(icon, size: 17, color: DS.muted),
+      ),
     ),
-  ),
   );
 }
 
@@ -263,20 +290,26 @@ class _NavBtn extends StatelessWidget {
 
 class _DailyTab extends StatelessWidget {
   final List<TxData> allTx;
-  final bool         loading;
-  final DateTime     cursor;
+  final bool loading;
+  final DateTime cursor;
   final ValueChanged<DateTime> onShift;
   final Future<void> Function() onRefresh;
 
   const _DailyTab({
-    required this.allTx, required this.loading,
-    required this.cursor, required this.onShift,
+    required this.allTx,
+    required this.loading,
+    required this.cursor,
+    required this.onShift,
     required this.onRefresh,
   });
 
-  List<TxData> get _monthTx => allTx
-    .where((t) => t.date.year == cursor.year && t.date.month == cursor.month)
-    .toList()..sort((a, b) => b.date.compareTo(a.date));
+  List<TxData> get _monthTx =>
+      allTx
+          .where(
+            (t) => t.date.year == cursor.year && t.date.month == cursor.month,
+          )
+          .toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
 
   Map<String, List<TxData>> get _grouped {
     final map = <String, List<TxData>>{};
@@ -288,11 +321,25 @@ class _DailyTab extends StatelessWidget {
   }
 
   String _dayKey(DateTime d) =>
-    '${_wd(d.weekday)}, ${d.day} ${_mon(d.month)} ${d.year}';
+      '${_wd(d.weekday)}, ${d.day} ${_mon(d.month)} ${d.year}';
 
-  static const _wds = ['','Sen','Sel','Rab','Kam','Jum','Sab','Min'];
-  static const _mons = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  String _wd(int w)  => _wds[w];
+  static const _wds = ['', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  static const _mons = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
+  String _wd(int w) => _wds[w];
   String _mon(int m) => _mons[m];
 
   @override
@@ -312,12 +359,13 @@ class _DailyTab extends StatelessWidget {
               child: EmptyState(
                 icon: Icons.receipt_long_outlined,
                 title: 'Belum ada transaksi',
-                subtitle: 'Ketuk + untuk mencatat transaksi baru'))
+                subtitle: 'Ketuk + untuk mencatat transaksi baru',
+              ),
+            )
           else
-            ..._grouped.entries.map((e) => _DayGroup(
-              dateLabel: e.key,
-              txs:       e.value,
-            )),
+            ..._grouped.entries.map(
+              (e) => _DayGroup(dateLabel: e.key, txs: e.value),
+            ),
         ],
       ),
     );
@@ -325,36 +373,46 @@ class _DailyTab extends StatelessWidget {
 
   Widget _shimmer() => Padding(
     padding: const EdgeInsets.all(16),
-    child: Column(children: List.generate(4, (_) => Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(children: const [
-        ShimmerBox(width: 36, height: 36, radius: 9),
-        SizedBox(width: 10),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShimmerBox(width: 140, height: 12),
-            SizedBox(height: 5),
-            ShimmerBox(width: 90, height: 10),
-          ])),
-        ShimmerBox(width: 80, height: 13),
-      ]),
-    ))),
+    child: Column(
+      children: List.generate(
+        4,
+        (_) => Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            children: const [
+              ShimmerBox(width: 36, height: 36, radius: 9),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShimmerBox(width: 140, height: 12),
+                    SizedBox(height: 5),
+                    ShimmerBox(width: 90, height: 10),
+                  ],
+                ),
+              ),
+              ShimmerBox(width: 80, height: 13),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 }
 
 class _DayGroup extends StatelessWidget {
-  final String       dateLabel;
+  final String dateLabel;
   final List<TxData> txs;
   const _DayGroup({required this.dateLabel, required this.txs});
 
-  double get _net => txs.fold(0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
+  double get _net =>
+      txs.fold(0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
 
   @override
   Widget build(BuildContext context) {
     final netColor = _net >= 0 ? DS.income : DS.expense;
-    final netStr   = (_net >= 0 ? '+' : '−') +
-        Rupiah.compact(_net.abs());
+    final netStr = (_net >= 0 ? '+' : '−') + Rupiah.compact(_net.abs());
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -367,13 +425,26 @@ class _DayGroup extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: DS.hairline,
-              borderRadius: BorderRadius.circular(7)),
-            child: Row(children: [
-              Expanded(child: Text(dateLabel,
-                style: Typo.sans(11, weight: FontWeight.w600))),
-              Text(netStr, style: Typo.mono(11,
-                color: netColor, weight: FontWeight.w600)),
-            ]),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    dateLabel,
+                    style: Typo.sans(11, weight: FontWeight.w600),
+                  ),
+                ),
+                Text(
+                  netStr,
+                  style: Typo.mono(
+                    11,
+                    color: netColor,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
           // Transactions
           Container(
@@ -381,13 +452,14 @@ class _DayGroup extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: DS.hairline, width: 0.5)),
+              border: Border.all(color: DS.hairline, width: 0.5),
+            ),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: txs.length,
               separatorBuilder: (_, __) =>
-                Divider(height: 0.5, indent: 56, color: DS.hairline),
+                  Divider(height: 0.5, indent: 56, color: DS.hairline),
               itemBuilder: (_, i) => TxListTile(tx: txs[i]),
             ),
           ),
@@ -403,13 +475,15 @@ class _DayGroup extends StatelessWidget {
 
 class _CalendarTab extends StatefulWidget {
   final List<TxData> allTx;
-  final bool         loading;
-  final DateTime     cursor;
+  final bool loading;
+  final DateTime cursor;
   final ValueChanged<DateTime> onShift;
 
   const _CalendarTab({
-    required this.allTx, required this.loading,
-    required this.cursor, required this.onShift,
+    required this.allTx,
+    required this.loading,
+    required this.cursor,
+    required this.onShift,
   });
 
   @override
@@ -417,186 +491,277 @@ class _CalendarTab extends StatefulWidget {
 }
 
 class _CalendarTabState extends State<_CalendarTab> {
-  bool _showIncome  = true;
+  bool _showIncome = true;
   bool _showExpense = true;
 
   static const _months = [
-    '','Januari','Februari','Maret','April','Mei','Juni',
-    'Juli','Agustus','September','Oktober','November','Desember',
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
-
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, box) {
-      final wide = box.maxWidth > 680;
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Left sidebar (wide only) ─────────────────────
-          if (wide) SizedBox(
-            width: 240,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(12, 12, 6, 20),
-              child: Column(children: [
-                _MiniCalendar(
-                  cursor:  widget.cursor,
-                  allTx:   widget.allTx,
-                  onMonth: widget.onShift,
+    return LayoutBuilder(
+      builder: (_, box) {
+        final wide = box.maxWidth > 680;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Left sidebar (wide only) ─────────────────────
+            if (wide)
+              SizedBox(
+                width: 240,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 6, 20),
+                  child: Column(
+                    children: [
+                      _MiniCalendar(
+                        cursor: widget.cursor,
+                        allTx: widget.allTx,
+                        onMonth: widget.onShift,
+                      ),
+                      const SizedBox(height: 14),
+                      _FilterCard(
+                        showIncome: _showIncome,
+                        showExpense: _showExpense,
+                        onIncomeToggle: (v) => setState(() => _showIncome = v),
+                        onExpenseToggle: (v) =>
+                            setState(() => _showExpense = v),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 14),
-                _FilterCard(
-                  showIncome:  _showIncome,
-                  showExpense: _showExpense,
-                  onIncomeToggle:  (v) => setState(() => _showIncome  = v),
-                  onExpenseToggle: (v) => setState(() => _showExpense = v),
-                ),
-              ]),
-            ),
-          ),
+              ),
 
-          // ── Main calendar ────────────────────────────────
-          Expanded(
-            child: Column(children: [
-              // Month nav
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(children: [
-                  _NavBtn(icon: Icons.chevron_left_rounded,
-                    onTap: () => widget.onShift(DateTime(
-                      widget.cursor.year, widget.cursor.month - 1))),
-                  const SizedBox(width: 10),
-                  Text('${_months[widget.cursor.month]} ${widget.cursor.year}',
-                    style: Typo.sans(14, weight: FontWeight.w600)),
-                  const SizedBox(width: 10),
-                  _NavBtn(icon: Icons.chevron_right_rounded,
-                    onTap: () => widget.onShift(DateTime(
-                      widget.cursor.year, widget.cursor.month + 1))),
-                  const SizedBox(width: 10),
-                  // Today button
-                  GestureDetector(
-                    onTap: () => widget.onShift(
-                      DateTime(DateTime.now().year, DateTime.now().month)),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: DS.hairline,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: DS.hairline, width: .5)),
-                      child: Text('Hari Ini',
-                        style: Typo.sans(11,
-                          weight: FontWeight.w500)),
+            // ── Main calendar ────────────────────────────────
+            Expanded(
+              child: Column(
+                children: [
+                  // Month nav
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Row(
+                      children: [
+                        _NavBtn(
+                          icon: Icons.chevron_left_rounded,
+                          onTap: () => widget.onShift(
+                            DateTime(
+                              widget.cursor.year,
+                              widget.cursor.month - 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${_months[widget.cursor.month]} ${widget.cursor.year}',
+                          style: Typo.sans(14, weight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 10),
+                        _NavBtn(
+                          icon: Icons.chevron_right_rounded,
+                          onTap: () => widget.onShift(
+                            DateTime(
+                              widget.cursor.year,
+                              widget.cursor.month + 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Today button
+                        GestureDetector(
+                          onTap: () => widget.onShift(
+                            DateTime(DateTime.now().year, DateTime.now().month),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: DS.hairline,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: DS.hairline, width: .5),
+                            ),
+                            child: Text(
+                              'Hari Ini',
+                              style: Typo.sans(11, weight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        // Legend
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _LegDot(color: DS.income, label: 'Masuk'),
+                            const SizedBox(width: 10),
+                            _LegDot(color: DS.expense, label: 'Keluar'),
+                            const SizedBox(width: 10),
+                            _LegDot(color: DS.brand, label: 'Keduanya'),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                  // Legend
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    _LegDot(color: DS.income,  label: 'Masuk'),
-                    const SizedBox(width: 10),
-                    _LegDot(color: DS.expense, label: 'Keluar'),
-                    const SizedBox(width: 10),
-                    _LegDot(color: DS.brand,   label: 'Keduanya'),
-                  ]),
-                ]),
+                  // Day labels
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: wide ? 16 : 8),
+                    child: Row(
+                      children:
+                          ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+                              .map(
+                                (d) => Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      d,
+                                      style: Typo.sans(
+                                        9,
+                                        color: DS.faint,
+                                        weight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  // Calendar grid — fills remaining height
+                  Expanded(
+                    child: _FullCalGrid(
+                      cursor: widget.cursor,
+                      allTx: widget.allTx,
+                      showIncome: _showIncome,
+                      showExpense: _showExpense,
+                      padding: EdgeInsets.symmetric(horizontal: wide ? 16 : 8),
+                      onDayTap: (day, txs) =>
+                          _showDayDetail(context, widget.cursor, day, txs),
+                    ),
+                  ),
+                ],
               ),
-              // Day labels
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: wide ? 16 : 8),
-                child: Row(
-                  children: ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
-                    .map((d) => Expanded(child: Center(child: Text(d,
-                      style: Typo.sans(9,
-                        color: DS.faint,
-                        weight: FontWeight.w500)))))
-                    .toList(),
-                ),
-              ),
-              const SizedBox(height: 3),
-              // Calendar grid — fills remaining height
-              Expanded(child: _FullCalGrid(
-                cursor:      widget.cursor,
-                allTx:       widget.allTx,
-                showIncome:  _showIncome,
-                showExpense: _showExpense,
-                padding:     EdgeInsets.symmetric(horizontal: wide ? 16 : 8),
-                onDayTap:    (day, txs) =>
-                  _showDayDetail(context, widget.cursor, day, txs),
-              )),
-            ]),
-          ),
-        ],
-      );
-    });
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  void _showDayDetail(BuildContext ctx, DateTime month,
-      int day, List<TxData> txs) {
-    final date    = DateTime(month.year, month.month, day);
-    final income  = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
-    final expense = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
+  void _showDayDetail(
+    BuildContext ctx,
+    DateTime month,
+    int day,
+    List<TxData> txs,
+  ) {
+    final date = DateTime(month.year, month.month, day);
+    final income = txs
+        .where((t) => t.isIncome)
+        .fold(0.0, (s, t) => s + t.amount);
+    final expense = txs
+        .where((t) => !t.isIncome)
+        .fold(0.0, (s, t) => s + t.amount);
 
     showDialog(
       context: ctx,
       barrierDismissible: true,
       builder: (_) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: SingleChildScrollView(child: Padding(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SingleChildScrollView(
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width:36,height:4,
-            decoration:BoxDecoration(color:DS.hairline,
-              borderRadius:BorderRadius.circular(2))),
-          const SizedBox(height:12),
-          Row(children: [
-            Expanded(child: Text(Tanggal.long(date),
-              style: Typo.serif(15))),
-            Text('${txs.length} transaksi',
-              style: Typo.sans(12, color: DS.faint)),
-          ]),
-          const SizedBox(height:8),
-          Row(children: [
-            _CalStat(label:'Masuk',  value:income,  color:DS.income),
-            const SizedBox(width:8),
-            _CalStat(label:'Keluar', value:expense, color:DS.expense),
-            const SizedBox(width:8),
-            _CalStat(label:'Net',    value:income-expense,
-              color: income>=expense ? DS.income : DS.expense),
-          ]),
-          Divider(height:20,color:DS.hairline),
-          ConstrainedBox(
-            constraints:const BoxConstraints(maxHeight:300),
-            child: ListView.separated(
-              shrinkWrap:true,
-              itemCount:txs.length,
-              separatorBuilder:(_,__)=>Divider(height:.5,color:DS.hairline),
-              itemBuilder:(_,i)=>TxListTile(tx:txs[i]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: DS.hairline,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(Tanggal.long(date), style: Typo.serif(15)),
+                      ),
+                      Text(
+                        '${txs.length} transaksi',
+                        style: Typo.sans(12, color: DS.faint),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _CalStat(label: 'Masuk', value: income, color: DS.income),
+                      const SizedBox(width: 8),
+                      _CalStat(
+                        label: 'Keluar',
+                        value: expense,
+                        color: DS.expense,
+                      ),
+                      const SizedBox(width: 8),
+                      _CalStat(
+                        label: 'Net',
+                        value: income - expense,
+                        color: income >= expense ? DS.income : DS.expense,
+                      ),
+                    ],
+                  ),
+                  Divider(height: 20, color: DS.hairline),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: txs.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: .5, color: DS.hairline),
+                      itemBuilder: (_, i) => TxListTile(tx: txs[i]),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ])),
-      )),
-    ));
+        ),
+      ),
+    );
   }
 }
 
 // ── Full calendar grid (fills parent, prev/next month days fill edges) ────────
 
 class _FullCalGrid extends StatefulWidget {
-  final DateTime   cursor;
+  final DateTime cursor;
   final List<TxData> allTx;
   final bool showIncome, showExpense;
   final EdgeInsets padding;
   final void Function(int day, List<TxData> txs) onDayTap;
 
   const _FullCalGrid({
-    required this.cursor, required this.allTx,
-    required this.showIncome, required this.showExpense,
-    required this.padding, required this.onDayTap,
+    required this.cursor,
+    required this.allTx,
+    required this.showIncome,
+    required this.showExpense,
+    required this.padding,
+    required this.onDayTap,
   });
 
   @override
@@ -606,8 +771,8 @@ class _FullCalGrid extends StatefulWidget {
 class _FullCalGridState extends State<_FullCalGrid> {
   int? _hovered;
 
-  int  _daysIn(int y, int m) => DateTime(y, m + 1, 0).day;
-  int  _startWd(int y, int m) {
+  int _daysIn(int y, int m) => DateTime(y, m + 1, 0).day;
+  int _startWd(int y, int m) {
     final d = DateTime(y, m, 1).weekday;
     return d == 7 ? 0 : d;
   }
@@ -617,7 +782,7 @@ class _FullCalGridState extends State<_FullCalGrid> {
     final cy = widget.cursor.year;
     final cm = widget.cursor.month;
     final start = _startWd(cy, cm);
-    final dim   = _daysIn(cy, cm);
+    final dim = _daysIn(cy, cm);
     final cells = <({int day, int month, int year, bool isCurrent})>[];
 
     // Prev month fill
@@ -625,14 +790,19 @@ class _FullCalGridState extends State<_FullCalGrid> {
     final prevY = cm == 1 ? cy - 1 : cy;
     final prevDim = _daysIn(prevY, prevM);
     for (int i = 0; i < start; i++) {
-      cells.add((day: prevDim - start + i + 1, month: prevM, year: prevY, isCurrent: false));
+      cells.add((
+        day: prevDim - start + i + 1,
+        month: prevM,
+        year: prevY,
+        isCurrent: false,
+      ));
     }
     // Current month
     for (int d = 1; d <= dim; d++) {
       cells.add((day: d, month: cm, year: cy, isCurrent: true));
     }
     // Next month fill to complete 42 cells
-    final nextM = cm == 12 ? 1  : cm + 1;
+    final nextM = cm == 12 ? 1 : cm + 1;
     final nextY = cm == 12 ? cy + 1 : cy;
     int nd = 1;
     while (cells.length < 42) {
@@ -644,7 +814,7 @@ class _FullCalGridState extends State<_FullCalGrid> {
   Map<String, List<TxData>> _txMap() {
     final map = <String, List<TxData>>{};
     for (final tx in widget.allTx) {
-      if (!widget.showIncome  &&  tx.isIncome) continue;
+      if (!widget.showIncome && tx.isIncome) continue;
       if (!widget.showExpense && !tx.isIncome) continue;
       final key = '${tx.date.year}-${tx.date.month}-${tx.date.day}';
       (map[key] ??= []).add(tx);
@@ -655,120 +825,168 @@ class _FullCalGridState extends State<_FullCalGrid> {
   @override
   Widget build(BuildContext context) {
     final cells = _cells();
-    final txMap  = _txMap();
-    final today  = DateTime.now();
+    final txMap = _txMap();
+    final today = DateTime.now();
 
-    return LayoutBuilder(builder: (_, box) {
-      final rows   = 6;
-      final cellH  = (box.maxHeight / rows).clamp(40.0, 120.0);
-      final fontSize = (cellH * 0.22).clamp(10.0, 16.0);
+    return LayoutBuilder(
+      builder: (_, box) {
+        final rows = 6;
+        final cellH = (box.maxHeight / rows).clamp(40.0, 120.0);
+        final fontSize = (cellH * 0.22).clamp(10.0, 16.0);
 
-      return Padding(
-        padding: widget.padding,
-        child: Column(children: List.generate(rows, (row) =>
-          Expanded(child: Row(children: List.generate(7, (col) {
-            final i = row * 7 + col;
-            final c = cells[i];
-            final key = '${c.year}-${c.month}-${c.day}';
-            final txs = txMap[key] ?? [];
-            final hasInc = txs.any((t) =>  t.isIncome);
-            final hasExp = txs.any((t) => !t.isIncome);
-            final isToday = c.day == today.day &&
-                            c.month == today.month &&
-                            c.year  == today.year;
-            final isHovered = _hovered == i && txs.isNotEmpty && c.isCurrent;
+        return Padding(
+          padding: widget.padding,
+          child: Column(
+            children: List.generate(
+              rows,
+              (row) => Expanded(
+                child: Row(
+                  children: List.generate(7, (col) {
+                    final i = row * 7 + col;
+                    final c = cells[i];
+                    final key = '${c.year}-${c.month}-${c.day}';
+                    final txs = txMap[key] ?? [];
+                    final hasInc = txs.any((t) => t.isIncome);
+                    final hasExp = txs.any((t) => !t.isIncome);
+                    final isToday =
+                        c.day == today.day &&
+                        c.month == today.month &&
+                        c.year == today.year;
+                    final isHovered =
+                        _hovered == i && txs.isNotEmpty && c.isCurrent;
 
-            // Border between cells
-            final border = Border(
-              right:  col < 6 ? BorderSide(color: DS.hairline, width: .5) : BorderSide.none,
-              bottom: row < 5 ? BorderSide(color: DS.hairline, width: .5) : BorderSide.none,
-            );
+                    // Border between cells
+                    final border = Border(
+                      right: col < 6
+                          ? BorderSide(color: DS.hairline, width: .5)
+                          : BorderSide.none,
+                      bottom: row < 5
+                          ? BorderSide(color: DS.hairline, width: .5)
+                          : BorderSide.none,
+                    );
 
-            Color? bg;
-            Color  numClr;
-            if (!c.isCurrent) {
-              numClr = DS.border;
-            } else if (isToday) {
-              numClr = DS.accent;
-            } else {
-              numClr = DS.ink;
-            }
+                    Color? bg;
+                    Color numClr;
+                    if (!c.isCurrent) {
+                      numClr = DS.border;
+                    } else if (isToday) {
+                      numClr = DS.accent;
+                    } else {
+                      numClr = DS.ink;
+                    }
 
-            if (txs.isNotEmpty && c.isCurrent) {
-              if (hasInc && hasExp)     bg = DS.brand.withValues(alpha: .10);
-              else if (hasInc)          bg = DS.income.withValues(alpha: 0.12);
-              else                      bg = DS.expense.withValues(alpha: 0.12);
-            }
-            if (isHovered) bg = DS.brand.withValues(alpha: .18);
+                    if (txs.isNotEmpty && c.isCurrent) {
+                      if (hasInc && hasExp)
+                        bg = DS.brand.withValues(alpha: .10);
+                      else if (hasInc)
+                        bg = DS.income.withValues(alpha: 0.12);
+                      else
+                        bg = DS.expense.withValues(alpha: 0.12);
+                    }
+                    if (isHovered) bg = DS.brand.withValues(alpha: .18);
 
-            final inc = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
-            final exp = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
-            final net = inc - exp;
-            final tip = txs.isNotEmpty
-              ? '${net >= 0 ? "+" : "−"}${Rupiah.compact(net.abs())}'
-              : '';
+                    final inc = txs
+                        .where((t) => t.isIncome)
+                        .fold(0.0, (s, t) => s + t.amount);
+                    final exp = txs
+                        .where((t) => !t.isIncome)
+                        .fold(0.0, (s, t) => s + t.amount);
+                    final net = inc - exp;
+                    final tip = txs.isNotEmpty
+                        ? '${net >= 0 ? "+" : "−"}${Rupiah.compact(net.abs())}'
+                        : '';
 
-            return Expanded(child: MouseRegion(
-              onEnter: (_) { if (txs.isNotEmpty && c.isCurrent) setState(() => _hovered = i); },
-              onExit:  (_) => setState(() => _hovered = null),
-              cursor: txs.isNotEmpty && c.isCurrent
-                ? SystemMouseCursors.click : SystemMouseCursors.basic,
-              child: Tooltip(
-                message: c.isCurrent && txs.isNotEmpty ? tip : '',
-                preferBelow: false,
-                textStyle: Typo.sans(11, color: Colors.white),
-                decoration: BoxDecoration(
-                  color: DS.ink,
-                  borderRadius: BorderRadius.circular(6)),
-                child: GestureDetector(
-                  onTap: c.isCurrent && txs.isNotEmpty
-                    ? () => widget.onDayTap(c.day, txs) : null,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    decoration: BoxDecoration(
-                      color: bg,
-                      border: border,
-                    ),
-                    padding: const EdgeInsets.all(4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Day number
-                        Container(
-                          width: fontSize * 1.7,
-                          height: fontSize * 1.7,
-                          decoration: isToday ? BoxDecoration(
-                            color: DS.accent,
-                            shape: BoxShape.circle) : null,
-                          child: Center(child: Text('${c.day}',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                              fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                              color: isToday ? Colors.white : numClr))),
-                        ),
-                        // Dot indicators
-                        if (txs.isNotEmpty && c.isCurrent && cellH >= 52)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Row(mainAxisSize: MainAxisSize.min, children: [
-                              if (hasInc) _dot(DS.income),
-                              if (hasExp) _dot(DS.expense),
-                            ]),
+                    return Expanded(
+                      child: MouseRegion(
+                        onEnter: (_) {
+                          if (txs.isNotEmpty && c.isCurrent)
+                            setState(() => _hovered = i);
+                        },
+                        onExit: (_) => setState(() => _hovered = null),
+                        cursor: txs.isNotEmpty && c.isCurrent
+                            ? SystemMouseCursors.click
+                            : SystemMouseCursors.basic,
+                        child: Tooltip(
+                          message: c.isCurrent && txs.isNotEmpty ? tip : '',
+                          preferBelow: false,
+                          textStyle: Typo.sans(11, color: Colors.white),
+                          decoration: BoxDecoration(
+                            color: DS.ink,
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                      ],
-                    ),
-                  ),
+                          child: GestureDetector(
+                            onTap: c.isCurrent && txs.isNotEmpty
+                                ? () => widget.onDayTap(c.day, txs)
+                                : null,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 100),
+                              decoration: BoxDecoration(
+                                color: bg,
+                                border: border,
+                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Day number
+                                  Container(
+                                    width: fontSize * 1.7,
+                                    height: fontSize * 1.7,
+                                    decoration: isToday
+                                        ? BoxDecoration(
+                                            color: DS.accent,
+                                            shape: BoxShape.circle,
+                                          )
+                                        : null,
+                                    child: Center(
+                                      child: Text(
+                                        '${c.day}',
+                                        style: TextStyle(
+                                          fontSize: fontSize,
+                                          fontWeight: isToday
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
+                                          color: isToday
+                                              ? Colors.white
+                                              : numClr,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Dot indicators
+                                  if (txs.isNotEmpty &&
+                                      c.isCurrent &&
+                                      cellH >= 52)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (hasInc) _dot(DS.income),
+                                          if (hasExp) _dot(DS.expense),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ),
-            ));
-          }))),
-        )),
-      );
-    });
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _dot(Color c) => Container(
-    width: 5, height: 5,
+    width: 5,
+    height: 5,
     margin: const EdgeInsets.only(right: 2),
     decoration: BoxDecoration(color: c, shape: BoxShape.circle),
   );
@@ -777,16 +995,30 @@ class _FullCalGridState extends State<_FullCalGrid> {
 // ── Mini calendar (left sidebar) ──────────────────────────────────────────────
 
 class _MiniCalendar extends StatelessWidget {
-  final DateTime     cursor;
+  final DateTime cursor;
   final List<TxData> allTx;
   final ValueChanged<DateTime> onMonth;
 
   const _MiniCalendar({
-    required this.cursor, required this.allTx, required this.onMonth});
+    required this.cursor,
+    required this.allTx,
+    required this.onMonth,
+  });
 
   static const _months = [
-    '','Jan','Feb','Mar','Apr','Mei','Jun',
-    'Jul','Agu','Sep','Okt','Nov','Des',
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
   ];
 
   @override
@@ -797,7 +1029,7 @@ class _MiniCalendar extends StatelessWidget {
         daysWithTx.add(tx.date.day);
       }
     }
-    final dim    = DateTime(cursor.year, cursor.month + 1, 0).day;
+    final dim = DateTime(cursor.year, cursor.month + 1, 0).day;
     final startWd = () {
       final d = DateTime(cursor.year, cursor.month, 1).weekday;
       return d == 7 ? 0 : d;
@@ -809,61 +1041,110 @@ class _MiniCalendar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: DS.hairline, width: .5)),
-      child: Column(children: [
-        // Mini month nav
-        Row(children: [
-          GestureDetector(
-            onTap: () => onMonth(DateTime(cursor.year, cursor.month - 1)),
-            child: Icon(Icons.chevron_left_rounded,
-              size: 16, color: DS.faint)),
-          Expanded(child: Text(
-            '${_months[cursor.month]} ${cursor.year}',
-            textAlign: TextAlign.center,
-            style: Typo.sans(11, weight: FontWeight.w600))),
-          GestureDetector(
-            onTap: () => onMonth(DateTime(cursor.year, cursor.month + 1)),
-            child: Icon(Icons.chevron_right_rounded,
-              size: 16, color: DS.faint)),
-        ]),
-        const SizedBox(height: 6),
-        // Day labels
-        Row(children: ['M','S','S','R','K','J','S'].map((d) =>
-          Expanded(child: Text(d, textAlign: TextAlign.center,
-            style: Typo.sans(8, color: DS.faint)))
-        ).toList()),
-        const SizedBox(height: 3),
-        // Mini grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, mainAxisExtent: 22, mainAxisSpacing: 1),
-          itemCount: 42,
-          itemBuilder: (_, i) {
-            final day = i - startWd + 1;
-            if (day < 1 || day > dim) return const SizedBox.shrink();
-            final hasTx  = daysWithTx.contains(day);
-            final isToday = day == today.day &&
-                cursor.month == today.month && cursor.year == today.year;
-            return Center(child: Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(
-                color: isToday ? DS.accent : Colors.transparent,
-                shape: BoxShape.circle),
-              child: Stack(alignment: Alignment.center, children: [
-                Text('$day', style: Typo.sans(8,
-                  color: isToday ? Colors.white : DS.muted)),
-                if (hasTx && !isToday)
-                  Positioned(bottom: 1, child: Container(
-                    width: 3, height: 3,
-                    decoration: BoxDecoration(
-                      color: DS.brand, shape: BoxShape.circle))),
-              ]),
-            ));
-          },
-        ),
-      ]),
+        border: Border.all(color: DS.hairline, width: .5),
+      ),
+      child: Column(
+        children: [
+          // Mini month nav
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => onMonth(DateTime(cursor.year, cursor.month - 1)),
+                child: Icon(
+                  Icons.chevron_left_rounded,
+                  size: 16,
+                  color: DS.faint,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '${_months[cursor.month]} ${cursor.year}',
+                  textAlign: TextAlign.center,
+                  style: Typo.sans(11, weight: FontWeight.w600),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => onMonth(DateTime(cursor.year, cursor.month + 1)),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: DS.faint,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Day labels
+          Row(
+            children: ['M', 'S', 'S', 'R', 'K', 'J', 'S']
+                .map(
+                  (d) => Expanded(
+                    child: Text(
+                      d,
+                      textAlign: TextAlign.center,
+                      style: Typo.sans(8, color: DS.faint),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 3),
+          // Mini grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisExtent: 22,
+              mainAxisSpacing: 1,
+            ),
+            itemCount: 42,
+            itemBuilder: (_, i) {
+              final day = i - startWd + 1;
+              if (day < 1 || day > dim) return const SizedBox.shrink();
+              final hasTx = daysWithTx.contains(day);
+              final isToday =
+                  day == today.day &&
+                  cursor.month == today.month &&
+                  cursor.year == today.year;
+              return Center(
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: isToday ? DS.accent : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        '$day',
+                        style: Typo.sans(
+                          8,
+                          color: isToday ? Colors.white : DS.muted,
+                        ),
+                      ),
+                      if (hasTx && !isToday)
+                        Positioned(
+                          bottom: 1,
+                          child: Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: DS.brand,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -875,8 +1156,10 @@ class _FilterCard extends StatelessWidget {
   final ValueChanged<bool> onIncomeToggle, onExpenseToggle;
 
   const _FilterCard({
-    required this.showIncome, required this.showExpense,
-    required this.onIncomeToggle, required this.onExpenseToggle,
+    required this.showIncome,
+    required this.showExpense,
+    required this.onIncomeToggle,
+    required this.onExpenseToggle,
   });
 
   @override
@@ -886,7 +1169,8 @@ class _FilterCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: DS.hairline, width: .5)),
+        border: Border.all(color: DS.hairline, width: .5),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -896,13 +1180,15 @@ class _FilterCard extends StatelessWidget {
             label: 'Pemasukan',
             color: DS.income,
             value: showIncome,
-            onToggle: onIncomeToggle),
+            onToggle: onIncomeToggle,
+          ),
           const SizedBox(height: 6),
           _FilterRow(
             label: 'Pengeluaran',
             color: DS.expense,
             value: showExpense,
-            onToggle: onExpenseToggle),
+            onToggle: onExpenseToggle,
+          ),
         ],
       ),
     );
@@ -911,69 +1197,92 @@ class _FilterCard extends StatelessWidget {
 
 class _FilterRow extends StatelessWidget {
   final String label;
-  final Color  color;
-  final bool   value;
+  final Color color;
+  final bool value;
   final ValueChanged<bool> onToggle;
 
   const _FilterRow({
-    required this.label, required this.color,
-    required this.value, required this.onToggle,
+    required this.label,
+    required this.color,
+    required this.value,
+    required this.onToggle,
   });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: () => onToggle(!value),
-    child: Row(children: [
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: 14, height: 14,
-        decoration: BoxDecoration(
-          color: value ? color : Colors.transparent,
-          border: Border.all(
-            color: value ? color : DS.border, width: 1.5),
-          borderRadius: BorderRadius.circular(3)),
-        child: value
-          ? const Icon(Icons.check_rounded, size: 10, color: Colors.white)
-          : null),
-      const SizedBox(width: 8),
-      Text(label, style: Typo.sans(11,
-        color: value ? DS.ink : DS.faint,
-        weight: value ? FontWeight.w500 : FontWeight.w400)),
-      const Spacer(),
-      Container(
-        width: 8, height: 8,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: value ? 0.3 : 0.1),
-          border: Border.all(color: value ? color : DS.border),
-          borderRadius: BorderRadius.circular(2))),
-    ]),
+    child: Row(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: value ? color : Colors.transparent,
+            border: Border.all(color: value ? color : DS.border, width: 1.5),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: value
+              ? const Icon(Icons.check_rounded, size: 10, color: Colors.white)
+              : null,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: Typo.sans(
+            11,
+            color: value ? DS.ink : DS.faint,
+            weight: value ? FontWeight.w500 : FontWeight.w400,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: value ? 0.3 : 0.1),
+            border: Border.all(color: value ? color : DS.border),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    ),
   );
 }
 
 class _LegDot extends StatelessWidget {
-  final Color color; final String label;
+  final Color color;
+  final String label;
   const _LegDot({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Container(width:8,height:8,
-        decoration:BoxDecoration(
-          color:color.withValues(alpha: .3),
-          border:Border.all(color:color,width:1),
-          borderRadius:BorderRadius.circular(2))),
-      const SizedBox(width:4),
-      Text(label,style:Typo.sans(10,color:DS.muted)),
-    ]);
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: .3),
+          border: Border.all(color: color, width: 1),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: 4),
+      Text(label, style: Typo.sans(10, color: DS.muted)),
+    ],
+  );
 }
-
 
 class _CalStat extends StatelessWidget {
   final String label;
   final double value;
-  final Color  color;
-  const _CalStat({required this.label, required this.value, required this.color});
+  final Color color;
+  const _CalStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -981,13 +1290,19 @@ class _CalStat extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
         color: DS.hairline,
-        borderRadius: BorderRadius.circular(8)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: Typo.sans(10, color: DS.faint)),
-        const SizedBox(height: 2),
-        Text(Rupiah.compact(value.abs()),
-          style: Typo.mono(12, color: color, weight: FontWeight.w600)),
-      ]),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Typo.sans(10, color: DS.faint)),
+          const SizedBox(height: 2),
+          Text(
+            Rupiah.compact(value.abs()),
+            style: Typo.mono(12, color: color, weight: FontWeight.w600),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -999,12 +1314,14 @@ class _CalStat extends StatelessWidget {
 class _MonthlyTab extends StatefulWidget {
   final List<TxData> allTx;
   final bool loading;
-  final int  year;
+  final int year;
   final ValueChanged<int> onShift;
 
   const _MonthlyTab({
-    required this.allTx, required this.loading,
-    required this.year,  required this.onShift,
+    required this.allTx,
+    required this.loading,
+    required this.year,
+    required this.onShift,
   });
 
   @override
@@ -1015,12 +1332,24 @@ class _MonthlyTabState extends State<_MonthlyTab> {
   final Set<int> _expanded = {};
 
   static const _months = [
-    '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
-  List<TxData> _txMonth(int m) => widget.allTx.where(
-    (t) => t.date.year == widget.year && t.date.month == m).toList();
+  List<TxData> _txMonth(int m) => widget.allTx
+      .where((t) => t.date.year == widget.year && t.date.month == m)
+      .toList();
 
   List<TxData> _txWeek(int m, int week) {
     // week 1=days1-7, 2=days8-14, 3=days15-21, 4=days22+
@@ -1028,7 +1357,7 @@ class _MonthlyTabState extends State<_MonthlyTab> {
     return txs.where((t) {
       final d = t.date.day;
       if (week == 1) return d <= 7;
-      if (week == 2) return d >= 8  && d <= 14;
+      if (week == 2) return d >= 8 && d <= 14;
       if (week == 3) return d >= 15 && d <= 21;
       return d >= 22;
     }).toList();
@@ -1036,9 +1365,11 @@ class _MonthlyTabState extends State<_MonthlyTab> {
 
   @override
   Widget build(BuildContext context) {
-    final months = List.generate(12, (i) => i + 1)
-      .where((m) => _txMonth(m).isNotEmpty || m <= DateTime.now().month)
-      .toList()..sort((a, b) => b.compareTo(a));
+    final months =
+        List.generate(12, (i) => i + 1)
+            .where((m) => _txMonth(m).isNotEmpty || m <= DateTime.now().month)
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 100),
@@ -1048,87 +1379,146 @@ class _MonthlyTabState extends State<_MonthlyTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: months.map((m) {
-              final txs     = _txMonth(m);
-              final income  = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
-              final expense = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
-              final isOpen  = _expanded.contains(m);
+              final txs = _txMonth(m);
+              final income = txs
+                  .where((t) => t.isIncome)
+                  .fold(0.0, (s, t) => s + t.amount);
+              final expense = txs
+                  .where((t) => !t.isIncome)
+                  .fold(0.0, (s, t) => s + t.amount);
+              final isOpen = _expanded.contains(m);
 
-              return Column(children: [
-                GestureDetector(
-                  onTap: () => setState(() =>
-                    isOpen ? _expanded.remove(m) : _expanded.add(m)),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: EdgeInsets.only(bottom: isOpen ? 0 : 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.vertical(
-                        top:    const Radius.circular(10),
-                        bottom: Radius.circular(isOpen ? 0 : 10)),
-                      border: Border.all(color: DS.hairline, width: 0.5)),
-                    child: Row(children: [
-                      Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: DS.hairline,
-                          borderRadius: BorderRadius.circular(8)),
-                        child: Center(child: Text(
-                          _months[m].substring(0, 3),
-                          style: Typo.sans(11, weight: FontWeight.w600)))),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(_months[m],
-                        style: Typo.sans(13, weight: FontWeight.w500))),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        Text('+${Rupiah.compact(income)}',
-                          style: Typo.mono(11,
-                            color: DS.income, weight: FontWeight.w600)),
-                        Text('−${Rupiah.compact(expense)}',
-                          style: Typo.mono(11,
-                            color: DS.expense, weight: FontWeight.w600)),
-                      ]),
-                      const SizedBox(width: 8),
-                      Icon(isOpen
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                        size: 18, color: DS.faint),
-                    ]),
-                  ),
-                ),
-                if (isOpen)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: DS.hairline,
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(10)),
-                      border: Border.all(color: DS.hairline, width: 0.5)),
-                    child: Column(
-                      children: List.generate(4, (wi) {
-                        final weekTxs = _txWeek(m, wi + 1);
-                        final wInc    = weekTxs.where((t) => t.isIncome).fold(0.0, (s, t) => s + t.amount);
-                        final wExp    = weekTxs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
-                        final labels  = ['1–7', '8–14', '15–21', '22+'];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 5),
-                          child: Row(children: [
-                            Text('Minggu ${wi + 1}  (${labels[wi]})',
-                              style: Typo.sans(11, color: DS.muted)),
-                            const Spacer(),
-                            Text('+${Rupiah.compact(wInc)}',
-                              style: Typo.mono(10,
-                                color: DS.income, weight: FontWeight.w500)),
-                            const SizedBox(width: 10),
-                            Text('−${Rupiah.compact(wExp)}',
-                              style: Typo.mono(10,
-                                color: DS.expense, weight: FontWeight.w500)),
-                          ]),
-                        );
-                      }),
+              return Column(
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(
+                      () => isOpen ? _expanded.remove(m) : _expanded.add(m),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: EdgeInsets.only(bottom: isOpen ? 0 : 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.vertical(
+                          top: const Radius.circular(10),
+                          bottom: Radius.circular(isOpen ? 0 : 10),
+                        ),
+                        border: Border.all(color: DS.hairline, width: 0.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: DS.hairline,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _months[m].substring(0, 3),
+                                style: Typo.sans(11, weight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _months[m],
+                              style: Typo.sans(13, weight: FontWeight.w500),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '+${Rupiah.compact(income)}',
+                                style: Typo.mono(
+                                  11,
+                                  color: DS.income,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                '−${Rupiah.compact(expense)}',
+                                style: Typo.mono(
+                                  11,
+                                  color: DS.expense,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            isOpen
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: DS.faint,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-              ]);
+                  if (isOpen)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: DS.hairline,
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(10),
+                        ),
+                        border: Border.all(color: DS.hairline, width: 0.5),
+                      ),
+                      child: Column(
+                        children: List.generate(4, (wi) {
+                          final weekTxs = _txWeek(m, wi + 1);
+                          final wInc = weekTxs
+                              .where((t) => t.isIncome)
+                              .fold(0.0, (s, t) => s + t.amount);
+                          final wExp = weekTxs
+                              .where((t) => !t.isIncome)
+                              .fold(0.0, (s, t) => s + t.amount);
+                          final labels = ['1–7', '8–14', '15–21', '22+'];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Minggu ${wi + 1}  (${labels[wi]})',
+                                  style: Typo.sans(11, color: DS.muted),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '+${Rupiah.compact(wInc)}',
+                                  style: Typo.mono(
+                                    10,
+                                    color: DS.income,
+                                    weight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '−${Rupiah.compact(wExp)}',
+                                  style: Typo.mono(
+                                    10,
+                                    color: DS.expense,
+                                    weight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                ],
+              );
             }).toList(),
           ),
         ),
@@ -1143,183 +1533,302 @@ class _MonthlyTabState extends State<_MonthlyTab> {
 
 class _TotalTab extends StatelessWidget {
   final List<TxData> allTx;
-  final bool         loading;
+  final bool loading;
 
   const _TotalTab({required this.allTx, required this.loading});
 
-  double get _totalIncome  => allTx.where((t) =>  t.isIncome).fold(0, (s, t) => s + t.amount);
-  double get _totalExpense => allTx.where((t) => !t.isIncome).fold(0, (s, t) => s + t.amount);
-  double get _profit       => _totalIncome - _totalExpense;
-  double get _margin       => _totalIncome > 0 ? _profit / _totalIncome * 100 : 0;
+  double get _totalIncome =>
+      allTx.where((t) => t.isIncome).fold(0, (s, t) => s + t.amount);
+  double get _totalExpense =>
+      allTx.where((t) => !t.isIncome).fold(0, (s, t) => s + t.amount);
+  double get _profit => _totalIncome - _totalExpense;
+  double get _margin => _totalIncome > 0 ? _profit / _totalIncome * 100 : 0;
 
   // Average daily income (rough: assume 22 working days)
   double get _avgDaily => _totalIncome / 22;
 
   // Transaction counts
-  int get _incomeCount  => allTx.where((t) =>  t.isIncome).length;
+  int get _incomeCount => allTx.where((t) => t.isIncome).length;
   int get _expenseCount => allTx.where((t) => !t.isIncome).length;
-  double get _avgTxValue => allTx.isEmpty ? 0 : ((_totalIncome + _totalExpense) / allTx.length);
+  double get _avgTxValue =>
+      allTx.isEmpty ? 0 : ((_totalIncome + _totalExpense) / allTx.length);
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       children: [
-
         // ── 4 KPI chips ───────────────────────────────────────
-        Row(children: [
-          _StatChip(label: 'Total Pemasukan',  value: Rupiah.compact(_totalIncome),  color: DS.income),
-          const SizedBox(width: 8),
-          _StatChip(label: 'Total Pengeluaran',value: Rupiah.compact(_totalExpense), color: DS.expense),
-        ]),
+        Row(
+          children: [
+            _StatChip(
+              label: 'Total Pemasukan',
+              value: Rupiah.compact(_totalIncome),
+              color: DS.income,
+            ),
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'Total Pengeluaran',
+              value: Rupiah.compact(_totalExpense),
+              color: DS.expense,
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
-        Row(children: [
-          _StatChip(label: 'Laba Bersih', value: Rupiah.compact(_profit),
-            color: _profit >= 0 ? const Color(0xFF185FA5) : DS.expense),
-          const SizedBox(width: 8),
-          _StatChip(label: 'Margin', value: Pct.formatValue(_margin), color: DS.brandDeep),
-        ]),
+        Row(
+          children: [
+            _StatChip(
+              label: 'Laba Bersih',
+              value: Rupiah.compact(_profit),
+              color: _profit >= 0 ? const Color(0xFF185FA5) : DS.expense,
+            ),
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'Margin',
+              value: Pct.formatValue(_margin),
+              color: DS.brandDeep,
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
-        Row(children: [
-          _StatChip(label: 'Rata-rata Harian', value: Rupiah.compact(_avgDaily), color: DS.muted),
-          const SizedBox(width: 8),
-          _StatChip(label: 'Total Transaksi',  value: '${allTx.length} tx',    color: DS.muted),
-        ]),
+        Row(
+          children: [
+            _StatChip(
+              label: 'Rata-rata Harian',
+              value: Rupiah.compact(_avgDaily),
+              color: DS.muted,
+            ),
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'Total Transaksi',
+              value: '${allTx.length} tx',
+              color: DS.muted,
+            ),
+          ],
+        ),
         const SizedBox(height: 14),
 
         // ── Bar chart — income vs expense 6 months ────────────
         AppCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Pemasukan vs Pengeluaran', style: Typo.serif(13)),
-            Text('6 bulan terakhir', style: Typo.sans(10, color: DS.faint)),
-            const SizedBox(height: 14),
-            Semantics(
-              label: 'Grafik batang pemasukan dan pengeluaran enam bulan terakhir',
-              child: ExcludeSemantics(child: _BarChart(allTx: allTx)),
-            ),
-            const SizedBox(height: 8),
-            Row(children: [
-              _LegDot(color: DS.income,  label: 'Pemasukan'),
-              const SizedBox(width: 12),
-              _LegDot(color: DS.expense, label: 'Pengeluaran'),
-            ]),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pemasukan vs Pengeluaran', style: Typo.serif(13)),
+              Text('6 bulan terakhir', style: Typo.sans(10, color: DS.faint)),
+              const SizedBox(height: 14),
+              Semantics(
+                label:
+                    'Grafik batang pemasukan dan pengeluaran enam bulan terakhir',
+                child: ExcludeSemantics(child: _BarChart(allTx: allTx)),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _LegDot(color: DS.income, label: 'Pemasukan'),
+                  const SizedBox(width: 12),
+                  _LegDot(color: DS.expense, label: 'Pengeluaran'),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
 
         // ── Line chart — cumulative laba ──────────────────────
         AppCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Tren Laba Kumulatif', style: Typo.serif(13)),
-            Text('Akumulasi laba per bulan', style: Typo.sans(10, color: DS.faint)),
-            const SizedBox(height: 14),
-            Semantics(
-              label: 'Grafik garis tren laba enam bulan terakhir',
-              child: ExcludeSemantics(child: _LineChart(allTx: allTx)),
-            ),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tren Laba Kumulatif', style: Typo.serif(13)),
+              Text(
+                'Akumulasi laba per bulan',
+                style: Typo.sans(10, color: DS.faint),
+              ),
+              const SizedBox(height: 14),
+              Semantics(
+                label: 'Grafik garis tren laba enam bulan terakhir',
+                child: ExcludeSemantics(child: _LineChart(allTx: allTx)),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
 
         // ── Pie chart — income vs expense composition ─────────
-        LayoutBuilder(builder: (_, box) {
-          final wide = box.maxWidth > 500;
-          if (wide) {
-            return Row(children: [
-              Expanded(child: AppCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Komposisi Arus Kas', style: Typo.serif(13)),
-                  Text('Pemasukan vs Pengeluaran', style: Typo.sans(10, color: DS.faint)),
-                  const SizedBox(height: 14),
-                  Semantics(
-                    label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
-                    child: ExcludeSemantics(
-                      child: _PieChart(income: _totalIncome, expense: _totalExpense),
+        LayoutBuilder(
+          builder: (_, box) {
+            final wide = box.maxWidth > 500;
+            if (wide) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Komposisi Arus Kas', style: Typo.serif(13)),
+                          Text(
+                            'Pemasukan vs Pengeluaran',
+                            style: Typo.sans(10, color: DS.faint),
+                          ),
+                          const SizedBox(height: 14),
+                          Semantics(
+                            label:
+                                'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
+                            child: ExcludeSemantics(
+                              child: _PieChart(
+                                income: _totalIncome,
+                                expense: _totalExpense,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ]),
-              )),
-              const SizedBox(width: 10),
-              Expanded(child: AppCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Kategori Pengeluaran', style: Typo.serif(13)),
-                  Text('Top 5 terbesar', style: Typo.sans(10, color: DS.faint)),
-                  const SizedBox(height: 14),
-                  Semantics(
-                    label: 'Diagram lingkaran komposisi pengeluaran per kategori',
-                    child: ExcludeSemantics(child: _ExpensePieChart(allTx: allTx)),
-                  ),
-                ]),
-              )),
-            ]);
-          }
-          return Column(children: [
-            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Komposisi Arus Kas', style: Typo.serif(13)),
-              Text('Pemasukan vs Pengeluaran', style: Typo.sans(10, color: DS.faint)),
-              const SizedBox(height: 14),
-              Semantics(
-                    label: 'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
-                    child: ExcludeSemantics(
-                      child: _PieChart(income: _totalIncome, expense: _totalExpense),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Kategori Pengeluaran', style: Typo.serif(13)),
+                          Text(
+                            'Top 5 terbesar',
+                            style: Typo.sans(10, color: DS.faint),
+                          ),
+                          const SizedBox(height: 14),
+                          Semantics(
+                            label:
+                                'Diagram lingkaran komposisi pengeluaran per kategori',
+                            child: ExcludeSemantics(
+                              child: _ExpensePieChart(allTx: allTx),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-            ])),
-            const SizedBox(height: 10),
-            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Kategori Pengeluaran', style: Typo.serif(13)),
-              Text('Top 5 terbesar', style: Typo.sans(10, color: DS.faint)),
-              const SizedBox(height: 14),
-              Semantics(
-                    label: 'Diagram lingkaran komposisi pengeluaran per kategori',
-                    child: ExcludeSemantics(child: _ExpensePieChart(allTx: allTx)),
+                ],
+              );
+            }
+            return Column(
+              children: [
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Komposisi Arus Kas', style: Typo.serif(13)),
+                      Text(
+                        'Pemasukan vs Pengeluaran',
+                        style: Typo.sans(10, color: DS.faint),
+                      ),
+                      const SizedBox(height: 14),
+                      Semantics(
+                        label:
+                            'Diagram lingkaran perbandingan pemasukan dan pengeluaran',
+                        child: ExcludeSemantics(
+                          child: _PieChart(
+                            income: _totalIncome,
+                            expense: _totalExpense,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-            ])),
-          ]);
-        }),
+                ),
+                const SizedBox(height: 10),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Kategori Pengeluaran', style: Typo.serif(13)),
+                      Text(
+                        'Top 5 terbesar',
+                        style: Typo.sans(10, color: DS.faint),
+                      ),
+                      const SizedBox(height: 14),
+                      Semantics(
+                        label:
+                            'Diagram lingkaran komposisi pengeluaran per kategori',
+                        child: ExcludeSemantics(
+                          child: _ExpensePieChart(allTx: allTx),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 10),
 
         // ── Category breakdown (bar) ──────────────────────────
         AppCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Rincian Pengeluaran', style: Typo.serif(13)),
-            const SizedBox(height: 10),
-            _CategoryBreakdown(allTx: allTx),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Rincian Pengeluaran', style: Typo.serif(13)),
+              const SizedBox(height: 10),
+              _CategoryBreakdown(allTx: allTx),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
 
         // ── Tx stats row ──────────────────────────────────────
-        Row(children: [
-          Expanded(child: AppCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Frekuensi Transaksi', style: Typo.serif(13)),
-              const SizedBox(height: 8),
-              _StatsRow(icon: Icons.trending_up_rounded,
-                label: 'Pemasukan', value: '$_incomeCount transaksi',
-                color: DS.income),
-              const SizedBox(height: 4),
-              _StatsRow(icon: Icons.trending_down_rounded,
-                label: 'Pengeluaran', value: '$_expenseCount transaksi',
-                color: DS.expense),
-              const SizedBox(height: 4),
-              _StatsRow(icon: Icons.payments_outlined,
-                label: 'Rata-rata nilai', value: Rupiah.compact(_avgTxValue),
-                color: DS.muted),
-            ]),
-          )),
-        ]),
+        Row(
+          children: [
+            Expanded(
+              child: AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Frekuensi Transaksi', style: Typo.serif(13)),
+                    const SizedBox(height: 8),
+                    _StatsRow(
+                      icon: Icons.trending_up_rounded,
+                      label: 'Pemasukan',
+                      value: '$_incomeCount transaksi',
+                      color: DS.income,
+                    ),
+                    const SizedBox(height: 4),
+                    _StatsRow(
+                      icon: Icons.trending_down_rounded,
+                      label: 'Pengeluaran',
+                      value: '$_expenseCount transaksi',
+                      color: DS.expense,
+                    ),
+                    const SizedBox(height: 4),
+                    _StatsRow(
+                      icon: Icons.payments_outlined,
+                      label: 'Rata-rata nilai',
+                      value: Rupiah.compact(_avgTxValue),
+                      color: DS.muted,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 10),
 
         // ── Frequent transactions ─────────────────────────────
         AppCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Transaksi Paling Sering', style: Typo.serif(13)),
-            Text('Berdasarkan frekuensi',
-              style: Typo.sans(10, color: DS.faint)),
-            const SizedBox(height: 10),
-            _FrequentList(allTx: allTx),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Transaksi Paling Sering', style: Typo.serif(13)),
+              Text(
+                'Berdasarkan frekuensi',
+                style: Typo.sans(10, color: DS.faint),
+              ),
+              const SizedBox(height: 10),
+              _FrequentList(allTx: allTx),
+            ],
+          ),
         ),
       ],
     );
@@ -1330,19 +1839,29 @@ class _TotalTab extends StatelessWidget {
 
 class _StatsRow extends StatelessWidget {
   final IconData icon;
-  final String   label, value;
-  final Color    color;
-  const _StatsRow({required this.icon, required this.label,
-    required this.value, required this.color});
+  final String label, value;
+  final Color color;
+  const _StatsRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-    Icon(icon, size: 14, color: color),
-    const SizedBox(width: 8),
-    Expanded(child: Text(label,
-      style: Typo.sans(11, color: DS.muted))),
-    Text(value, style: Typo.sans(11, color: color, weight: FontWeight.w600)),
-  ]);
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 14, color: color),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(label, style: Typo.sans(11, color: DS.muted)),
+      ),
+      Text(
+        value,
+        style: Typo.sans(11, color: color, weight: FontWeight.w600),
+      ),
+    ],
+  );
 }
 
 // ── Line Chart (cumulative profit) ───────────────────────────────────────────
@@ -1354,16 +1873,23 @@ class _LineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final months = List.generate(6, (i) =>
-      DateTime(now.year, now.month - 5 + i));
+    final months = List.generate(
+      6,
+      (i) => DateTime(now.year, now.month - 5 + i),
+    );
 
     double cumulative = 0;
     final spots = months.asMap().entries.map((e) {
       final m = e.value;
-      final txs = allTx.where((t) =>
-        t.date.year == m.year && t.date.month == m.month);
-      final inc = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
-      final exp = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
+      final txs = allTx.where(
+        (t) => t.date.year == m.year && t.date.month == m.month,
+      );
+      final inc = txs
+          .where((t) => t.isIncome)
+          .fold(0.0, (s, t) => s + t.amount);
+      final exp = txs
+          .where((t) => !t.isIncome)
+          .fold(0.0, (s, t) => s + t.amount);
       cumulative += (inc - exp);
       return FlSpot(e.key.toDouble(), cumulative / 1000000);
     }).toList();
@@ -1371,56 +1897,80 @@ class _LineChart extends StatelessWidget {
     final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
     final minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
 
-    const labels = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const labels = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     final monthLabels = months.map((m) => labels[m.month]).toList();
 
     return SizedBox(
       height: 120,
-      child: LineChart(LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY > 0 ? (maxY / 3).clamp(1, double.infinity) : 1,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: DS.hairline, strokeWidth: .5),
-        ),
-        titlesData: FlTitlesData(
-          leftTitles:   AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:  AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:    AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(sideTitles: SideTitles(
-            showTitles: true,
-            interval: 1,
-            getTitlesWidget: (v, _) {
-              final i = v.toInt();
-              if (i < 0 || i >= monthLabels.length) return const SizedBox.shrink();
-              return Text(monthLabels[i],
-                style: Typo.sans(8, color: DS.faint));
-            },
-          )),
-        ),
-        borderData: FlBorderData(show: false),
-        minY: minY < 0 ? minY * 1.1 : 0,
-        maxY: maxY > 0 ? maxY * 1.1 : 1,
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: _profit(allTx) >= 0 ? DS.income : DS.expense,
-            barWidth: 2.5,
-            dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              color: (_profit(allTx) >= 0 ? DS.income : DS.expense)
-                .withValues(alpha: 0.08)),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxY > 0
+                ? (maxY / 3).clamp(1, double.infinity)
+                : 1,
+            getDrawingHorizontalLine: (_) =>
+                FlLine(color: DS.hairline, strokeWidth: .5),
           ),
-        ],
-      )),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: 1,
+                getTitlesWidget: (v, _) {
+                  final i = v.toInt();
+                  if (i < 0 || i >= monthLabels.length)
+                    return const SizedBox.shrink();
+                  return Text(
+                    monthLabels[i],
+                    style: Typo.sans(8, color: DS.faint),
+                  );
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          minY: minY < 0 ? minY * 1.1 : 0,
+          maxY: maxY > 0 ? maxY * 1.1 : 1,
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: _profit(allTx) >= 0 ? DS.income : DS.expense,
+              barWidth: 2.5,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: (_profit(allTx) >= 0 ? DS.income : DS.expense)
+                    .withValues(alpha: 0.08),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   double _profit(List<TxData> txs) {
-    final inc = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
+    final inc = txs.where((t) => t.isIncome).fold(0.0, (s, t) => s + t.amount);
     final exp = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
     return inc - exp;
   }
@@ -1435,45 +1985,63 @@ class _PieChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = income + expense;
-    if (total == 0) return Center(child: Text('Belum ada data',
-      style: Typo.sans(11, color: DS.faint)));
+    if (total == 0)
+      return Center(
+        child: Text('Belum ada data', style: Typo.sans(11, color: DS.faint)),
+      );
 
     final incPct = income / total * 100;
     final expPct = expense / total * 100;
 
-    return Column(children: [
-      SizedBox(
-        height: 140,
-        child: PieChart(PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 36,
-          sections: [
-            PieChartSectionData(
-              value: income,
-              color: DS.income,
-              radius: 40,
-              title: Pct.formatValue(incPct, decimals: 0),
-              titleStyle: Typo.sans(10,
-                color: Colors.white, weight: FontWeight.w600),
+    return Column(
+      children: [
+        SizedBox(
+          height: 140,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 36,
+              sections: [
+                PieChartSectionData(
+                  value: income,
+                  color: DS.income,
+                  radius: 40,
+                  title: Pct.formatValue(incPct, decimals: 0),
+                  titleStyle: Typo.sans(
+                    10,
+                    color: Colors.white,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+                PieChartSectionData(
+                  value: expense,
+                  color: DS.expense,
+                  radius: 40,
+                  title: Pct.formatValue(expPct, decimals: 0),
+                  titleStyle: Typo.sans(
+                    10,
+                    color: Colors.white,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            PieChartSectionData(
-              value: expense,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _LegDot(color: DS.income, label: 'Masuk ${Rupiah.compact(income)}'),
+            const SizedBox(width: 12),
+            _LegDot(
               color: DS.expense,
-              radius: 40,
-              title: Pct.formatValue(expPct, decimals: 0),
-              titleStyle: Typo.sans(10,
-                color: Colors.white, weight: FontWeight.w600),
+              label: 'Keluar ${Rupiah.compact(expense)}',
             ),
           ],
-        )),
-      ),
-      const SizedBox(height: 8),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _LegDot(color: DS.income,  label: 'Masuk ${Rupiah.compact(income)}'),
-        const SizedBox(width: 12),
-        _LegDot(color: DS.expense, label: 'Keluar ${Rupiah.compact(expense)}'),
-      ]),
-    ]);
+        ),
+      ],
+    );
   }
 }
 
@@ -1484,60 +2052,85 @@ class _ExpensePieChart extends StatelessWidget {
   const _ExpensePieChart({required this.allTx});
 
   static const _catColors = [
-    Color(0xFFD92B2B), Color(0xFFB07D2A), Color(0xFF185FA5),
-    Color(0xFF1B8A4B), Color(0xFF8898AA),
+    Color(0xFFD92B2B),
+    Color(0xFFB07D2A),
+    Color(0xFF185FA5),
+    Color(0xFF1B8A4B),
+    Color(0xFF8898AA),
   ];
 
   @override
   Widget build(BuildContext context) {
     final expenses = allTx.where((t) => !t.isIncome);
-    final total    = expenses.fold(0.0, (s, t) => s + t.amount);
-    if (total == 0) return Center(child: Text('Belum ada data',
-      style: Typo.sans(11, color: DS.faint)));
+    final total = expenses.fold(0.0, (s, t) => s + t.amount);
+    if (total == 0)
+      return Center(
+        child: Text('Belum ada data', style: Typo.sans(11, color: DS.faint)),
+      );
 
     final map = <String, double>{};
     for (final t in expenses) {
       map[t.category.name] = (map[t.category.name] ?? 0) + t.amount;
     }
-    final sorted = (map.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value)))
-      .take(5).toList();
+    final sorted =
+        (map.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
+            .take(5)
+            .toList();
 
-    return Column(children: [
-      SizedBox(
-        height: 140,
-        child: PieChart(PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 30,
-          sections: sorted.asMap().entries.map((e) {
-            final pct = e.value.value / total * 100;
-            return PieChartSectionData(
-              value: e.value.value,
-              color: _catColors[e.key % _catColors.length],
-              radius: 44,
-              title: pct >= 8 ? Pct.formatValue(pct, decimals: 0) : '',
-              titleStyle: Typo.sans(9,
-                color: Colors.white, weight: FontWeight.w600),
-            );
-          }).toList(),
-        )),
-      ),
-      const SizedBox(height: 8),
-      Wrap(spacing: 8, runSpacing: 4,
-        children: sorted.asMap().entries.map((e) =>
-          _LegDot(
-            color: _catColors[e.key % _catColors.length],
-            label: e.value.key)).toList(),
-      ),
-    ]);
+    return Column(
+      children: [
+        SizedBox(
+          height: 140,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 30,
+              sections: sorted.asMap().entries.map((e) {
+                final pct = e.value.value / total * 100;
+                return PieChartSectionData(
+                  value: e.value.value,
+                  color: _catColors[e.key % _catColors.length],
+                  radius: 44,
+                  title: pct >= 8 ? Pct.formatValue(pct, decimals: 0) : '',
+                  titleStyle: Typo.sans(
+                    9,
+                    color: Colors.white,
+                    weight: FontWeight.w600,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: sorted
+              .asMap()
+              .entries
+              .map(
+                (e) => _LegDot(
+                  color: _catColors[e.key % _catColors.length],
+                  label: e.value.key,
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
   }
 }
 
 class _StatChip extends StatelessWidget {
   final String label;
   final String value;
-  final Color  color;
-  const _StatChip({required this.label, required this.value, required this.color});
+  final Color color;
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -1545,12 +2138,19 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
         color: DS.hairline,
-        borderRadius: BorderRadius.circular(9)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(value, style: Typo.mono(13, color: color, weight: FontWeight.w600)),
-        const SizedBox(height: 2),
-        Text(label, style: Typo.sans(10, color: DS.faint)),
-      ]),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: Typo.mono(13, color: color, weight: FontWeight.w600),
+          ),
+          const SizedBox(height: 2),
+          Text(label, style: Typo.sans(10, color: DS.faint)),
+        ],
+      ),
     ),
   );
 }
@@ -1562,15 +2162,22 @@ class _BarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final months = List.generate(6, (i) =>
-      DateTime(now.year, now.month - 5 + i));
+    final months = List.generate(
+      6,
+      (i) => DateTime(now.year, now.month - 5 + i),
+    );
 
     double maxVal = 1;
     final data = months.map((m) {
-      final txs  = allTx.where((t) =>
-        t.date.year == m.year && t.date.month == m.month);
-      final inc  = txs.where((t) =>  t.isIncome).fold(0.0, (s, t) => s + t.amount);
-      final exp  = txs.where((t) => !t.isIncome).fold(0.0, (s, t) => s + t.amount);
+      final txs = allTx.where(
+        (t) => t.date.year == m.year && t.date.month == m.month,
+      );
+      final inc = txs
+          .where((t) => t.isIncome)
+          .fold(0.0, (s, t) => s + t.amount);
+      final exp = txs
+          .where((t) => !t.isIncome)
+          .fold(0.0, (s, t) => s + t.amount);
       if (inc > maxVal) maxVal = inc;
       if (exp > maxVal) maxVal = exp;
       return (m, inc, exp);
@@ -1585,32 +2192,56 @@ class _BarChart extends StatelessWidget {
           final (m, inc, exp) = d;
           final hi = (inc / maxVal * h).clamp(2.0, h);
           final he = (exp / maxVal * h).clamp(2.0, h);
-          final lbl = ['Jan','Feb','Mar','Apr','Mei','Jun',
-            'Jul','Agu','Sep','Okt','Nov','Des'][m.month - 1];
-          return Expanded(child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(width: 10, height: hi,
-                    decoration: BoxDecoration(
-                      color: DS.income.withValues(alpha: 0.85),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(3)))),
-                  const SizedBox(width: 2),
-                  Container(width: 10, height: he,
-                    decoration: BoxDecoration(
-                      color: DS.expense.withValues(alpha: 0.75),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(3)))),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(lbl, style: Typo.sans(8, color: DS.faint)),
-            ],
-          ));
+          final lbl = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'Mei',
+            'Jun',
+            'Jul',
+            'Agu',
+            'Sep',
+            'Okt',
+            'Nov',
+            'Des',
+          ][m.month - 1];
+          return Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: hi,
+                      decoration: BoxDecoration(
+                        color: DS.income.withValues(alpha: 0.85),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(3),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Container(
+                      width: 10,
+                      height: he,
+                      decoration: BoxDecoration(
+                        color: DS.expense.withValues(alpha: 0.75),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(lbl, style: Typo.sans(8, color: DS.faint)),
+              ],
+            ),
+          );
         }).toList(),
       ),
     );
@@ -1623,10 +2254,13 @@ class _CategoryBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final expenses  = allTx.where((t) => !t.isIncome);
-    final total     = expenses.fold(0.0, (s, t) => s + t.amount);
-    if (total == 0) return Text('Tidak ada data pengeluaran',
-      style: Typo.sans(12, color: DS.faint));
+    final expenses = allTx.where((t) => !t.isIncome);
+    final total = expenses.fold(0.0, (s, t) => s + t.amount);
+    if (total == 0)
+      return Text(
+        'Tidak ada data pengeluaran',
+        style: Typo.sans(12, color: DS.faint),
+      );
 
     final map = <String, double>{};
     for (final t in expenses) {
@@ -1641,29 +2275,47 @@ class _CategoryBreakdown extends StatelessWidget {
         final pct = e.value / total;
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: Row(children: [
-            SizedBox(width: 90, child: Text(e.key,
-              style: Typo.sans(11, color: DS.muted),
-              overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 8),
-            Expanded(child: Container(
-              height: 6,
-              decoration: BoxDecoration(
-                color: DS.hairline,
-                borderRadius: BorderRadius.circular(3)),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: pct,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 90,
+                child: Text(
+                  e.key,
+                  style: Typo.sans(11, color: DS.muted),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
                 child: Container(
+                  height: 6,
                   decoration: BoxDecoration(
-                    color: DS.expense,
-                    borderRadius: BorderRadius.circular(3))))),
-            ),
-            const SizedBox(width: 8),
-            Text(Pct.formatValue(pct * 100, decimals: 0),
-              style: Typo.mono(11,
-                color: DS.expense, weight: FontWeight.w600)),
-          ]),
+                    color: DS.hairline,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: pct,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: DS.expense,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                Pct.formatValue(pct * 100, decimals: 0),
+                style: Typo.mono(
+                  11,
+                  color: DS.expense,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );
@@ -1685,24 +2337,28 @@ class _FrequentList extends StatelessWidget {
       ..sort((a, b) => b.value.compareTo(a.value));
     final top = sorted.take(3).toList();
 
-    if (top.isEmpty) return Text('Belum ada data',
-      style: Typo.sans(12, color: DS.faint));
+    if (top.isEmpty)
+      return Text('Belum ada data', style: Typo.sans(12, color: DS.faint));
 
     return Column(
       children: top.asMap().entries.map((e) {
         final tx = allTx.firstWhere(
           (t) => (t.description ?? t.category.name) == e.value.key,
-          orElse: () => allTx.first);
+          orElse: () => allTx.first,
+        );
         final amtTotal = allTx
-          .where((t) => (t.description ?? t.category.name) == e.value.key)
-          .fold(0.0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
-        return Column(children: [
-          if (e.key > 0) Divider(height: 0.5, color: DS.hairline),
-          // Ringkasan per keterangan, bukan satu transaksi — tidak punya detail.
-          TxListTile(
-            tx: tx.copyWith(amount: amtTotal.abs()),
-            interactive: false),
-        ]);
+            .where((t) => (t.description ?? t.category.name) == e.value.key)
+            .fold(0.0, (s, t) => s + (t.isIncome ? t.amount : -t.amount));
+        return Column(
+          children: [
+            if (e.key > 0) Divider(height: 0.5, color: DS.hairline),
+            // Ringkasan per keterangan, bukan satu transaksi — tidak punya detail.
+            TxListTile(
+              tx: tx.copyWith(amount: amtTotal.abs()),
+              interactive: false,
+            ),
+          ],
+        );
       }).toList(),
     );
   }
@@ -1781,9 +2437,11 @@ class _ViewTabPill extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label,
-              style: Typo.sans(13.5,
-                  weight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: selected ? DS.brandInk : DS.muted),
+              style: Typo.sans(
+                13.5,
+                weight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? DS.brandInk : DS.muted,
+              ),
             ),
           ),
         ),

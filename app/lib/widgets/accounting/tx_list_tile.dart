@@ -67,57 +67,74 @@ class _TxListTileState extends State<TxListTile> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         color: _hovered
-          ? AppColors.brand.withValues(alpha: 0.04)
-          : Colors.transparent,
+            ? AppColors.brand.withValues(alpha: 0.04)
+            : Colors.transparent,
         child: InkWell(
           onTap: interactive ? _open : null,
           hoverColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-            child: Row(children: [
-              // Icon
-              Container(
-                width: 38, height: 38,
-                decoration: BoxDecoration(
-                  color: tx.category.flutterColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Center(child: Text(tx.category.icon,
-                  style: const TextStyle(fontSize: 17))),
-              ),
-              const SizedBox(width: 11),
-
-              // Name + meta
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tx.description ?? tx.category.name,
-                    style: AppTextStyles.body(13, weight: FontWeight.w500),
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: tx.category.flutterColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(9),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${Tanggal.short(tx.date)} · ${tx.category.name}',
-                    style: AppTextStyles.body(11, color: AppColors.stone400),
+                  child: Center(
+                    child: Text(
+                      tx.category.icon,
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 11),
+
+                // Name + meta
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tx.description ?? tx.category.name,
+                        style: AppTextStyles.body(13, weight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${Tanggal.short(tx.date)} · ${tx.category.name}',
+                        style: AppTextStyles.body(
+                          11,
+                          color: AppColors.stone400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Amount
+                Text(
+                  '${tx.isIncome ? '+' : '−'}${Rupiah.format(tx.amount)}',
+                  style: AppTextStyles.mono(
+                    13,
+                    color: tx.isIncome ? AppColors.income : AppColors.expense,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+                if (interactive) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: _hovered ? AppColors.brand : AppColors.stone300,
                   ),
                 ],
-              )),
-
-              // Amount
-              Text(
-                '${tx.isIncome ? '+' : '−'}${Rupiah.format(tx.amount)}',
-                style: AppTextStyles.mono(13,
-                  color: tx.isIncome ? AppColors.income : AppColors.expense,
-                  weight: FontWeight.w600),
-              ),
-              if (interactive) ...[
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded,
-                  size: 16,
-                  color: _hovered ? AppColors.brand : AppColors.stone300),
               ],
-            ]),
+            ),
           ),
         ),
       ),

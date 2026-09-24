@@ -75,7 +75,8 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
       builder: (ctx) => Dialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.lg)),
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -96,11 +97,13 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
         _deleting = false;
         _confirmDelete = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.userMessage),
-        backgroundColor: DS.expense,
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.userMessage),
+          backgroundColor: DS.expense,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
     if (!mounted) return;
@@ -128,26 +131,28 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
   }
 
   Widget _header(double pad, Breakpoint bp) => Padding(
-        padding: EdgeInsets.fromLTRB(pad - 8, 12, pad, 0),
-        child: Row(
-          children: [
-            IconButton(
-              // Detail dibuka dengan context.go dari dashboard, jadi biasanya
-              // tidak ada halaman di bawahnya untuk di-pop.
-              onPressed: () => context.canPop()
-                  ? context.pop()
-                  : context.go(AppRoutes.accounting),
-              icon: Icon(Icons.arrow_back_rounded, color: DS.body),
-              tooltip: 'Kembali',
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text('Detail transaksi',
-                  style: Typo.serif(bp.isExpanded ? 30 : 24)),
-            ),
-          ],
+    padding: EdgeInsets.fromLTRB(pad - 8, 12, pad, 0),
+    child: Row(
+      children: [
+        IconButton(
+          // Detail dibuka dengan context.go dari dashboard, jadi biasanya
+          // tidak ada halaman di bawahnya untuk di-pop.
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.accounting),
+          icon: Icon(Icons.arrow_back_rounded, color: DS.body),
+          tooltip: 'Kembali',
         ),
-      );
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            'Detail transaksi',
+            style: Typo.serif(bp.isExpanded ? 30 : 24),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _body(double pad) {
     if (_loading) {
@@ -164,9 +169,11 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             children: [
               Icon(Icons.search_off_rounded, size: 34, color: DS.faint),
               const SizedBox(height: 16),
-              Text(_error ?? 'Transaksi tidak ditemukan.',
-                  textAlign: TextAlign.center,
-                  style: Typo.sans(15, color: DS.body)),
+              Text(
+                _error ?? 'Transaksi tidak ditemukan.',
+                textAlign: TextAlign.center,
+                style: Typo.sans(15, color: DS.body),
+              ),
               const SizedBox(height: 20),
               DsButton(label: 'Coba lagi', onPressed: _load),
             ],
@@ -214,13 +221,17 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(amountText,
-                  style: Typo.serif(42, color: accent, height: 1, spacing: -1)),
+              child: Text(
+                amountText,
+                style: Typo.serif(42, color: accent, height: 1, spacing: -1),
+              ),
             ),
             if (tx.description?.isNotEmpty ?? false) ...[
               const SizedBox(height: 12),
-              Text(tx.description!,
-                  style: Typo.sans(16, color: DS.body, height: 1.5)),
+              Text(
+                tx.description!,
+                style: Typo.sans(16, color: DS.body, height: 1.5),
+              ),
             ],
           ],
         ),
@@ -244,7 +255,11 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
             title: 'Kategori',
             trailing:
                 '${tx.category.icon} ${tx.category.name}${tags.isEmpty ? '' : ' · ${tags.join(' · ')}'}',
-            trailingStyle: Typo.sans(14, color: DS.ink, weight: FontWeight.w500),
+            trailingStyle: Typo.sans(
+              14,
+              color: DS.ink,
+              weight: FontWeight.w500,
+            ),
           ),
           DsListRow(
             title: 'Tanggal',
@@ -253,8 +268,7 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
           ),
           DsListRow(
             title: 'Metode pembayaran',
-            trailing:
-                _paymentLabels[tx.paymentMethod] ?? tx.paymentMethod,
+            trailing: _paymentLabels[tx.paymentMethod] ?? tx.paymentMethod,
             trailingStyle: Typo.sans(14, color: DS.ink),
           ),
           if (tx.receiptNote?.isNotEmpty ?? false)
@@ -290,19 +304,25 @@ class _TxDetailScreenState extends State<TxDetailScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded,
-                    color: DS.expense, size: 19),
+                Icon(Icons.warning_amber_rounded, color: DS.expense, size: 19),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Hapus transaksi ini?',
-                      style: Typo.sans(14.5,
-                          weight: FontWeight.w600, color: DS.expense)),
+                  child: Text(
+                    'Hapus transaksi ini?',
+                    style: Typo.sans(
+                      14.5,
+                      weight: FontWeight.w600,
+                      color: DS.expense,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text('Tindakan ini tidak bisa dibatalkan.',
-                style: Typo.sans(13, color: DS.body)),
+            Text(
+              'Tindakan ini tidak bisa dibatalkan.',
+              style: Typo.sans(13, color: DS.body),
+            ),
             const SizedBox(height: 14),
             Row(
               children: [

@@ -88,8 +88,7 @@ class MockAuthRepository implements AuthRepository {
   Future<void> setPassword({
     required String newPassword,
     String? currentPassword,
-  }) =>
-      Future.delayed(MockData.latency);
+  }) => Future.delayed(MockData.latency);
 }
 
 // ── Profil usaha ──────────────────────────────────────────────────────────────
@@ -110,14 +109,16 @@ class MockBusinessRepository implements BusinessRepository {
     final p = await SharedPreferences.getInstance();
     final name = p.getString(_kName);
     if (name == null) return null;
-    return _build(BusinessDraft(
-      businessName: name,
-      ownerName: p.getString(_kOwner),
-      npwp: p.getString(_kNpwp),
-      businessType: p.getString(_kType) ?? '',
-      pkpStatus: p.getBool(_kPkp) ?? false,
-      employeeCount: p.getInt(_kEmp) ?? 0,
-    ));
+    return _build(
+      BusinessDraft(
+        businessName: name,
+        ownerName: p.getString(_kOwner),
+        npwp: p.getString(_kNpwp),
+        businessType: p.getString(_kType) ?? '',
+        pkpStatus: p.getBool(_kPkp) ?? false,
+        employeeCount: p.getInt(_kEmp) ?? 0,
+      ),
+    );
   }
 
   @override
@@ -165,9 +166,9 @@ class MockTransactionRepository implements TransactionRepository {
   static final Set<String> _deleted = {};
 
   List<TxData> get _all => [
-        ..._added,
-        ...MockData.transactions.where((t) => !_deleted.contains(t.id)),
-      ]..sort((a, b) => b.date.compareTo(a.date));
+    ..._added,
+    ...MockData.transactions.where((t) => !_deleted.contains(t.id)),
+  ]..sort((a, b) => b.date.compareTo(a.date));
 
   @override
   Future<List<TxCategoryData>> getCategories() async {
@@ -207,7 +208,8 @@ class MockTransactionRepository implements TransactionRepository {
   @override
   Future<bool> createTransaction(TransactionDraft draft) async {
     await Future.delayed(MockData.latency);
-    final category = MockData.txCategories
+    final category =
+        MockData.txCategories
             .where((c) => c.id == draft.categoryId)
             .firstOrNull ??
         MockData.txCategories.first;
@@ -236,24 +238,27 @@ class MockTransactionRepository implements TransactionRepository {
     await Future.delayed(MockData.latency);
     final old = _all.where((t) => t.id == id).firstOrNull;
     if (old == null) return false;
-    final category = MockData.txCategories
+    final category =
+        MockData.txCategories
             .where((c) => c.id == draft.categoryId)
             .firstOrNull ??
         old.category;
     _added
       ..removeWhere((t) => t.id == id)
-      ..add(TxData(
-        id: id,
-        businessId: old.businessId,
-        date: DateTime.tryParse(draft.date) ?? old.date,
-        type: draft.type,
-        amount: draft.amount,
-        category: category,
-        description: draft.description,
-        paymentMethod: draft.paymentMethod,
-        receiptNote: draft.receiptNote,
-        createdAt: old.createdAt,
-      ));
+      ..add(
+        TxData(
+          id: id,
+          businessId: old.businessId,
+          date: DateTime.tryParse(draft.date) ?? old.date,
+          type: draft.type,
+          amount: draft.amount,
+          category: category,
+          description: draft.description,
+          paymentMethod: draft.paymentMethod,
+          receiptNote: draft.receiptNote,
+          createdAt: old.createdAt,
+        ),
+      );
     _deleted.add(id);
     return true;
   }
@@ -274,7 +279,8 @@ class MockTransactionRepository implements TransactionRepository {
     final totals = <int, MonthTotals>{};
     for (final t in _all.where((t) => t.date.year == year)) {
       final m = t.date.month;
-      final prev = totals[m] ??
+      final prev =
+          totals[m] ??
           (month: m, income: 0.0, expense: 0.0, cogs: 0.0, txCount: 0);
       totals[m] = (
         month: m,
@@ -316,12 +322,15 @@ class MockRecurringRepository implements RecurringRepository {
   @override
   Future<RecurringTemplate> createTemplate(RecurringDraft draft) async {
     await Future.delayed(MockData.latency);
-    final category = MockData.txCategories
+    final category =
+        MockData.txCategories
             .where((c) => c.id == draft.categoryId)
             .firstOrNull ??
         MockData.txCategories.first;
     final start = DateTime.tryParse(draft.startDate) ?? DateTime.now();
-    final end = draft.endDate == null ? null : DateTime.tryParse(draft.endDate!);
+    final end = draft.endDate == null
+        ? null
+        : DateTime.tryParse(draft.endDate!);
     final schedule = _computeSchedule(
       start: start,
       frequency: draft.frequency,
@@ -375,13 +384,16 @@ class MockRecurringRepository implements RecurringRepository {
         message: 'Transaksi berulang ini sudah dihentikan. Buat yang baru.',
       );
     }
-    final category = MockData.txCategories
+    final category =
+        MockData.txCategories
             .where((c) => c.id == draft.categoryId)
             .firstOrNull ??
         old.category;
     final scheduleChanged =
         draft.frequency != old.frequency || draft.startDate != old.startDate;
-    final end = draft.endDate == null ? null : DateTime.tryParse(draft.endDate!);
+    final end = draft.endDate == null
+        ? null
+        : DateTime.tryParse(draft.endDate!);
     final schedule = scheduleChanged
         ? _computeSchedule(
             start: DateTime.tryParse(draft.startDate) ?? DateTime.now(),
@@ -515,7 +527,10 @@ class MockAttachmentRepository implements AttachmentRepository {
   }
 
   @override
-  Future<void> deleteAttachment(String transactionId, String attachmentId) async {
+  Future<void> deleteAttachment(
+    String transactionId,
+    String attachmentId,
+  ) async {
     await Future.delayed(MockData.latency);
     final list = _byTransaction[transactionId];
     final index = list?.indexWhere((a) => a.id == attachmentId) ?? -1;
@@ -559,10 +574,14 @@ class MockDashboardRepository implements DashboardRepository {
   /// Dari agregat transaksi contoh, bukan angka tetap di [MockData] — jadi
   /// sama dengan tab Pembukuan, termasuk transaksi yang ditambah selama sesi.
   @override
-  Future<MonthClose> getMonthClose({required int month, required int year}) async {
+  Future<MonthClose> getMonthClose({
+    required int month,
+    required int year,
+  }) async {
     checkMonthParam(month: month);
-    final aggregate =
-        await MockTransactionRepository().getAggregate(year: year);
+    final aggregate = await MockTransactionRepository().getAggregate(
+      year: year,
+    );
     return MonthClose.fromAggregate(year, aggregate[month]);
   }
 }

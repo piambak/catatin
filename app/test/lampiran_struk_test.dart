@@ -48,9 +48,13 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -86,10 +90,13 @@ void main() {
   group('checkAttachmentUpload', () {
     test('berkas kosong -> 400 "Foto kosong."', () {
       expect(
-        () => checkAttachmentUpload(bytes: Uint8List(0), mimeType: 'image/jpeg'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)
-            .having((e) => e.errors, 'errors', {'file': 'Foto kosong.'})),
+        () =>
+            checkAttachmentUpload(bytes: Uint8List(0), mimeType: 'image/jpeg'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.errors, 'errors', {'file': 'Foto kosong.'}),
+        ),
       );
     });
 
@@ -97,9 +104,15 @@ void main() {
       final bytes = Uint8List(kAttachmentMaxBytes + 1);
       expect(
         () => checkAttachmentUpload(bytes: bytes, mimeType: 'image/png'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)
-            .having((e) => e.errors?['file'], 'errors.file', contains('5 MB'))),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having(
+                (e) => e.errors?['file'],
+                'errors.file',
+                contains('5 MB'),
+              ),
+        ),
       );
     });
 
@@ -114,10 +127,18 @@ void main() {
     test('tipe di luar JPEG/PNG/WebP (mis. GIF) ditolak', () {
       expect(
         () => checkAttachmentUpload(
-            bytes: Uint8List.fromList([1, 2, 3]), mimeType: 'image/gif'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)
-            .having((e) => e.errors?['file'], 'errors.file', contains('JPEG'))),
+          bytes: Uint8List.fromList([1, 2, 3]),
+          mimeType: 'image/gif',
+        ),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having(
+                (e) => e.errors?['file'],
+                'errors.file',
+                contains('JPEG'),
+              ),
+        ),
       );
     });
   });
@@ -139,10 +160,7 @@ void main() {
       expect(att.mimeType, 'image/jpeg');
       expect(att.sizeBytes, bytes.length);
       expect(att.url, startsWith('data:image/jpeg;base64,'));
-      expect(
-        att.urlExpiresAt.difference(before).inMinutes,
-        closeTo(60, 1),
-      );
+      expect(att.urlExpiresAt.difference(before).inMinutes, closeTo(60, 1));
 
       final list = await repo.getAttachments('tx-a');
       expect(list.single.id, att.id);
@@ -150,8 +168,12 @@ void main() {
 
     test('upload menolak berkas tidak valid sebelum tersimpan', () async {
       await expectLater(
-        repo.uploadAttachment('tx-b',
-            bytes: Uint8List(0), fileName: 'x.jpg', mimeType: 'image/jpeg'),
+        repo.uploadAttachment(
+          'tx-b',
+          bytes: Uint8List(0),
+          fileName: 'x.jpg',
+          mimeType: 'image/jpeg',
+        ),
         throwsA(isA<ApiException>()),
       );
       expect(await repo.getAttachments('tx-b'), isEmpty);
@@ -160,8 +182,9 @@ void main() {
     test('delete id yang tidak dikenal -> 404', () async {
       expect(
         () => repo.deleteAttachment('tx-a', 'id-tidak-ada'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 404)),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404),
+        ),
       );
     });
 
@@ -178,12 +201,15 @@ void main() {
   });
 
   group('newUuidV4', () {
-    test('formatnya memenuhi isUuid, dengan nibble versi 4 dan varian RFC 4122', () {
-      final id = newUuidV4();
-      expect(isUuid(id), isTrue);
-      expect(id[14], '4');
-      expect(['8', '9', 'a', 'b'], contains(id[19].toLowerCase()));
-    });
+    test(
+      'formatnya memenuhi isUuid, dengan nibble versi 4 dan varian RFC 4122',
+      () {
+        final id = newUuidV4();
+        expect(isUuid(id), isTrue);
+        expect(id[14], '4');
+        expect(['8', '9', 'a', 'b'], contains(id[19].toLowerCase()));
+      },
+    );
 
     test('tidak menghasilkan id yang sama berulang kali', () {
       final ids = {for (var i = 0; i < 500; i++) newUuidV4()};
@@ -202,41 +228,51 @@ void main() {
 
     tearDown(ApiClient.reset);
 
-    test('GET /transactions/{id}/attachments membaca daftar lampiran', () async {
-      useFakeServer({
-        'attachments': [_sampleAttachment]
-      });
-      final list = await ApiAttachmentRepository().getAttachments('trx_01');
-      final req = adapter.requests.single;
-      expect(req.method, 'GET');
-      expect(req.uri.path, '/api/v1/transactions/trx_01/attachments');
-      expect(list.single.id, 'att_01');
-    });
+    test(
+      'GET /transactions/{id}/attachments membaca daftar lampiran',
+      () async {
+        useFakeServer({
+          'attachments': [_sampleAttachment],
+        });
+        final list = await ApiAttachmentRepository().getAttachments('trx_01');
+        final req = adapter.requests.single;
+        expect(req.method, 'GET');
+        expect(req.uri.path, '/api/v1/transactions/trx_01/attachments');
+        expect(list.single.id, 'att_01');
+      },
+    );
 
-    test('POST mengirim multipart dengan part "file" dan nama berkas', () async {
-      useFakeServer({'attachment': _sampleAttachment});
-      final bytes = Uint8List.fromList([1, 2, 3]);
-      final att = await ApiAttachmentRepository().uploadAttachment(
-        'trx_01',
-        bytes: bytes,
-        fileName: 'struk.jpg',
-        mimeType: 'image/jpeg',
-      );
-      final req = adapter.requests.single;
-      expect(req.method, 'POST');
-      expect(req.uri.path, '/api/v1/transactions/trx_01/attachments');
-      final form = req.data as FormData;
-      expect(form.files, hasLength(1));
-      expect(form.files.single.key, 'file');
-      expect(form.files.single.value.filename, 'struk.jpg');
-      expect(att.id, 'att_01');
-    });
+    test(
+      'POST mengirim multipart dengan part "file" dan nama berkas',
+      () async {
+        useFakeServer({'attachment': _sampleAttachment});
+        final bytes = Uint8List.fromList([1, 2, 3]);
+        final att = await ApiAttachmentRepository().uploadAttachment(
+          'trx_01',
+          bytes: bytes,
+          fileName: 'struk.jpg',
+          mimeType: 'image/jpeg',
+        );
+        final req = adapter.requests.single;
+        expect(req.method, 'POST');
+        expect(req.uri.path, '/api/v1/transactions/trx_01/attachments');
+        final form = req.data as FormData;
+        expect(form.files, hasLength(1));
+        expect(form.files.single.key, 'file');
+        expect(form.files.single.value.filename, 'struk.jpg');
+        expect(att.id, 'att_01');
+      },
+    );
 
     test('upload berkas tidak valid ditolak tanpa mengirim request', () async {
       useFakeServer({'attachment': _sampleAttachment});
       await expectLater(
-        ApiAttachmentRepository().uploadAttachment('trx_01',
-            bytes: Uint8List(0), fileName: 'x.jpg', mimeType: 'image/jpeg'),
+        ApiAttachmentRepository().uploadAttachment(
+          'trx_01',
+          bytes: Uint8List(0),
+          fileName: 'x.jpg',
+          mimeType: 'image/jpeg',
+        ),
         throwsA(isA<ApiException>()),
       );
       expect(adapter.requests, isEmpty);
@@ -256,31 +292,39 @@ void main() {
         supabaseException(e, hasSession: hasSession)!;
 
     test('statusCode 413 -> 400 ukuran foto', () {
-      final e = map(const sb.StorageException('Payload too large',
-          statusCode: '413'));
+      final e = map(
+        const sb.StorageException('Payload too large', statusCode: '413'),
+      );
       expect(e.statusCode, 400);
       expect(e.errors, {'file': 'Ukuran foto maksimal 5 MB.'});
     });
 
     test('pesan menyebut "size" tanpa statusCode baku -> 400 ukuran foto', () {
-      final e = map(const sb.StorageException(
-          'The object exceeded the maximum allowed size'));
+      final e = map(
+        const sb.StorageException(
+          'The object exceeded the maximum allowed size',
+        ),
+      );
       expect(e.statusCode, 400);
       expect(e.errors, {'file': 'Ukuran foto maksimal 5 MB.'});
     });
 
     test('statusCode 415 -> 400 format foto', () {
-      final e =
-          map(const sb.StorageException('Unsupported media', statusCode: '415'));
+      final e = map(
+        const sb.StorageException('Unsupported media', statusCode: '415'),
+      );
       expect(e.statusCode, 400);
       expect(e.errors, {'file': 'Format foto harus JPEG, PNG, atau WebP.'});
     });
 
-    test('pesan menyebut "mime type" tanpa statusCode baku -> 400 format foto', () {
-      final e = map(const sb.StorageException('invalid mime type'));
-      expect(e.statusCode, 400);
-      expect(e.errors, {'file': 'Format foto harus JPEG, PNG, atau WebP.'});
-    });
+    test(
+      'pesan menyebut "mime type" tanpa statusCode baku -> 400 format foto',
+      () {
+        final e = map(const sb.StorageException('invalid mime type'));
+        expect(e.statusCode, 400);
+        expect(e.errors, {'file': 'Format foto harus JPEG, PNG, atau WebP.'});
+      },
+    );
 
     test('statusCode 401 -> sesi berakhir', () {
       final e = map(const sb.StorageException('x', statusCode: '401'));
@@ -293,9 +337,10 @@ void main() {
         403,
       );
       expect(
-        map(const sb.StorageException('x', statusCode: '403'),
-                hasSession: false)
-            .statusCode,
+        map(
+          const sb.StorageException('x', statusCode: '403'),
+          hasSession: false,
+        ).statusCode,
         401,
       );
     });
@@ -319,9 +364,9 @@ void main() {
 
   group('supabaseException — validasi lampiran struk (#59)', () {
     ApiException map(String code, String message) => supabaseException(
-          sb.PostgrestException(message: message, code: code),
-          hasSession: true,
-        )!;
+      sb.PostgrestException(message: message, code: code),
+      hasSession: true,
+    )!;
 
     String check(String constraint) =>
         'new row for relation "transaction_attachments" violates check '

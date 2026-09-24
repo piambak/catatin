@@ -15,11 +15,11 @@ class ScenarioTab extends StatefulWidget {
 
 class _ScenarioTabState extends State<ScenarioTab>
     with AutomaticKeepAliveClientMixin {
-  double     _omzetBase     = 0;
-  int        _employees     = 0;
-  double     _avgGaji       = 0;
-  PtkpStatus _ptkp          = PtkpStatus.tk0;
-  bool       _isPkp         = false;
+  double _omzetBase = 0;
+  int _employees = 0;
+  double _avgGaji = 0;
+  PtkpStatus _ptkp = PtkpStatus.tk0;
+  bool _isPkp = false;
   List<ScenarioResult>? _results;
 
   @override
@@ -31,13 +31,15 @@ class _ScenarioTabState extends State<ScenarioTab>
       return;
     }
     setState(() {
-      _results = calculateScenarios(ScenarioInput(
-        omzetBulanan:  _omzetBase,
-        employeeCount: _employees,
-        avgGaji:       _avgGaji,
-        ptkpStatus:    _ptkp,
-        isPkp:         _isPkp,
-      ));
+      _results = calculateScenarios(
+        ScenarioInput(
+          omzetBulanan: _omzetBase,
+          employeeCount: _employees,
+          avgGaji: _avgGaji,
+          ptkpStatus: _ptkp,
+          isPkp: _isPkp,
+        ),
+      );
     });
   }
 
@@ -59,46 +61,72 @@ class _ScenarioTabState extends State<ScenarioTab>
               RupiahInput(
                 label: 'Omzet Bulanan Base (Rp)',
                 hint: '28.500.000',
-                onChanged: (v) { _omzetBase = v; _calc(); },
+                onChanged: (v) {
+                  _omzetBase = v;
+                  _calc();
+                },
               ),
               const SizedBox(height: 14),
 
-              Row(children: [
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Jumlah Karyawan',
-                      style: AppTextStyles.body(
-                        12, weight: FontWeight.w500)),
-                    const SizedBox(height: 5),
-                    _StepperInput(
-                      value: _employees,
-                      onChanged: (v) { _employees = v; _calc(); },
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Jumlah Karyawan',
+                          style: AppTextStyles.body(
+                            12,
+                            weight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        _StepperInput(
+                          value: _employees,
+                          onChanged: (v) {
+                            _employees = v;
+                            _calc();
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                )),
-                const SizedBox(width: 14),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Status PKP',
-                      style: AppTextStyles.body(
-                        12, weight: FontWeight.w500)),
-                    const SizedBox(height: 5),
-                    _PkpToggle(
-                      value: _isPkp,
-                      onChanged: (v) { _isPkp = v; _calc(); },
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Status PKP',
+                          style: AppTextStyles.body(
+                            12,
+                            weight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        _PkpToggle(
+                          value: _isPkp,
+                          onChanged: (v) {
+                            _isPkp = v;
+                            _calc();
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                )),
-              ]),
+                  ),
+                ],
+              ),
 
               if (_employees > 0) ...[
                 const SizedBox(height: 14),
                 RupiahInput(
                   label: 'Rata-rata Gaji Karyawan (Rp)',
                   hint: '5.000.000',
-                  onChanged: (v) { _avgGaji = v; _calc(); },
+                  onChanged: (v) {
+                    _avgGaji = v;
+                    _calc();
+                  },
                 ),
               ],
             ],
@@ -108,24 +136,24 @@ class _ScenarioTabState extends State<ScenarioTab>
           // ── Scenario Cards ────────────────────────────────
           if (_results != null) ...[
             // Cards stacked (full-width each)
-            ..._results!.map((s) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: ScenarioCard(
-                label:         s.label,
-                note:          _noteFor(s.label),
-                omzetTahunan:  s.omzetTahunan,
-                totalPajak:    s.totalPajak,
-                effectiveRate: s.effectiveRate,
-                breakdown: {
-                  'PPh Final 0,5%':   s.pphFinal,
-                  if (_employees > 0)
-                    'PPh 21 Karyawan': s.pph21Total,
-                  if (_isPkp)
-                    'PPN 11%':         s.ppn,
-                },
-                isFeatured: s.isFeatured,
+            ..._results!.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ScenarioCard(
+                  label: s.label,
+                  note: _noteFor(s.label),
+                  omzetTahunan: s.omzetTahunan,
+                  totalPajak: s.totalPajak,
+                  effectiveRate: s.effectiveRate,
+                  breakdown: {
+                    'PPh Final 0,5%': s.pphFinal,
+                    if (_employees > 0) 'PPh 21 Karyawan': s.pph21Total,
+                    if (_isPkp) 'PPN 11%': s.ppn,
+                  },
+                  isFeatured: s.isFeatured,
+                ),
               ),
-            )),
+            ),
 
             // Mini bar chart
             Semantics(
@@ -143,12 +171,14 @@ class _ScenarioTabState extends State<ScenarioTab>
 
   String _noteFor(String label) {
     if (label == 'Konservatif') return '70% dari omzet base';
-    if (label == 'Optimistis')  return '140% dari omzet base';
+    if (label == 'Optimistis') return '140% dari omzet base';
     return 'Omzet saat ini';
   }
 
   Widget _buildBarChart(List<ScenarioResult> results) {
-    final maxTotal = results.map((r) => r.totalPajak).reduce((a, b) => a > b ? a : b);
+    final maxTotal = results
+        .map((r) => r.totalPajak)
+        .reduce((a, b) => a > b ? a : b);
     if (maxTotal <= 0) return const SizedBox.shrink();
 
     final colors = [
@@ -177,9 +207,10 @@ class _ScenarioTabState extends State<ScenarioTab>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(Rupiah.compact(s.totalPajak),
-                        style: AppTextStyles.mono(
-                          9, color: AppColors.stone500)),
+                      Text(
+                        Rupiah.compact(s.totalPajak),
+                        style: AppTextStyles.mono(9, color: AppColors.stone500),
+                      ),
                       const SizedBox(height: 4),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 500),
@@ -188,14 +219,19 @@ class _ScenarioTabState extends State<ScenarioTab>
                         decoration: BoxDecoration(
                           color: colors[i],
                           borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4)),
+                            top: Radius.circular(4),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(s.label,
+                      Text(
+                        s.label,
                         style: AppTextStyles.body(
-                          10, color: AppColors.stone500),
-                        textAlign: TextAlign.center),
+                          10,
+                          color: AppColors.stone500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ],
                   ),
                 ),
@@ -224,15 +260,25 @@ class _StepperInput extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).cardColor,
       ),
-      child: Row(children: [
-        _StepBtn(icon: Icons.remove_rounded,
-          onTap: value > 0 ? () => onChanged(value - 1) : null),
-        Expanded(child: Text('$value',
-          textAlign: TextAlign.center,
-          style: AppTextStyles.mono(14, weight: FontWeight.w600))),
-        _StepBtn(icon: Icons.add_rounded,
-          onTap: value < 99 ? () => onChanged(value + 1) : null),
-      ]),
+      child: Row(
+        children: [
+          _StepBtn(
+            icon: Icons.remove_rounded,
+            onTap: value > 0 ? () => onChanged(value - 1) : null,
+          ),
+          Expanded(
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.mono(14, weight: FontWeight.w600),
+            ),
+          ),
+          _StepBtn(
+            icon: Icons.add_rounded,
+            onTap: value < 99 ? () => onChanged(value + 1) : null,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -248,12 +294,14 @@ class _StepBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36, height: 36,
+        width: 36,
+        height: 36,
         alignment: Alignment.center,
-        child: Icon(icon,
+        child: Icon(
+          icon,
           size: 18,
-          color: onTap != null
-              ? AppColors.stone600 : AppColors.stone300),
+          color: onTap != null ? AppColors.stone600 : AppColors.stone300,
+        ),
       ),
     );
   }
@@ -272,36 +320,49 @@ class _PkpToggle extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: value ? AppColors.navy : AppColors.bgCard,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: value ? AppColors.navy : AppColors.stone300,
-            width: 0.5),
+            width: 0.5,
+          ),
         ),
-        child: Row(children: [
-          Icon(value
-            ? Icons.check_circle_rounded
-            : Icons.radio_button_unchecked_rounded,
-            size: 16,
-            color: value ? Colors.white : AppColors.stone400),
-          const SizedBox(width: 6),
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value ? 'PKP' : 'Bukan PKP',
-                style: AppTextStyles.body(12,
-                  color: value ? Colors.white : AppColors.stone700,
-                  weight: FontWeight.w600)),
-              Text(value ? 'Wajib PPN 11%' : 'Bebas PPN',
-                style: AppTextStyles.body(10,
-                  color: value
-                    ? Colors.white70 : AppColors.stone400)),
-            ],
-          )),
-        ]),
+        child: Row(
+          children: [
+            Icon(
+              value
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 16,
+              color: value ? Colors.white : AppColors.stone400,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value ? 'PKP' : 'Bukan PKP',
+                    style: AppTextStyles.body(
+                      12,
+                      color: value ? Colors.white : AppColors.stone700,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    value ? 'Wajib PPN 11%' : 'Bebas PPN',
+                    style: AppTextStyles.body(
+                      10,
+                      color: value ? Colors.white70 : AppColors.stone400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

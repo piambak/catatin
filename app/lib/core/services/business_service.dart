@@ -19,14 +19,16 @@ class BusinessService {
     required bool pkpStatus,
     required int employeeCount,
   }) async {
-    final profile = await Repos.business.create(BusinessDraft(
-      businessName: businessName,
-      ownerName: ownerName,
-      npwp: npwp,
-      businessType: businessType,
-      pkpStatus: pkpStatus,
-      employeeCount: employeeCount,
-    ));
+    final profile = await Repos.business.create(
+      BusinessDraft(
+        businessName: businessName,
+        ownerName: ownerName,
+        npwp: npwp,
+        businessType: businessType,
+        pkpStatus: pkpStatus,
+        employeeCount: employeeCount,
+      ),
+    );
     await StorageService.setBusinessId(profile.id);
     await StorageService.setOnboarded();
     return profile;
