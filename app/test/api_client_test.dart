@@ -28,7 +28,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum _RefreshReply { ok, rejected, offline }
+enum _RefreshReply { ok, rejected, unavailable, offline }
 
 class _FakeServer implements HttpClientAdapter {
   _FakeServer({this.refreshReply = _RefreshReply.ok});
@@ -56,6 +56,8 @@ class _FakeServer implements HttpClientAdapter {
               {'access_token': 'baru', 'refresh_token': 'refresh-2'}, 200);
         case _RefreshReply.rejected:
           return _json({'error': 'refresh token tidak dikenal'}, 401);
+        case _RefreshReply.unavailable:
+          return _json({'error': 'bad gateway'}, 502);
         case _RefreshReply.offline:
           throw DioException.connectionError(
             requestOptions: options,
@@ -177,6 +179,15 @@ void main() {
       expect(error.statusCode, 0);
       expect(sessionEnded, 0);
       expect(secure[StorageKeys.refreshToken], 'refresh-1');
+    });
+
+    test('502 dari gateway saat refresh → sesi TIDAK diakhiri', () async {
+      useServer(_FakeServer(refreshReply: _RefreshReply.unavailable));
+
+      final error = await _errorOf(dio.get<dynamic>('/dashboard'));
+
+      expect(error.statusCode, 0);
+      expect(sessionEnded, 0);
     });
 
     test('401 pada request tanpa token (kata sandi salah) → tanpa refresh',

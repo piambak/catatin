@@ -150,9 +150,9 @@ class ApiClient {
 /// 3. **Rotasi dihormati (D-14).** Refresh token baru dari respons disimpan
 ///    menggantikan yang lama; yang lama sudah hangus begitu ditukar.
 ///
-/// Sesi hanya diakhiri ([onSessionEnded]) kalau SERVER menolak refresh.
-/// Gagal jaringan saat refresh dilaporkan sebagai galat jaringan biasa —
-/// pengguna yang sebentar offline tidak boleh ikut dikeluarkan.
+/// Sesi hanya diakhiri kalau server MENOLAK refresh (400/401/403). Gagal
+/// jaringan, 429, atau 5xx saat refresh dilaporkan sebagai galat jaringan
+/// biasa — pengguna yang sebentar offline tidak boleh ikut dikeluarkan.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor(this.dio, {Future<void> Function()? onSessionEnded})
       : _onSessionEnded = onSessionEnded ?? StorageService.clearSession;
@@ -179,9 +179,16 @@ class AuthInterceptor extends Interceptor {
       handler.next(options);
       return;
     }
-    final token = await StorageService.getAccessToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (_) {
+      // Token tak terbaca (mis. OperationError WebCrypto di web) = tidak
+      // punya sesi. Request tetap dikirim tanpa token; Dio membuang Future
+      // callback ini, jadi galat yang lolos di sini membuat request macet
+      // selamanya, bukan gagal.
     }
     handler.next(options);
   }
@@ -211,7 +218,14 @@ class AuthInterceptor extends Interceptor {
     if (statusCode == 401 &&
         options.extra[skipAuthKey] != true &&
         options.extra[_retriedKey] != true) {
-      switch (await _renewSession(options)) {
+      _Refresh renewal;
+      try {
+        renewal = await _renewSession(options);
+      } catch (_) {
+        // Sama seperti di onRequest: galat yang lolos membuat request macet.
+        renewal = _Refresh.rejected;
+      }
+      switch (renewal) {
         case _Refresh.renewed:
           options.extra[_retriedKey] = true;
           try {
@@ -256,12 +270,12 @@ class AuthInterceptor extends Interceptor {
   Future<_Refresh> _renewSession(RequestOptions failed) async {
     final used = failed.headers['Authorization'];
     if (used == null) return _Refresh.rejected;
+    if (_refreshing != null) return _refreshOnce();
     final current = await StorageService.getAccessToken();
-    if (_refreshing == null &&
-        current != null &&
-        used != 'Bearer $current') {
-      return _Refresh.renewed;
-    }
+    // Sesi sudah diakhiri (refresh lain gagal, atau pengguna keluar) selagi
+    // request ini di jalan — jangan diakhiri untuk kedua kalinya.
+    if (current == null) return _Refresh.rejected;
+    if (used != 'Bearer $current') return _Refresh.renewed;
     return _refreshOnce();
   }
 
@@ -305,10 +319,14 @@ class AuthInterceptor extends Interceptor {
       );
       return _Refresh.renewed;
     } on DioException catch (e) {
-      // Tanpa jawaban server (offline, timeout) → biarkan sesinya; request
-      // aslinya gagal sebagai galat jaringan. Server menjawab dan menolak →
-      // sesi memang habis.
-      if (e.response == null) return _Refresh.offline;
+      // Hanya penolakan eksplisit (400/401/403) yang mengakhiri sesi. Tanpa
+      // jawaban (offline, timeout), 429, atau 5xx dari gateway → sesinya
+      // mungkin masih sah; request aslinya gagal sebagai galat jaringan dan
+      // refresh dicoba lagi di request berikutnya.
+      final status = e.response?.statusCode;
+      if (status != 400 && status != 401 && status != 403) {
+        return _Refresh.offline;
+      }
       await _onSessionEnded();
       return _Refresh.rejected;
     } on FormatException catch (e) {
@@ -327,7 +345,7 @@ enum _Refresh {
   /// Server menolak (atau tidak ada refresh token) — sesi berakhir.
   rejected,
 
-  /// Server tidak terjangkau; sesi dibiarkan apa adanya.
+  /// Server tidak terjangkau atau sedang bermasalah; sesi dibiarkan.
   offline,
 }
 
