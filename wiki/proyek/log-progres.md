@@ -18,6 +18,29 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-09-24** — Frontend + PO — **Minggu 2 diajukan sebagai tujuh PR**,
+  masing-masing untuk satu issue: #29 (D-14, D-15, D-16 diputus mengikuti
+  default — lihat [log keputusan](log-keputusan.md)), #32 (T-32: 11 berkas
+  yatim / 3.684 baris dihapus, `tool/find_orphans.sh --strict` jadi gerbang CI;
+  fasad BE yang UI-nya belum ada didaftar di `tool/find_orphans.allow`),
+  #36 (T-20a/T-20b: baris transaksi membuka layar detail; tombol Sunting di
+  detail tersambung ke `updateTransaction` — yang sudah ada sejak kontrak
+  Minggu 1, jadi yang kurang hanya pintunya), #34 (T-23: satu refresh untuk
+  request bersamaan, refresh tanpa Bearer, rotasi refresh token D-14,
+  `clearSession()` mempertahankan tema; 10 tes baru), #37 (T-27:
+  `StatefulShellRoute` — boot hanya membangun tab yang dibuka, `errorBuilder`,
+  cache penjaga rute, orientasi per D-16), #35 (T-37/T-28: `userMessage` aman
+  untuk `details` kosong, `getTransaction` mock tidak lagi salah sasaran, log
+  jaringan tersamarkan dan hanya di build debug; `pretty_dio_logger` dan
+  `percent_indicator` dicabut), #33 (T-9/T-10: `dart format` ditegakkan,
+  `--enforce-lockfile`, coverage lcov sebagai artifact). Sudah selesai
+  sebelumnya dan hanya perlu ditutup: T-38 (sesi demo selalu memakai data lokal
+  sejak `23a12b6`, 13 Sep) dan item T-37 no. 1 & 4. Skor PRD setelah ketujuhnya: `BoxShadow` 4 ✓,
+  `withOpacity` 0 ✓, orientasi web ✓, kalender 1 berkas ✓; kelas widget privat
+  **64** (target M1 < 60 — sisanya ikut pemecahan `accounting_screen.dart`,
+  issue #52). Belum: latihan rollback (#30) dan uji kata sandi salah di
+  staging — keduanya butuh orang, dijadwalkan Jumat bersama sign-off M1 (#31).
+
 - **2026-09-22** — Produksi — lima migrasi yang tertunda diterapkan ke
   `catatin` atas izin pemilik tugas BE: `validasi_transaksi`,
   `transaksi_berulang` (pg_cron dipasang), `lampiran_struk` (bucket privat

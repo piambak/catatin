@@ -48,17 +48,16 @@ Default di bawah **sudah berlaku** sesuai aturan 2. PO tinggal mengkonfirmasi
 
 ## Terbuka, tenggat belum lewat
 
-| ID | Diajukan | Pertanyaan | Pemilik | Tenggat | Default | Keputusan | Diputus |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| D-14 | 8 Sep | T-11: refresh token boleh disimpan di browser? Umur token? | Backend + Frontend | 25 Sep | Access 15 menit, refresh dirotasi | | |
-| D-15 | 8 Sep | T-12: aplikasi multi-bahasa di fase ini? | PO | 25 Sep | Tidak; dicatat di [Arsitektur](../arsitektur/gambaran-umum.md) | | |
-| D-16 | 8 Sep | Kunci orientasi dibuka untuk web saja atau tablet juga? | PO | 25 Sep | Web + tablet | | |
+Kosong. D-14, D-15, dan D-16 diputus 24 Sep (issue #29) — lihat di bawah.
 
 ## Sudah diputus
 
 | ID | Diajukan | Pertanyaan | Pemilik | Keputusan | Diputus |
 | --- | --- | --- | --- | --- | --- |
 | D-7 | 12 Sep | Stack backend: BaaS atau tulis sendiri? | Backend → PO | **Supabase.** Alasan & lingkupnya di [sumber issue #149](../sumber/github-issue-149-d7-stack-backend.md); penerapannya di [Supabase](../arsitektur/supabase.md) dan [Backend & API](../arsitektur/backend-dan-api.md) | 15 Sep 2026 |
+| D-14 | 8 Sep | T-11: refresh token boleh disimpan di browser? Umur token? | Backend + Frontend → PO | **Access token 15 menit, refresh token dirotasi; refresh token boleh disimpan di browser** (`localStorage` klien Supabase; secure storage di mode REST). Cookie HTTP-only tidak dipakai karena logika aplikasi berjalan di browser dan harus bisa membaca token untuk memperbaruinya — rinciannya di [Supabase §Sesi dan token](../arsitektur/supabase.md#sesi-dan-token-d-14). Tindak lanjut Backend: pasang 900 detik di dashboard proyek **produksi** (staging sudah). Tindak lanjut Frontend: klien REST menyimpan refresh token hasil rotasi (issue #34) | 24 Sep 2026 · PO (default dikonfirmasi) |
+| D-15 | 8 Sep | T-12: aplikasi multi-bahasa di fase ini? | PO | **Tidak.** Fase Dua hanya Bahasa Indonesia; multi-bahasa ke backlog Fase Tiga. Dicatat di [Arsitektur](../arsitektur/gambaran-umum.md#bahasa--orientasi) | 24 Sep 2026 · PO (default dikonfirmasi) |
+| D-16 | 8 Sep | Kunci orientasi dibuka untuk web saja atau tablet juga? | PO | **Web + tablet.** Potret hanya dikunci di ponsel (sisi terpendek layar < 600 dp); diterapkan di `main.dart` lewat issue #37 | 24 Sep 2026 · PO (default dikonfirmasi) |
 
 ---
 
