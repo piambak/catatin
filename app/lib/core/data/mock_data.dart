@@ -26,7 +26,7 @@ class MockData {
   // biaya yang mengurangi apa pun. Diisi false seluruhnya sampai field dipisah
   // menjadi grossTurnover khusus INCOME (F-11).
   //
-  // Pemetaan lengkap beserta pasalnya: docs/tax/SPEC-Kategori.md
+  // Pemetaan lengkap beserta pasalnya: wiki/domain/pajak/spek-kategori.md (#47)
 
   static List<TxCategoryData> get txCategories => const [
     // INCOME — masuk peredaran bruto

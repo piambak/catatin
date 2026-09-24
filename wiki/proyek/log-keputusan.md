@@ -33,15 +33,15 @@ Default di bawah **sudah berlaku** sesuai aturan 2. PO tinggal mengkonfirmasi
 
 | ID | Diajukan | Pertanyaan | Pemilik | Tenggat | Default (berlaku) | Keputusan | Diputus |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| D-1 | 12 Sep | [Linimasa](linimasa.md) adalah satu-satunya jadwal; kanvas "Peta Jalan Catatin" dinyatakan usang? | PO | 14 Sep | Ya | | |
-| D-2 | 8 Sep | Redesain UI masuk Fase Dua sebagai jalur kerja Frontend resmi? | PO | 14 Sep | Ya | | |
-| D-3 | 8 Sep | Dashboard berpusat pada "kewajiban berikutnya"? | PO | 14 Sep | Ya | | |
-| D-4 | 8 Sep | Nama fitur tetap "Pembukuan"? | PO | 14 Sep | Ya | | |
-| D-5 | 8 Sep | Hapus 3.684 baris kode yatim (T-14, T-32)? | PO | 16 Sep | Ya, setelah tag `pra-hapus-orphan` | | |
-| D-6 | 8 Sep | Navigation rail di lebar desktop? | PO | 14 Sep | Ya | | |
+| D-1 | 12 Sep | [Linimasa](linimasa.md) adalah satu-satunya jadwal; kanvas "Peta Jalan Catatin" dinyatakan usang? | PO | 14 Sep | Ya | Ya | 15 Sep 2026 · PO (issue [#143](https://github.com/piambak/catatin/issues/143) ditutup) |
+| D-2 | 8 Sep | Redesain UI masuk Fase Dua sebagai jalur kerja Frontend resmi? | PO | 14 Sep | Ya | **Ya** (default). Redesain dikerjakan sebagai jalur Frontend: [PRD redesain UI](../desain/prd-redesain-ui.md) dan [Rencana Frontend](rencana-frontend.md); diterapkan mulai PR [#3](https://github.com/piambak/catatin/pull/3) | Default berlaku sejak 14 Sep 2026 (aturan 2) · dicatat BE 24 Sep, belum dikonfirmasi PO ([#144](https://github.com/piambak/catatin/issues/144)) |
+| D-3 | 8 Sep | Dashboard berpusat pada "kewajiban berikutnya"? | PO | 14 Sep | Ya | **Ya** (default). Blok "Kewajiban berikutnya" sudah ada di Dashboard dan membawa chip kepercayaan ([#9](https://github.com/piambak/catatin/issues/9)) | Default berlaku sejak 14 Sep 2026 (aturan 2) · dicatat BE 24 Sep, belum dikonfirmasi PO ([#145](https://github.com/piambak/catatin/issues/145)) |
+| D-4 | 8 Sep | Nama fitur tetap "Pembukuan"? | PO | 14 Sep | Ya | **Tidak** — nama fitur **Pencatatan**, sama dengan label tab dan judul layar sejak redesain 8 Sep | 15 Sep 2026 · PO ([#146](https://github.com/piambak/catatin/issues/146)) |
+| D-5 | 8 Sep | Hapus 3.684 baris kode yatim (T-14, T-32)? | PO | 16 Sep | Ya, setelah tag `pra-hapus-orphan` | **Ya** (default). Tag `pra-hapus-orphan` sudah dibuat; penghapusan lewat PR [#185](https://github.com/piambak/catatin/pull/185) untuk [#32](https://github.com/piambak/catatin/issues/32) | Default berlaku sejak 16 Sep 2026 (aturan 2) · dicatat BE 24 Sep, belum dikonfirmasi PO ([#147](https://github.com/piambak/catatin/issues/147)) |
+| D-6 | 8 Sep | Navigation rail di lebar desktop? | PO | 14 Sep | Ya | **Ya** (default). `AppNavRail` diaktifkan di lebar `expanded` lewat [#67](https://github.com/piambak/catatin/issues/67) (Minggu 4) | Default berlaku sejak 14 Sep 2026 (aturan 2) · dicatat BE 24 Sep, belum dikonfirmasi PO ([#148](https://github.com/piambak/catatin/issues/148)) |
 | D-8 | 7 Sep | Modul PPN & proyeksi SPT Tahunan masuk fase ini? | Pakar → PO | 18 Sep | Ditunda ke Fase Tiga | | |
 | D-9 | 8 Sep | T-3: pengecualian Rp500 juta & batas waktu PP 23 masuk lingkup? Untuk profil WP mana? | Pakar | 18 Sep | Masuk, WP OP saja | | |
-| D-10 | 8 Sep | T-4: angka apa yang tampil di hasil PPh 21; rekalkulasi Desember di fase ini? | Pakar | 18 Sep | Tampilkan bruto, TER, potongan; Desember ditunda | | |
+| D-10 | 8 Sep | T-4: angka apa yang tampil di hasil PPh 21; rekalkulasi Desember di fase ini? | Pakar | 18 Sep | Tampilkan bruto, TER, potongan; Desember ditunda | Wajib tampil: kategori TER beserta status PTKP, tarif efektif, penanda masa Januari–November. Tidak tampil: angka PKP dan "pajak tahunan" hasil bulanan × 12. Rekalkulasi Desember ditunda sampai besaran biaya jabatan bersumber. Rinciannya di [Spek PPh 21 TER §6–§7](../domain/pajak/spek-pph21-ter.md#7-aturan-tampilan-d-10) | 18 Sep 2026 · TAX ([Keputusan TAX](../domain/pajak/keputusan-tax.md), [#152](https://github.com/piambak/catatin/issues/152)) |
 | D-11 | 12 Sep | T-17: rezim per profesi — karyawan → PPh 21, usaha sendiri → PPh Final? | Pakar | 18 Sep | Ya | | |
 | D-12 | 12 Sep | T-25: SPT OP 31 Maret; tenggat masa PPh Final tanggal 15 bulan berikutnya? | Pakar | 16 Sep | Ya | | |
 | D-13 | 12 Sep | T-26: omzet di atas Rp4,8 M tampil "di luar skema final", bukan 0? | Pakar | 18 Sep | Ya | | |
