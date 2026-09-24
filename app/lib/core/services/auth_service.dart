@@ -136,7 +136,7 @@ class AuthService {
         // sesi lokal tetap dibersihkan di bawah.
       }
     }
-    await StorageService.clearAll();
+    await StorageService.clearSession();
     Repos.useDemo(false);
     sessionChanges.notify();
   }
@@ -144,6 +144,11 @@ class AuthService {
   /// Menyiapkan sesi sebelum frame pertama. Dipanggil `main.dart` sesudah
   /// backend diinisialisasi.
   static Future<void> restoreSession() async {
+    // Mode REST: refresh token yang ditolak server mengakhiri sesi dari lapisan
+    // jaringan. Dipasang di sini — sebelum request pertama — supaya penjaga
+    // rute langsung membawa pengguna ke layar masuk (T-23).
+    ApiClient.onSessionEnded = _endSessionFromServer;
+
     if (await StorageService.isDemo()) {
       Repos.useDemo(true);
     }
@@ -156,7 +161,7 @@ class AuthService {
     if (!Repos.isDemo &&
         !SupabaseBackend.hasSession &&
         await StorageService.isLoggedIn()) {
-      await StorageService.clearAll();
+      await StorageService.clearSession();
     }
 
     // Kebalikannya: Supabase memegang sesi yang belum dikenal penyimpanan
@@ -174,7 +179,7 @@ class AuthService {
       },
       onSignedOut: () async {
         if (Repos.isDemo) return;
-        await StorageService.clearAll();
+        await StorageService.clearSession();
         sessionChanges.notify();
       },
       onAuthError: (_) {
@@ -183,6 +188,12 @@ class AuthService {
         oauthError.value = 'Masuk dengan Google gagal. Coba lagi.';
       },
     );
+  }
+
+  static Future<void> _endSessionFromServer() async {
+    if (Repos.isDemo) return;
+    await StorageService.clearSession();
+    sessionChanges.notify();
   }
 
   /// Menyalin sesi Supabase ke penyimpanan lokal kalau belum dikenal, lalu
@@ -197,7 +208,7 @@ class AuthService {
     final loggedIn = await StorageService.isLoggedIn();
     if (loggedIn) {
       if (await StorageService.getUserId() == auth.user.id) return false;
-      await StorageService.clearAll();
+      await StorageService.clearSession();
     }
 
     await _persist(auth);
