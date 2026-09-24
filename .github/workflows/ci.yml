@@ -67,6 +67,13 @@ jobs:
             bash tool/prd_score.sh --markdown
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Tidak ada kode yatim
+        # Blocking: berkas app/lib yang tidak terjangkau dari main.dart dan tidak
+        # terdaftar di tool/find_orphans.allow menggagalkan PR (issue #32, T-32).
+        # 3.684 baris sempat menumpuk karena tidak ada yang memeriksa.
+        working-directory: .
+        run: bash tool/find_orphans.sh --strict
+
       - name: Simpan hasil build untuk ditinjau
         uses: actions/upload-artifact@v4
         with:

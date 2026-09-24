@@ -6,9 +6,10 @@
 // 480 (dashboard), 500 (accounting), 600 (kpi_card), 680 (accounting),
 // 700 (dashboard). Lihat wiki/desain/prd-redesain-ui.md R-4.
 //
-// BELUM SELESAI. Per 18 Sep 2026 masih ada pemakaian literal di
-// accounting_screen.dart, month_picker.dart, cal_deadline_card.dart, dan
-// kpi_card.dart. Penggantian tuntas dijadwalkan Minggu 4 (issue #67); sampai
+// BELUM SELESAI. Per 24 Sep 2026 pemakaian literal tinggal di
+// accounting_screen.dart (cal_deadline_card.dart dan kpi_card.dart ikut
+// terhapus sebagai kode yatim di issue #32). Penggantian tuntas dijadwalkan
+// Minggu 4 (issue #67); sampai
 // itu selesai, jangan membaca komentar ini sebagai jaminan bahwa `Bp` adalah
 // satu-satunya sumber angka breakpoint.
 

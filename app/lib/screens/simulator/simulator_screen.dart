@@ -7,9 +7,10 @@
 // membandingkannya di penjelasan. Tab "Skenario" dan "Deadline" tetap terpisah
 // karena tugasnya memang lain.
 //
-// Berkas lama `pph_final_tab.dart` dan `pph21_tab.dart` sengaja TIDAK dihapus.
-// Keduanya masih jadi rujukan saat T-1 (kategori TER B & C) dikerjakan, dan
-// menghapusnya di PR yang sama akan mencampur dua topik.
+// Berkas lama `pph_final_tab.dart` dan `pph21_tab.dart` dihapus di issue #32
+// (T-32, D-5). Rujukan T-1 sekarang spesifikasi pakar pajak di
+// `wiki/domain/pajak/spek-pph21-ter.md`; isi lamanya tetap bisa dibaca di tag
+// `pra-hapus-orphan`.
 
 import 'package:flutter/material.dart';
 

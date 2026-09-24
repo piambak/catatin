@@ -1,0 +1,8 @@
+# Berkas app/lib yang SENGAJA belum terjangkau dari main.dart.
+# Format: <path dari root repo>  # <alasan> (<issue yang menyambungkannya>)
+# Setiap baris harus punya issue. Cabut barisnya di PR yang menyambungkan berkas itu —
+# tool/find_orphans.sh akan mengingatkan kalau lupa.
+
+app/lib/core/services/recurring_service.dart       # lapisan data transaksi berulang dari BE (#58); UI-nya issue #54, Minggu 3
+app/lib/core/services/attachment_service.dart      # lapisan data lampiran struk dari BE (#59); UI-nya issue #55, Minggu 3
+app/lib/core/services/simulator_input_service.dart # nilai awal Simulator dari BE (#89); disambung issue #86, Minggu 5

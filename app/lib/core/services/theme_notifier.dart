@@ -7,8 +7,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/app_constants.dart';
+
 class ThemeNotifier extends ValueNotifier<ThemeMode> {
-  static const _key = 'theme_mode';
+  // Kuncinya milik StorageKeys, bukan string sendiri, supaya kode yang
+  // membersihkan penyimpanan tahu kunci mana yang milik tema.
+  static const _key = StorageKeys.themeMode;
 
   ThemeNotifier() : super(ThemeMode.light);
 

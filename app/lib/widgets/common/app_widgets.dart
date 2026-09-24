@@ -49,55 +49,6 @@ class AppCard extends StatelessWidget {
   }
 }
 
-// ─── Section Label ────────────────────────────────────────────────────────────
-
-class SectionLabel extends StatelessWidget {
-  final String text;
-  final Color? color;
-
-  const SectionLabel(this.text, {super.key, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: Typo.label(color: color),
-    );
-  }
-}
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-enum BadgeVariant { green, red, amber, blue, gray }
-
-class StatusBadge extends StatelessWidget {
-  final String text;
-  final BadgeVariant variant;
-
-  const StatusBadge(this.text, {super.key, this.variant = BadgeVariant.gray});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = {
-      BadgeVariant.green: (DS.income.withValues(alpha: 0.12),  DS.income),
-      BadgeVariant.red:   (DS.expense.withValues(alpha: 0.12), DS.expense),
-      BadgeVariant.amber: (DS.brandMuted, DS.brandDeep),
-      BadgeVariant.blue:  (DS.accent.withValues(alpha: 0.12),    DS.accent),
-      BadgeVariant.gray:  (DS.hairline,     DS.muted),
-    };
-    final (bg, fg) = colors[variant]!;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(text, style: Typo.sans(10, color: fg, weight: FontWeight.w600)),
-    );
-  }
-}
-
 // ─── Shimmer Loading Box ───────────────────────────────────────────────────────
 
 class ShimmerBox extends StatelessWidget {
@@ -208,24 +159,5 @@ class ErrorState extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-// ─── Divider with label ────────────────────────────────────────────────────────
-
-class LabelDivider extends StatelessWidget {
-  final String label;
-  const LabelDivider(this.label, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      const Expanded(child: Divider()),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(label, style: Typo.sans(11, color: DS.faint)),
-      ),
-      const Expanded(child: Divider()),
-    ]);
   }
 }
