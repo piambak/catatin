@@ -58,6 +58,7 @@ bool _isPhone() {
   final views = WidgetsBinding.instance.platformDispatcher.views;
   if (views.isEmpty) return true;
   final view = views.first;
+  if (view.devicePixelRatio <= 0) return true;
   final logical = view.physicalSize / view.devicePixelRatio;
   return logical.shortestSide < 600;
 }
