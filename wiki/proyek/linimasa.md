@@ -104,6 +104,19 @@ setelah ini, ubah spesifikasi berarti ubah jadwal. *(18 Sep: spesifikasi TAX
 dikunci dan diajukan untuk M0 sign-off; dua tugas audit Backend masih terbuka,
 jadi status Minggu 1 belum ✅.)*
 
+> **M0 ditahan — menunggu Pakar Regulasi (27 Sep 2026).**
+> Tanda tangan M0 berarti "spesifikasi pajak cukup untuk diimplementasi".
+> Empat keputusan yang menjadi dasarnya **belum dijawab**: D-9 (pengecualian
+> Rp500 juta), D-11 (rezim per profesi), D-12 (tanggal SPT & tenggat masa),
+> dan D-13 (perlakuan di atas Rp4,8 M) — lihat
+> [Log keputusan](log-keputusan.md). Keempatnya menahan seluruh Minggu 5
+> (T-1, T-3, T-17, T-25, T-26).
+>
+> PO **tidak** menandatangani M0 sampai keempatnya terisi. Ini bukan penundaan
+> administratif: menandatangani sekarang berarti menyatakan cukup sesuatu yang
+> belum ada. Issue [#8](https://github.com/piambak/catatin/issues/8) tetap
+> terbuka sebagai penanda, bukan sebagai pekerjaan PO yang tertunggak.
+
 > Keputusan yang menahan pekerjaan orang lain dicatat di
 > [Log keputusan](log-keputusan.md), bukan di sini. Tenggat D-1…D-13 sudah
 > lewat, jadi default-nya berlaku sampai PO menimpanya.
@@ -154,11 +167,38 @@ fondasi data untuk peningkatan berikutnya siap.
 **Milestone M1 (Jumat 25 Sep):** Pustaka peraturan hilang total dari kode
 dan dokumentasi; tidak ada regresi di fitur lain.
 
+**Status M1 per 27 Sep 2026:**
+
+| Peran | Status | Sisa |
+| --- | --- | --- |
+| **Frontend** | ✅ **Selesai — disetujui PO** | — (#32, #33, #34, #35, #36, #37 tergabung) |
+| Backend | 🔵 Berjalan | Cabut bagian Pustaka peraturan dari [Backend & API](../arsitektur/backend-dan-api.md); tabel konfigurasi tarif ([#42](https://github.com/piambak/catatin/issues/42)); deploy staging otomatis ([#43](https://github.com/piambak/catatin/issues/43)) |
+| Pakar Regulasi | 🔵 Berjalan | Matriks TER lengkap; sign-off formula; validasi pemetaan kategori ([#45](https://github.com/piambak/catatin/issues/45), [#46](https://github.com/piambak/catatin/issues/46), [#47](https://github.com/piambak/catatin/issues/47)) |
+
+M1 **belum** ditandatangani sebagai milestone penuh: bagian Frontend tuntas,
+tapi milestone menuntut semua peran. Issue
+[#31](https://github.com/piambak/catatin/issues/31) tetap terbuka sampai
+Backend dan Pakar menutup sisanya.
+
+**Latihan rollback digeser ke Minggu 3** (semula Jumat 25 Sep → ~~25 Sep~~
+Jumat 2 Okt). Alasan: seluruh minggu habis untuk menggabungkan sebelas PR, dan
+latihan rollback yang dikerjakan setengah hati lebih buruk daripada yang
+dijadwalkan ulang dengan jujur. Issue
+[#30](https://github.com/piambak/catatin/issues/30).
+
 ---
 
 ## Minggu 3 — 28 Sep–2 Okt — Pembukuan naik kelas (1/2)
 
 **Target minggu:** transaksi berulang dan lampiran struk berjalan end-to-end.
+
+- [ ] **Latihan rollback** (digeser dari Minggu 2, issue
+      [#30](https://github.com/piambak/catatin/issues/30)) — 15 menit, semua
+      peran, mengikuti [Rilis & deploy](../panduan/rilis-dan-deploy.md).
+      Jumat 2 Okt.
+- [ ] Keadaan kosong Pembukuan dikirim **berbasis teks**; aset ilustrasi
+      menyusul Minggu 4 sesuai D-21 — lihat
+      [Log keputusan](log-keputusan.md#utang-yang-lahir-dari-d-21).
 
 ### Backend
 
