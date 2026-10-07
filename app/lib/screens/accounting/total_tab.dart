@@ -847,6 +847,7 @@ class _FrequentList extends StatelessWidget {
     );
   }
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab bergaya pil — menggantikan TabBar bergaris bawah, mengikuti mockup.
 // ─────────────────────────────────────────────────────────────────────────────

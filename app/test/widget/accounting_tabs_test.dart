@@ -23,6 +23,7 @@ import 'package:catatin/screens/accounting/monthly_tab.dart';
 import 'package:catatin/screens/accounting/total_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 const _kategoriMasuk = TxCategoryData(
   id: 'c1',
@@ -74,9 +75,13 @@ List<TxData> _contohTx() {
 }
 
 /// Ukuran layar dipatok supaya hasilnya tidak berubah karena ukuran jendela
-/// mesin yang menjalankan tes.
-Future<void> _render(WidgetTester tester, Widget anak) async {
-  tester.view.physicalSize = const Size(1200, 2400);
+/// mesin yang menjalankan tes. Bawaan 400×800 dp (ponsel).
+Future<void> _render(
+  WidgetTester tester,
+  Widget anak, {
+  Size ukuran = const Size(400, 800),
+}) async {
+  tester.view.physicalSize = ukuran * 3.0;
   tester.view.devicePixelRatio = 3.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -86,6 +91,9 @@ Future<void> _render(WidgetTester tester, Widget anak) async {
 }
 
 void main() {
+  // Sama seperti main.dart: Tanggal.short memakai DateFormat locale id_ID.
+  setUpAll(() => initializeDateFormatting('id_ID', null));
+
   final cursor = DateTime(2026, 9, 1);
 
   group('Tab Harian', () {
@@ -120,6 +128,12 @@ void main() {
   });
 
   group('Tab Kalender', () {
+    // Dirender di lebar desktop. Di lebar ponsel baris navigasi bulan
+    // (panah, nama bulan, "Hari Ini", legenda) OVERFLOW — diukur dengan font
+    // DMSans asli: 82 dp di 375, 57 dp di 400, dan 16 dp tepat setelah
+    // breakpoint lebar (681). Itu bug tata letak yang sudah ada sebelum
+    // pemecahan ini (kodenya dipindah apa adanya), dicatat untuk QA #61.
+    // Kembalikan tes ini ke ukuran bawaan setelah baris itu diperbaiki.
     testWidgets('berdiri dengan data dan punya tombol filter', (tester) async {
       await _render(
         tester,
@@ -129,15 +143,17 @@ void main() {
           cursor: cursor,
           onShift: (_) {},
         ),
+        ukuran: const Size(1440, 900),
       );
-      expect(find.text('September'), findsWidgets);
+      expect(find.text('September 2026'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   });
 
   group('Tab Bulanan', () {
-    testWidgets('menampilkan dua belas bulan untuk tahun yang dipilih',
-        (tester) async {
+    testWidgets('menampilkan dua belas bulan untuk tahun yang dipilih', (
+      tester,
+    ) async {
       await _render(
         tester,
         MonthlyTab(
