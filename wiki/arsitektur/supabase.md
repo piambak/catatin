@@ -701,11 +701,26 @@ baris `set_config('uji.akun', …)`.
   menyimpan puluhan ribu transaksi setahun, ganti paginasi `range()` di
   `getTransactions` dengan keyset (`date`, `created_at`).
 
+**Pembentukan CSV ekspor (#72), 7 Okt 2026.** Ekspor tidak punya kueri
+sendiri: datanya langkah 3 di atas, lalu `TransactionCsv.build` membentuk
+berkasnya di klien ([kontrak ekspor](backend-dan-api.md#ekspor-csv--tanpa-endpoint-baru-72)).
+Biaya formatternya, median 7 kali setelah pemanasan:
+
+| Isi | Waktu bentuk CSV | Ukuran berkas |
+| --- | --- | --- |
+| Setahun, 2.400 transaksi | 4,5 ms | 208 KB |
+| Sepuluh tahun, 24.000 transaksi | 36,9 ms | 2,05 MB |
+
+Jadi setahun penuh ± 35 ms di luar jaringan: ± 30 ms kueri ditambah ± 5 ms
+formatter. Riwayat 10 tahun yang wajib disimpan pengguna masih di bawah
+sepersepuluh detik untuk formatternya. Angka formatter diukur di VM Dart
+(`flutter test`, JIT), bukan build web rilis (dart2js); waktu di peramban
+belum diukur. Yang juga belum diukur: jaringan dan PostgREST untuk tiga
+halaman itu dari perangkat pengguna.
+
 **Batasan.** Waktu diukur di dalam database: belum termasuk PostgREST dan
 jaringan ke ap-southeast-1. Satu sesi, bukan pengguna serentak — uji 50
-pengguna serentak masuk #114 dan butuh akun staging sungguhan. Ekspor CSV
-sendiri (#72) diformat di klien; ukur ulang langkah 3 setelah endpoint itu
-ada. Sisipan yang digulung balik meninggalkan ruang mati ± 8 MB di tabel
+pengguna serentak masuk #114 dan butuh akun staging sungguhan. Sisipan yang digulung balik meninggalkan ruang mati ± 8 MB di tabel
 `transactions` sampai autovacuum membersihkannya — aman untuk batas 500 MB
 paket Free, tapi jangan menjalankannya berkali-kali berturut-turut.
 
