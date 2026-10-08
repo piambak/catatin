@@ -473,6 +473,81 @@ Contoh di atas adalah data contoh staging ([Supabase §8](supabase.md#8-staging-
 
 `color` wajib hex `#RRGGBB`; `icon` satu emoji.
 
+#### Ekspor CSV — tanpa endpoint baru (#72)
+
+Rencana awal menyebut `GET /transactions/export?from&to&category`. Sejak D-7
+(Supabase) endpoint itu **tidak dibuat**: datanya diambil lewat
+`GET /transactions` yang sudah ada (mode Supabase memaging per 1.000 baris),
+lalu CSV-nya dibentuk di klien. Satu formatter melayani mode `mock`, `api`,
+`hybrid`, dan `supabase`, jadi isi berkasnya sama di semua mode, dan tidak ada
+migrasi baru. Biayanya terukur di [Supabase §10](supabase.md#10-uji-beban).
+
+Di klien: `ExportService.exportTransactionsCsv({from, to, categoryId})` →
+`CsvExportResult { csv, rowCount, suggestedFileName }`. Formatternya murni
+(tanpa I/O) di `core/utils/transaction_csv.dart` (`TransactionCsv.build`).
+
+* `from`/`to` inklusif dan boleh kosong. Kalau keduanya kosong, yang diekspor
+  **seluruh riwayat**: kewajiban simpan 10 tahun ada pada pengguna, jadi
+  ekspor tidak boleh dibatasi rentang (SPEC-Ekspor §5). Kalau hanya satu yang
+  diisi, sisi lainnya 2000-01-01 atau 2099-12-31, sama dengan batas tanggal di
+  database. `from` setelah `to` melempar `ArgumentError`.
+* `categoryId` menyaring di klien (`tx.category.id`).
+* `suggestedFileName`: `catatin-transaksi-20260901-20260930.csv`, atau
+  `catatin-transaksi-semua.csv` untuk seluruh riwayat.
+* UI-nya (pilih rentang, unduh/bagikan) issue #68 milik Frontend.
+
+**Bentuk berkas.** UTF-8 dengan BOM (supaya Excel membacanya sebagai UTF-8),
+pemisah koma, setiap baris diakhiri CRLF, kutipan mengikuti RFC 4180. Baris 1
+adalah label wajib SPEC-Ekspor §6 dalam satu sel. Baris 2 berisi metadata
+(tanggal ekspor, rentang, kategori kalau disaring, jumlah transaksi). Baris 3
+kosong. Baris 4 header. Impor (#73, belum dibuat) harus mencari baris header
+ini, bukan menganggap baris pertama sebagai header.
+
+```text
+"Dokumen ini adalah catatan peredaran bruto dan penghasilan sesuai Pasal 28 Undang-Undang KUP. Ini BUKAN laporan keuangan dan BUKAN Surat Pemberitahuan (SPT). Angka PPh Final dan status batas PKP adalah simulasi berdasarkan data yang Anda catat sendiri, belum diverifikasi terhadap kalkulator resmi Direktorat Jenderal Pajak."
+Diekspor 2026-10-07; rentang 2026-09-01 s.d. 2026-09-30; 2 transaksi
+
+tanggal,kategori,arah,deskripsi,nominal_rupiah,mata_uang_asal,kurs_dipakai,masuk_peredaran_bruto_pph,masuk_batas_pkp,status_konfirmasi,metode_pembayaran
+2026-09-10,Penjualan Produk,Pemasukan,Jual kue,5000000,,,Ya,CEK,,CASH
+2026-09-10,Bahan Baku,Pengeluaran,"'=SUM(A1), ""gula""",1234.50,,,Tidak,Tidak,terjadwal,QRIS
+```
+
+Contoh di atas adalah keluaran `TransactionCsv.build` yang sebenarnya untuk dua
+transaksi buatan. Baris kedua sengaja menunjukkan pengaman dan kutipan.
+
+| Kolom | Isi |
+| --- | --- |
+| `tanggal` | `YYYY-MM-DD`. Baris diurutkan naik menurut tanggal, lalu `created_at`, lalu `id` |
+| `kategori` | Nama kategori |
+| `arah` | `Pemasukan` / `Pengeluaran` |
+| `deskripsi` | Teks bebas; kosong kalau tidak diisi |
+| `nominal_rupiah` | Angka saja tanpa pemisah ribuan: `5000000`; pecahan dua desimal dengan titik: `1234.50` |
+| `mata_uang_asal`, `kurs_dipakai` | Selalu kosong — aplikasi hanya mencatat Rupiah, dan kosong memang isi yang benar untuk transaksi Rupiah |
+| `masuk_peredaran_bruto_pph` | Pemasukan: `Ya`/`Tidak` dari `tax_relevant` kategori. Pengeluaran: selalu `Tidak` |
+| `masuk_batas_pkp` | Pemasukan: `CEK`. Pengeluaran: `Tidak` |
+| `status_konfirmasi` | `terjadwal` untuk transaksi yang diterbitkan templat berulang; kosong untuk lainnya |
+| `metode_pembayaran` | Kode apa adanya: `CASH`, `TRANSFER`, `QRIS`, … |
+
+`receipt_note` tidak diekspor. Teks di `kategori` dan `deskripsi` yang diawali
+`=`, `+`, `-`, `@`, tab, atau CR diberi awalan `'` supaya spreadsheet tidak
+menjalankannya sebagai rumus (CSV injection). Impor (#73) harus membuang
+awalan itu lagi.
+
+> **Tiga kolom masih sementara.** Kolom mengikuti `docs/tax/SPEC-Ekspor.md` §3,
+> yang masih draf (#77). Keputusan isi sementaranya diambil 7 Okt 2026:
+>
+> * `masuk_peredaran_bruto_pph` memakai nilai kategori **saat ekspor**. Spek
+>   meminta nilai saat transaksi dicatat, supaya ekspor lama tidak berubah
+>   kalau kategori diubah. Untuk itu perlu kolom snapshot di `transactions`,
+>   dibuat setelah pemetaan kategori final (#47).
+> * `masuk_batas_pkp` bernilai `CEK` untuk pemasukan, karena atribut kategori
+>   `vatTurnover` belum ada (#47, #63).
+> * `status_konfirmasi` bernilai `terjadwal` untuk transaksi dari templat,
+>   karena belum ada langkah konfirmasi oleh pengguna (F-14, Q-62-3).
+>
+> Nama dan urutan kolom tidak akan berubah saat ketiganya dipenuhi; hanya
+> isinya.
+
 ---
 
 ### Transaksi berulang

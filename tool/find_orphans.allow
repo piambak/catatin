@@ -6,3 +6,5 @@
 app/lib/core/services/recurring_service.dart       # lapisan data transaksi berulang dari BE (#58); UI-nya issue #54, Minggu 3
 app/lib/core/services/attachment_service.dart      # lapisan data lampiran struk dari BE (#59); UI-nya issue #55, Minggu 3
 app/lib/core/services/simulator_input_service.dart # nilai awal Simulator dari BE (#89); disambung issue #86, Minggu 5
+app/lib/core/services/export_service.dart          # ekspor CSV dari BE (#72); UI-nya issue #68, Minggu 4
+app/lib/core/utils/transaction_csv.dart            # ekspor CSV dari BE (#72); UI-nya issue #68, Minggu 4

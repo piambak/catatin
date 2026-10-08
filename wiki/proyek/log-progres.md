@@ -18,6 +18,19 @@ tumbuh terus.
 > Tambahkan baris baru di atas (paling baru di atas), format:
 > `- **YYYY-MM-DD** — [Nama/Peran] — apa yang selesai/berubah`
 
+- **2026-10-07** — Backend — **Issue #72: ekspor CSV transaksi.** Tanpa
+  endpoint atau migrasi baru: data dari `getTransactions` (paging 1.000),
+  CSV dibentuk di klien oleh `TransactionCsv.build` lewat
+  `ExportService.exportTransactionsCsv`, sama untuk semua mode sumber data.
+  Kolom mengikuti draf `docs/tax/SPEC-Ekspor.md` §3 (#77). Tiga kolom diisi
+  sementara atas keputusan Backend: peredaran bruto dari kategori saat
+  ekspor, batas PKP `CEK`, transaksi berulang `terjadwal`. Kontraknya di
+  [Backend & API](../arsitektur/backend-dan-api.md#ekspor-csv--tanpa-endpoint-baru-72).
+  Biaya formatter 4,5 ms untuk setahun (2.400 transaksi) dan 36,9 ms untuk
+  sepuluh tahun, dicatat di [Supabase §10](../arsitektur/supabase.md#10-uji-beban)
+  untuk #75. UI-nya issue #68. Sebelumnya hari yang sama: CI `main` yang merah
+  sejak 28 Sep (format `mock_data.dart` dari #201) dipulihkan lewat PR #203.
+
 - **2026-09-24** — Backend — **Umur access token 900 detik di staging dan
   produksi** (D-14, #39). Dicek langsung di dashboard *Authentication →
   Sessions*: keduanya ternyata masih 3600 detik, termasuk staging yang di PR
